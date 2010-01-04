@@ -1,0 +1,12 @@
+Package: ASCBS
+Type: Package
+Title: Allele-specific segmentation and calling using Circular Binary Segmentation
+Version: 0.1.0
+Date: 2010-01-03
+Author: Adam Olshen <olshena@biostat.ucsf.edu>
+Maintainer: Adam Olshen <olshena@biostat.ucsf.edu>
+Description: Allele-specific segmentation and calling using Circular Binary Segmentation
+License: file LICENSE
+LazyLoad: yes
+Depends: DNAcopy (>= 1.20.0)
+

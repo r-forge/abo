@@ -1,0 +1,5 @@
+Package: ASCBS
+==============
+
+Version: 0.1.0 [2010-01-03]
+o Turned ASCBS scripts into an R package.
