@@ -122,4 +122,10 @@ as.CNA <- function(genomdat.a, genomdat.b, chrom, maploc, normaldat.a, normaldat
     zzz
   }
 
+###########################################################################
+# HISTORY:
+# 2010-01-03 [HB]
+# o Added Rdoc comments.
+# o Created from as.DNAcopyMethods.R.
+########################################################################### 
 
