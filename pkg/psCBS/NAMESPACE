@@ -1,0 +1,3 @@
+import(stats,graphics,DNAcopy)
+export("psCNA","psSegment")
+S3method(print, psCNA)
