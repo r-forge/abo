@@ -16,7 +16,7 @@ psSegment(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009,
           min.hetero=5, alpha.homozygous=0.05, alpha.equality=0.05, maf=0.075,
           min.homo.region=100, het.bias=0.025, smooth.segmentation=TRUE,
           smooth.region=2, outlier.SD.scale=4, smooth.SD.scale=2, trim=0.025,
-          impute.LOH, zero.homo=FALSE,verbose=1, ...) 
+          impute.LOH, zero.homo=FALSE, verbose=1, ...) 
 }
 \arguments{
   \item{x}{an object of class psCNA.}

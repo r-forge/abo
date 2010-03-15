@@ -10,4 +10,4 @@ Depends: DNAcopy
 License: GPL (>= 2)
 LazyLoad: yes
 biocViews: Microarray, CopyNumberVariants
-Packaged: 2010-03-12 19:18:10 UTC; seshanv
+
