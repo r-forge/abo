@@ -1,4 +1,4 @@
-psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het.lower=0.1, het.upper=0.75, het.minimum.window=0.05, het.stepsize.window=0.01, het.stepsize.within=0.01, trim.mean=0.1, min.hetero=5, alpha.homozygous=0.05, alpha.equality=0.05, maf=0.075, min.homo.region=100, het.bias=0.025, smooth.segmentation=TRUE, smooth.region=2, outlier.SD.scale=4, smooth.SD.scale=2, trim=0.025, impute.LOH, zero.homo=FALSE, verbose=1, ...)
+psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het.lower=0.1, het.upper=0.75, het.minimum.window=0.05, het.stepsize.window=0.01, het.stepsize.within=0.01, trim.mean=0.1, min.hetero=5, alpha.homozygous=0.05, alpha.equality=0.05, maf=0.075, min.homo.region=100, het.bias=0.025, smooth.segmentation=TRUE, smooth.region=2, outlier.SD.scale=4, smooth.SD.scale=2, trim=0.025, impute.LOH, zero.homo=FALSE,verbose=1, ...)
   {
     if (!inherits(x, 'psCNA')) stop("First arg must be an psCNA object")
     if(alpha1>=alpha) stop ("alpha1 must be less than alpha")
@@ -17,7 +17,8 @@ psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het
           {
             normal.a.vector <- x[[5]][,i]
             normal.b.vector <- x[[6]][,i]
-            normal.baf.vector <- normal.a.vector/(normal.a.vector+normal.b.vector)
+            normal.baf.vector <- normal.b.vector/(normal.a.vector+normal.b.vector)
+            normal.baf.vector[abs(normal.baf.vector)==Inf] <- 1             
             normal.mbaf.vector <- apply(cbind(normal.baf.vector,1-normal.baf.vector),1,max)
             normal.mbaf.vector[abs(normal.mbaf.vector)==Inf] <- 1                
             normal.fit.heterozygous <- findheterozygous(normal.a.vector,normal.b.vector,het.lower,het.upper,het.minimum.window,het.stepsize.window,het.stepsize.within)
@@ -38,7 +39,8 @@ psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het
       {
         a.vector <- x[[1]][,i]
         b.vector <- x[[2]][,i]
-        baf.vector <- a.vector/(a.vector+b.vector)
+        baf.vector <- b.vector/(a.vector+b.vector)
+        baf.vector[abs(baf.vector)==Inf] <- 1             
         mbaf.vector <- apply(cbind(baf.vector,1-baf.vector),1,max)
         mbaf.vector[abs(mbaf.vector)==Inf] <- 1
         if(matching.reference)
@@ -53,7 +55,8 @@ psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het
                 which.notmissing <- which(!is.na(a.vector) & !is.na(b.vector) & !is.na(chrom.vector) & !is.na(position.vector) & !is.na(normal.a.vector) & !is.na(normal.b.vector))
                 normal.a.vector.notmissing <- normal.a.vector[which.notmissing]
                 normal.b.vector.notmissing <- normal.b.vector[which.notmissing]
-                normal.mbaf.vector.notmissing <- normal.mbaf.vector[which.notmissing]
+                normal.baf.vector.notmissing <- normal.baf.vector[which.notmissing]
+                normal.mbaf.vector.notmissing <- normal.mbaf.vector[which.notmissing]                
                 normal.fit.heterozygous <- findheterozygous(normal.a.vector.notmissing,normal.b.vector.notmissing,het.lower,het.upper,het.minimum.window,het.stepsize.window,het.stepsize.within)
                 normal.het.vector.notmissing <- normal.fit.heterozygous$is.heterozygous
               }
@@ -71,7 +74,8 @@ psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het
           }
         a.vector.notmissing <- a.vector[which.notmissing]
         b.vector.notmissing <- b.vector[which.notmissing]
-        mbaf.vector.notmissing <- mbaf.vector[which.notmissing]
+        baf.vector.notmissing <- baf.vector[which.notmissing]
+        mbaf.vector.notmissing <- mbaf.vector[which.notmissing]        
         chrom.vector.notmissing <- chrom.vector[which.notmissing]
         position.vector.notmissing <- position.vector[which.notmissing]
         if(predict.genomdat.heterozygous)
@@ -117,8 +121,13 @@ psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het
 #Second round of segmentation
         if(matching.reference)
           {
+            tumorBoostBAFNotmissing <- 0.5*baf.vector.notmissing/normal.baf.vector.notmissing
+            whichTumorGreater <- which(baf.vector.notmissing>normal.baf.vector.notmissing)
+            tumorBoostBAFNotmissing[whichTumorGreater] <- (1-0.5*((1-baf.vector.notmissing)/(1-normal.baf.vector.notmissing)))[whichTumorGreater]
+            foldedTumorBoostBAFNotmissing <- 2*abs(tumorBoostBAFNotmissing-0.5)
             diff.mbaf.vector.notmissing <- mbaf.vector.notmissing-normal.mbaf.vector.notmissing
-            second.output <- second.segment.matching(matching.reference,diff.mbaf.vector.notmissing,normal.het.vector.notmissing,alpha2,segmented.output,position.vector.notmissing)
+            second.output <- second.segment.matching(matching.reference,foldedTumorBoostBAFNotmissing,normal.het.vector.notmissing,alpha2,segmented.output,position.vector.notmissing)
+#            second.output <- second.segment.matching(matching.reference,diff.mbaf.vector.notmissing,normal.het.vector.notmissing,alpha2,segmented.output,position.vector.notmissing)            
           }
         else
           {

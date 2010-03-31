@@ -1,17 +1,21 @@
 \name{psCNA}
 \alias{psCNA}
 \alias{print.psCNA}
+
 \title{Create `Parent-Specific Copy Number Array' data object}
+
 \description{
   Creates a `parent-sprcific copy number array' data object used for
   Parent-Specific  DNA copy number analyses by psSegment.
 }
+
 \usage{
   psCNA(genomdat.a, genomdat.b, chrom, maploc, normaldat.a, normaldat.b,
       genomdat.hetmatrix=NULL, normaldat.hetmatrix=NULL, sampleid=NULL,
       arraytype=NULL) 
   \method{print}{psCNA}(x, \dots)
 }
+
 \arguments{
   \item{genomdat.a}{a vector or matrix of parental copy number data form
     a test SNP array. If it is a matrix the rows correspond to the
@@ -44,8 +48,10 @@
   \item{x}{object returned by CNA}
   \item{...}{arguments to be passed onto print command called within.}
 }
+
 \value{
   An object of class \code{psCNA}.  There is a \code{print} method that
   gives the number of samples and probes and the type of data.
 }
+
 \keyword{nonparametric}

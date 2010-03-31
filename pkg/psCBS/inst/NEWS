@@ -1,5 +1,9 @@
 Package: psCBS
 ==============
 
+Version: 0.5.1 [2010-03-31]
+o Now psSegment(..., matching.reference=TRUE) does TumorBoost 
+  normalization on the allele B fractions before segmentation.
+
 Version: 0.5.0 [2010-03-12]
 o Added to R-forge repository.
