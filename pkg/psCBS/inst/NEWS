@@ -1,9 +1,24 @@
 Package: psCBS
 ==============
 
+Version: 0.5.4 [2010-04-30]
+o Added internal hrmode().
+o CLEAN UP: Renamed source files to match function names.
+  Only only function per source file.
+
+
+Version: 0.5.3 [2010-04-22]
+o ABO updated the psCBS algorithm.
+
+
+Version: 0.5.2 [2010-0?-??]
+o ???
+
+
 Version: 0.5.1 [2010-03-31]
 o Now psSegment(..., matching.reference=TRUE) does TumorBoost 
   normalization on the allele B fractions before segmentation.
+
 
 Version: 0.5.0 [2010-03-12]
 o Added to R-forge repository.

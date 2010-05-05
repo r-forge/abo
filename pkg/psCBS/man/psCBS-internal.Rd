@@ -3,26 +3,23 @@
 \alias{findheterozygous}
 \alias{second.round.cbs.matching}
 \alias{second.segment.matching}
-
+\alias{hrmode}
 \title{Internal psCBS functions}
-
 \description{
   Internal functions of package psCBS.
 }
-
 \usage{
-  callsegments.matching(matching, segment.starts, segment.ends, a.vector,
+callsegments.matching(matching, segment.starts, segment.ends, a.vector,
     b.vector, diff.mbaf.vector, het.vector, normal.het.vector,
-    chrom.vector.starts, total.vector.starts, min.hetero, trim.mean, 
-    alpha.equality, het.bias, maf, alpha.homozygous, min.homo.region,
-    impute.LOH)
-  findheterozygous(a.vector, b.vector, lower.bound=0, upper.bound=0.5,
+    foldedTumorBoostBAF,chrom.vector.starts, total.vector.starts, min.hetero, 
+    trim.mean, alpha.equality, modeOffset, maf, alpha.homozygous, 
+    min.homo.region,impute.LOH,nBootstrapSamples=1000)
+findheterozygous(a.vector, b.vector, lower.bound=0, upper.bound=0.5,
     minimum.window=0.05, stepsize.window=0.01, stepsize.within=0.01)
-  second.round.cbs.matching(diff.data,alpha)
-  second.segment.matching(matching, diff.mbaf.vector.notmissing,
+second.round.cbs.matching(diff.data,alpha)
+second.segment.matching(matching, diff.mbaf.vector.notmissing,
     normal.data, alpha.level, input.matrix,map.data)
+hrmode(x)
 }
-
 \details{These are not to be called directly by the user}
-
 \keyword{internal}

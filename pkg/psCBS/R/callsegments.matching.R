@@ -1,4 +1,4 @@
-callsegments.matching <- function(matching,segment.starts,segment.ends,a.vector,b.vector,diff.mbaf.vector,het.vector,normal.het.vector,chrom.vector.starts,total.vector.starts,min.hetero,trim.mean,alpha.equality,het.bias,maf,alpha.homozygous,min.homo.region,impute.LOH)  
+callsegments.matching <- function(matching,segment.starts,segment.ends,a.vector,b.vector,diff.mbaf.vector,het.vector,normal.het.vector,foldedTumorBoostBAF,chrom.vector.starts,total.vector.starts,min.hetero,trim.mean,alpha.equality,modeOffset,maf,alpha.homozygous,min.homo.region,impute.LOH,nBootstrapSamples=1000)  
   {
     n.segments <- length(segment.starts)
     n.homo <- rep(NA,n.segments)
@@ -15,7 +15,8 @@ callsegments.matching <- function(matching,segment.starts,segment.ends,a.vector,
     sumsquarediff.hetero <- rep(NA,n.segments)
     pvalues.equality <- rep(NA,n.segments)
     length.segments <- segment.ends-segment.starts+1
-#New loop for total output
+    confidence95NewModes <- rep(NA,n.segments)
+                                        #New loop for total output
     mean.index <- rep(NA,n.segments)
     mean.index[1] <- 1
     if(n.segments>1)
@@ -158,21 +159,34 @@ callsegments.matching <- function(matching,segment.starts,segment.ends,a.vector,
             which.i <- segment.starts[i]:segment.ends[i]
             new.a <- a.vector[which.i]
             new.b <- b.vector[which.i]
+            newFoldedTumorBoostBAF <- foldedTumorBoostBAF[which.i]
             new.diff.mbaf <- diff.mbaf.vector[which.i] 
                                         #        total.output[i] <- mean(new.a+new.b,trim=trim.mean)
             new.normal.hetero <- normal.het.vector[which.i]
             new.tumor.hetero <- het.vector[which.i]
                                         #        n.hetero[i] <- sum(new.normal.hetero)
-            if(sum(new.normal.hetero)>=min.hetero & sum(new.tumor.hetero)>=min.hetero)
+            sumNewNormalHetero <- sum(new.normal.hetero)
+#            if(sumNewNormalHetero>=min.hetero)
+            if(sum(new.normal.hetero)>=min.hetero & sum(new.tumor.hetero)>=min.hetero)              
                                         #        if(n.hetero[i]>=min.hetero)          
               {
                 new.a.hetero <- new.a[new.tumor.hetero]
                 new.b.hetero <- new.b[new.tumor.hetero]
                 meandiff.hetero[i] <- mean(abs(new.a.hetero-new.b.hetero),trim=trim.mean)
-                new.diff.mbaf.hetero <- new.diff.mbaf[new.normal.hetero]
+                newFoldedTumorBoostBAFHetero <- newFoldedTumorBoostBAF[new.normal.hetero]
+                newModes <- rep(NA,nBootstrapSamples)
+                for(j in 1:nBootstrapSamples)
+                  {
+                    newModes[j] <- hrmode(sample(newFoldedTumorBoostBAFHetero,replace=TRUE))
+                  }
+
+                confidence95NewModes[i] <- quantile(newModes,0.05)-modeOffset
+                new.diff.mbaf.hetero <- new.diff.mbaf[new.tumor.hetero]
                 mean.diff.mbaf[i] <- mean(new.diff.mbaf.hetero)
+
                                         # Add small amount of noise in case mbaf are constant
-                pvalues.equality[i] <- t.test(new.diff.mbaf.hetero-het.bias+rnorm(length(new.diff.mbaf.hetero),0,0.000001),alt="greater")$p.value
+                
+#                pvalues.equality[i] <- t.test(new.diff.mbaf.hetero-modeOffset+rnorm(length(new.diff.mbaf.hetero),0,0.000001),alt="greater")$p.value
                                         #            pvalues.equality[i] <- t.test(new.diff.mbaf.hetero-het.bias,alt="greater")$p.value            
                                         #            print(paste("Segment",i))
                                         #            print(paste("n=",length(new.diff.mbaf.hetero)))
@@ -183,7 +197,8 @@ callsegments.matching <- function(matching,segment.starts,segment.ends,a.vector,
                 mindiff.output[i] <- (total.output[i]-meandiff.hetero[i])/2
                 if(is.na(min.output[i])|min.output[i]!=0)
                   {
-                    if(pvalues.equality[i]>alpha.equality)
+                    if(confidence95NewModes[i]<0)
+#                    if(pvalues.equality[i]>alpha.equality)                      
                       {
                         min.output[i] <- total.output[i]/2
                         max.output[i] <- total.output[i]/2
@@ -208,14 +223,15 @@ callsegments.matching <- function(matching,segment.starts,segment.ends,a.vector,
             new.b <- b.vector[which.i]
             new.diff.mbaf <- diff.mbaf.vector[which.i] 
             new.tumor.hetero <- het.vector[which.i]
-            if(sum(new.tumor.hetero)>=min.hetero)
+            sumNewTumorHetero <- sum(new.tumor.hetero)
+            if(sumNewTumorHetero>=min.hetero)
               {
                 new.a.hetero <- new.a[new.tumor.hetero]
                 new.b.hetero <- new.b[new.tumor.hetero]
                 meandiff.hetero[i] <- mean(abs(new.a.hetero-new.b.hetero),trim=trim.mean)
                 new.diff.mbaf.hetero <- new.diff.mbaf[new.tumor.hetero]
                 mean.diff.mbaf[i] <- mean(new.diff.mbaf.hetero)
-                pvalues.equality[i] <- t.test(new.diff.mbaf.hetero-het.bias+rnorm(length(new.diff.mbaf.hetero),0,0.000001),alt="greater")$p.value
+                pvalues.equality[i] <- t.test(new.diff.mbaf.hetero-modeOffset+rnorm(length(new.diff.mbaf.hetero),0,0.000001),alt="greater")$p.value
                 maxdiff.output[i] <- (total.output[i]+meandiff.hetero[i])/2
                 mindiff.output[i] <- (total.output[i]-meandiff.hetero[i])/2
                 if(is.na(min.output[i])|min.output[i]!=0)
@@ -235,6 +251,5 @@ callsegments.matching <- function(matching,segment.starts,segment.ends,a.vector,
           }#End of n.segments loop
       }
     
-    list(total.output=total.output,min.output=min.output,max.output=max.output,n.hetero=n.hetero,mindiff.output=mindiff.output,maxdiff.output=maxdiff.output,mean.diff.mbaf=mean.diff.mbaf)
+    list(total.output=total.output,min.output=min.output,max.output=max.output,n.hetero=n.hetero,mindiff.output=mindiff.output,maxdiff.output=maxdiff.output,mean.diff.mbaf=mean.diff.mbaf,confidence95NewModes=(confidence95NewModes+modeOffset))
   }
-

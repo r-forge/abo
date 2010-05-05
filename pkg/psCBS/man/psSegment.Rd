@@ -3,24 +3,21 @@
 \title{
   Parent specific DNA copy number segmentation algorithm
 }
-
 \description{
   This function segments allele specific copy number data into parent
   specific DNA copy number segments using CBS (segment function from
   DNAcopy) for initial segmentation of Total DNA copy numbers and
   further segmenting when parental copy numbers change.
 }
-
 \usage{
 psSegment(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009,
           het.lower=0.1, het.upper=0.75, het.minimum.window=0.05,
           het.stepsize.window=0.01, het.stepsize.within=0.01, trim.mean=0.1,
           min.hetero=5, alpha.homozygous=0.05, alpha.equality=0.05, maf=0.075,
-          min.homo.region=100, het.bias=0.025, smooth.segmentation=TRUE,
+          min.homo.region=100, modeOffset=0.025, smooth.segmentation=TRUE,
           smooth.region=2, outlier.SD.scale=4, smooth.SD.scale=2, trim=0.025,
-          impute.LOH, zero.homo=FALSE, verbose=1, ...) 
+          impute.LOH, zero.homo=FALSE,verbose=1, ...) 
 }
-
 \arguments{
   \item{x}{an object of class psCNA.}
   \item{matching.reference}{whether matching reference sample is
@@ -51,7 +48,7 @@ psSegment(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009,
     whether region is LOH; decreasing it will lead to more LOH regions.}
   \item{min.homo.region}{the smallest number of SNPs where no attempt
     made to combine regions when testing heterozygosity.}
-  \item{het.bias}{a tuning parameter for estimating whether the parental
+  \item{modeOffset}{a tuning parameter for estimating whether the parental
     copy numbers are unequal in the second round of segmentation;
     increasing it will lead to fewer regions estimated to be unequal.}
   \item{smooth.segmentation}{whether to smooth before segmenting on
@@ -73,14 +70,6 @@ psSegment(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009,
   \item{verbose}{verbosity of CBS}
   \item{...}{other arguments to be passed on to segment}
 }
-
-\value{
-  A data frame with 13 columns that give the following characteristics
-  of each segment: "ID", "chrom", "loc.start", "loc.end", "num.mark",
-  "num.hetero", "mean.diff.mbaf", "mindiff.mean", "maxdiff.mean",
-  "min.mean", "max.mean", "total.mean"
-}
-
 \details{
   This function implements the parent specific segmentation. It segments
   the total copy number.  Heterozygotes are found.  Then within each
@@ -91,6 +80,10 @@ psSegment(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009,
   constant.  After the segmentation is complete segments are called for
   LOH, equal parental copies or unequal copies.  
 }
-
+\value{
+  A data frame with 13 columns that give the following characteristics
+  of each segment: "ID", "chrom", "loc.start", "loc.end", "num.mark",
+  "num.hetero", "mean.diff.mbaf", "mindiff.mean", "maxdiff.mean",
+  "min.mean", "max.mean", "total.mean"
+}
 \keyword{nonparametric}
-
