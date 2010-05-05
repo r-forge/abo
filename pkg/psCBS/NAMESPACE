@@ -1,5 +1,5 @@
 import(DNAcopy)
 
-export("psCNA")
+export("psCNA", "psSegment")
 
 S3method(print, psCNA)
