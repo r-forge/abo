@@ -1,6 +1,6 @@
 Package: ASCBS
 Type: Package
-Title: Allele-specific segmentation and calling using Circular Binary Segmentation
+Title: Allele-specific segmentation and calling using Circular Binary Segmentation [DEPRECATED]
 Version: 0.1.0
 Date: 2010-01-03
 Author: Adam Olshen <olshena@biostat.ucsf.edu>
