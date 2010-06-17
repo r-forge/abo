@@ -1,10 +1,13 @@
-#diff.mbaf.vector.notmissing - absolute differences of A and B alleles alpha.level -
-#alpha-level of segmentation window.size - size of windows for
-#comparing left to right distributions quantile.values - quantiles of
-#distribution being compared frequency.sample.markers - how often to
-#compute p-values before smoothing f - amount of smoothing in lowess
-#input.matrix - the results of the first round of segmentation
-#map.data - map data
+# \arguments{
+#  \item{diff.mbaf.vector.notmissing}{absolute differences of A and B alleles}
+#  \item{alpha.level}{alpha-level of segmentation}
+#  \item{window.size}{size of windows for#comparing left to right distributions}
+#  \item{quantile.values}{quantiles of distribution being compared}
+#  \item{frequency.sample.markers}{how often to compute p-values before smoothing}
+#  \item{f}{amount of smoothing in lowess}
+#  \item{input.matrix}{the results of the first round of segmentation}
+#  \item{map.data}{map data}
+# }
 second.segment.matching <- function(matching, diff.mbaf.vector.notmissing, normal.data, alpha.level, input.matrix, map.data) {
   output.matrix <- as.matrix(input.matrix)
   colnames(output.matrix) <- colnames(input.matrix)

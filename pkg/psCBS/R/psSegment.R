@@ -1,28 +1,36 @@
-psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het.lower=0.1, het.upper=0.75, het.minimum.window=0.05, het.stepsize.window=0.01, het.stepsize.within=0.01, trim.mean=0.1, min.hetero=5, alpha.homozygous=0.05, alpha.equality=0.05, maf=0.075, min.homo.region=100, modeOffset=0.025, smooth.segmentation=TRUE, smooth.region=2, outlier.SD.scale=4, smooth.SD.scale=2, trim=0.025, impute.LOH, zero.homo=FALSE,verbose=1, ...) {
+psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het.lower=0.1, het.upper=0.75, het.minimum.window=0.05, het.stepsize.window=0.01, het.stepsize.within=0.01, trim.mean=0.1, min.hetero=5, alpha.homozygous=0.05, alpha.equality=0.05, maf=0.075, min.homo.region=100, modeOffset=0.025, smooth.segmentation=TRUE, smooth.region=2, outlier.SD.scale=4, smooth.SD.scale=2, trim=0.025, impute.LOH, zero.homo=FALSE, verbose=1, ...) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Argument 'x':
   if (!inherits(x, 'psCNA')) {
     stop("First arg must be an psCNA object")
   }
 
-  if (alpha1 >= alpha) {
-    stop("alpha1 must be less than alpha")
+  nsample <- ncol(x[[1]])
+  nsample.normal <- ncol(x[[5]])
+  if (matching.reference && nsample.normal != nsample) {
+    stop("If matching normal (matching.reference=TRUE), number of test and reference samples must be the same: ", nsample, " != ", nsample.normal)
   }
+
+  # Argument 'alpha' and 'alpha1':
+  if (alpha1 >= alpha) {
+    stop("alpha1 must be less than alpha: ", alpha1, " >= ", alpha)
+  }
+
+
 
   call <- match.call()
   alpha2 <- alpha-alpha1
   sampleid <- colnames(x[[1]])
-  nsample <- ncol(x[[1]])
   nprobe <-  nrow(x[[1]])
-  nsample.normal <- ncol(x[[5]])
-  if (matching.reference && nsample.normal != nsample) {
-    stop("If matching normal, number of test and reference samples must be the same")
-  }
 
   if (!matching.reference && is.null(x[[8]])) {
     count.heterozygous <- rep(0, times=nprobe)
     typical.mbaf.heterozygous <- rep(0, times=nprobe)
-    for (i in 1:nsample.normal) {
-      normal.a.vector <- x[[5]][,i]
-      normal.b.vector <- x[[6]][,i]
+    for (ii in 1:nsample.normal) {
+      normal.a.vector <- x[[5]][,ii]
+      normal.b.vector <- x[[6]][,ii]
       normal.baf.vector <- normal.b.vector/(normal.a.vector+normal.b.vector)
       normal.baf.vector[abs(normal.baf.vector) == Inf] <- 1             
       normal.mbaf.vector <- apply(cbind(normal.baf.vector, 1-normal.baf.vector), MARGIN=1, FUN=max)
@@ -31,7 +39,7 @@ psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het
       normal.het.vector <- which(normal.fit.heterozygous$is.heterozygous)
       count.heterozygous[normal.het.vector] <- count.heterozygous[normal.het.vector] + 1
       typical.mbaf.heterozygous[normal.het.vector] <- typical.mbaf.heterozygous[normal.het.vector] + normal.mbaf.vector[normal.het.vector]
-    } # for (i ...)
+    } # for (ii ...)
 
     reference.mbaf.heterozygous <- typical.mbaf.heterozygous/count.heterozygous
     reference.mbaf.heterozygous[is.na(reference.mbaf.heterozygous)] <- mean(reference.mbaf.heterozygous, na.rm=TRUE)
@@ -51,9 +59,9 @@ psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het
 
   chrom.vector <- x[[3]]
   position.vector <- x[[4]]
-  for (i in 1:nsample) {
-    a.vector <- x[[1]][,i]
-    b.vector <- x[[2]][,i]
+  for (ii in 1:nsample) {
+    a.vector <- x[[1]][,ii]
+    b.vector <- x[[2]][,ii]
     baf.vector <- b.vector / (a.vector + b.vector)
     baf.vector[abs(baf.vector) == Inf] <- 1             
     mbaf.vector <- apply(cbind(baf.vector, 1-baf.vector), MARGIN=1, FUN=max)
@@ -61,8 +69,8 @@ psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het
 
     if (matching.reference) {
       if (predict.normal.heterozygous) {
-        normal.a.vector <- x[[5]][,i]
-        normal.b.vector <- x[[6]][,i]
+        normal.a.vector <- x[[5]][,ii]
+        normal.b.vector <- x[[6]][,ii]
         normal.baf.vector <- normal.b.vector/(normal.a.vector+normal.b.vector)
         normal.mbaf.vector <- apply(cbind(normal.baf.vector, 1-normal.baf.vector), MARGIN=1, FUN=max)
         normal.mbaf.vector[abs(normal.mbaf.vector) == Inf] <- 1                
@@ -74,7 +82,7 @@ psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het
         normal.fit.heterozygous <- findheterozygous(normal.a.vector.notmissing, normal.b.vector.notmissing, het.lower, het.upper, het.minimum.window, het.stepsize.window, het.stepsize.within)
         normal.het.vector.notmissing <- normal.fit.heterozygous$is.heterozygous
       } else {
-        normal.het.vector <- x[[8]][,i]
+        normal.het.vector <- x[[8]][,ii]
         which.notmissing <- which(!is.na(a.vector) & !is.na(b.vector) & !is.na(chrom.vector) & !is.na(position.vector) & !is.na(normal.het.vector))
         # which.notmissing <- which(!is.na(a.vector) & !is.na(b.vector) & !is.na(chrom.vector) & !is.na(position.vector) & !is.na(normal.het.vector) & !is.na(genomdat.het.vector))                
         normal.het.vector.notmissing <- normal.het.vector[which.notmissing]
@@ -95,7 +103,7 @@ psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het
       fit.heterozygous <- findheterozygous(a.vector.notmissing, b.vector.notmissing, het.lower, het.upper, het.minimum.window, het.stepsize.window, het.stepsize.within)
       het.vector.notmissing <- fit.heterozygous$is.heterozygous
     } else {
-      het.vector <- x[[7]][,i]
+      het.vector <- x[[7]][,ii]
       het.vector.notmissing <- het.vector[which.notmissing]
 #     stop("Code not yet written for test genotyping data; must use test copy number data")
     } # if (predict.genomdat.heterozygous)
@@ -246,4 +254,3 @@ psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het
 
   output
 } # psSegment()
-

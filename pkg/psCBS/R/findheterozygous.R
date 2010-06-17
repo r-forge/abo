@@ -7,9 +7,14 @@
 #stepsize.within - how much to increment the current window size
 #Find the optimal window to separate homozygous from heterozygous based on the minimum of the A and B alleles.  Start with window of lower.bound to lower.bound + minimum.window.  Shift window by stepsize.within.  Repeat process with bigger windows starting from lower.bound to lower.bound + stepsize.window
 findheterozygous <- function(a.vector, b.vector, lower.bound=0, upper.bound=0.5, minimum.window=0.05, stepsize.window=0.01, stepsize.within=0.01) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Argument 'minimum.window', 'upper.bound' & 'lower.bound':
   if (minimum.window > (upper.bound-lower.bound)) {
     stop("Minimum window size is too big for the current lower.bound and upper.bound")
   }
+
 
   min.vector <- apply(cbind(a.vector, b.vector), MARGIN=1, FUN=min)
   current.fixed.lower <- lower.bound
