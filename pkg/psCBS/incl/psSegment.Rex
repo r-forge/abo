@@ -1,6 +1,5 @@
 if (require("R.utils")) {
 
-
 pathname <- system.file("data-ex/pcCBS,exData,chr01.Rbin", package="psCBS")
 data <- R.utils::loadObject(pathname)
 

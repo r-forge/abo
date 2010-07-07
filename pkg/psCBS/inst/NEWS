@@ -1,6 +1,12 @@
 Package: psCBS
 ==============
 
+Version: 0.5.6 [2010-07-07]
+o Added example(psSegment).
+o BUG FIX: Previous clean up introduced bugs.
+o BUG FIX: The dynamic library for hrmode() was not loaded.
+
+
 Version: 0.5.5 [2010-05-05]
 o CLEAN UP/ROBUSTNESS: Major code clean up.
 
