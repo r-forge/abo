@@ -22,32 +22,36 @@ pd <- psCNA(genomdat.a=CTA, genomdat.b=CTB,
             normaldat.a=CNA, normaldat.b=CNB)
 print(pd)
 ## Number of Test Samples 1 Number of Reference Samples 1
-## Number of Probes  14670
+## Number of Probes  7335
 
 fit <- psSegment(pd, matching.reference=TRUE, impute.LOH=TRUE, verbose=1)
-## [1] "Heterozygous cutoff is 0.702"
-## [1] "Heterozygous cutoff is 0.697"
-## Analyzing: Sample.1
+## [1] "Heterozygous cutoff is 0.695"
+## [1] "Heterozygous cutoff is 0.686"
 ## Analyzing: Sample.1
 ## Analyzing: Sample.1
 ## Analyzing: Sample.1
 ## Analyzing: Sample.1
 
+# AD HOC: Turn fit into a data frame
+fit <- as.data.frame(fit, stringsAsFactors=FALSE);
+for (cc in 3:5) { fit[,cc] <- as.integer(fit[,cc]); }
+for (cc in 6:ncol(fit)) { fit[,cc] <- as.double(fit[,cc]); }
+
 str(fit)
-## 'data.frame':   5 obs. of  13 variables:
-##  $ ID            : Factor w/ 1 level "Sample.1": 1 1 1 1 1
-##  $ chrom         : Factor w/ 1 level "1": 1 1 1 1 1
-##  $ loc.start     : Factor w/ 5 levels "   554484"," 90446342",..: 1 2 3 4 5
-##  $ loc.end       : Factor w/ 5 levels " 90437574"," 90564186",..: 1 2 3 4 5
-##  $ num.mark      : Factor w/ 5 levels "1942","2675",..: 4 5 1 2 3
-##  $ num.hetero    : Factor w/ 5 levels "0","1281","156",..: 3 1 4 5 2
-##  $ mean.diff.mbaf: Factor w/ 4 levels "-0.00580908781811386",..: 3 NA 2 1 4
-##  $ mindiff.mean  : Factor w/ 4 levels "0.532319235794478",..: 1 NA 2 3 4
-##  $ maxdiff.mean  : Factor w/ 4 levels "0.837964234142425",..: 1 NA 2 3 4
-##  $ confidence95  : Factor w/ 4 levels "0.00584787059363753",..: 4 NA 3 1 2
-##  $ min.mean      : Factor w/ 3 levels "0","0.996010651148487",..: 1 1 1 3 2
-##  $ max.mean      : Factor w/ 5 levels "0.746089002916825",..: 3 1 4 2 5
-##  $ total.mean    : Factor w/ 5 levels "0.746089002916825",..: 2 1 3 4 5
+## 'data.frame':   3 obs. of  13 variables:
+##  $ ID            : chr  "Sample.1" "Sample.1" "Sample.1"
+##  $ chrom         : chr  "1" "1" "1"
+##  $ loc.start     : int  554484 143726347 185505853
+##  $ loc.end       : int  143656390 185438403 246679946
+##  $ num.mark      : int  3766 1365 2204
+##  $ num.hetero    : num  113 360 667
+##  $ mean.diff.mbaf: num  -0.05794 -0.00943 0.04095
+##  $ mindiff.mean  : num  0.521 0.898 0.992
+##  $ maxdiff.mean  : num  0.85 1.15 1.64
+##  $ confidence95  : num  0.471 0.036 0.191
+##  $ min.mean      : num  0 0.898 0.992
+##  $ max.mean      : num  1.37 1.15 1.64
+##  $ total.mean    : num  1.37 2.05 2.63
 
 
 } # if (require("R.utils"))

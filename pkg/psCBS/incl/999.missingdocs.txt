@@ -1,5 +1,6 @@
   nbrOfLoci nbrOfLoci.psCNA nbrOfReferenceSamples
   nbrOfReferenceSamples.psCNA
 getSampleNames getSampleNames.psCNA nbrOfSamples nbrOfSamples.psCNA
-psSegment
 psSegmentPaired
+  callSegmentsByPSCBS callSegmentsByPSCBS.default drawLevels
+  drawLevels.DNAcopy

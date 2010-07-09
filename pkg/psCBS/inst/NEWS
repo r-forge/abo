@@ -1,6 +1,17 @@
 Package: psCBS
 ==============
 
+Version: 0.6.1 [2010-07-09]
+o Added low-level segmentByPairedPSCBS(), which runs paired PSCBS
+  segmentation on a single sample and a single chromosome.
+  It only segments; it does not call segments.  This is only
+  a stub in the sense that it still does not adjust p-values etc.
+o Added low-level segmentByCBS(), which runs CBS segmentation
+  on a single sample and a single chromosome.
+o BACKWARD COMPATIBILITY: Now psCNA() returns a list of length 8.
+o Reverted psSegment() back to v0.5.6.
+
+
 Version: 0.6.0 [2010-07-08]
 o Now psSegmentPaired() returns a data frame (no longer a matrix).
 o CLEANUP: Major cleanup, i.e. renaming variables, reordering etc.

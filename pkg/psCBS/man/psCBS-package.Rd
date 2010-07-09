@@ -34,7 +34,7 @@
  \section{To get started}{
    To get started, see:
    \enumerate{
-     \item \code{\link{psSegment.psCNA}}()
+     \item \code{\link{segmentByPairedPSCBS}}()
    }
  }
 

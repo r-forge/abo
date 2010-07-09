@@ -1,6 +1,5 @@
 ###########################################################################/**
-# @set "class=psCNA"
-# @RdocMethod "psSegment"
+# @RdocFunction "psSegment"
 # 
 # @title "Parent specific DNA copy number segmentation algorithm"
 # 
@@ -88,23 +87,19 @@
 #
 # @keyword nonparametric
 #*/###########################################################################
-setMethodS3("psSegment", "psCNA", function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het.lower=0.1, het.upper=0.75, het.minimum.window=0.05, het.stepsize.window=0.01, het.stepsize.within=0.01, trim.mean=0.1, min.hetero=5, alpha.homozygous=0.05, alpha.equality=0.05, maf=0.075, min.homo.region=100, modeOffset=0.025, smooth.segmentation=TRUE, smooth.region=2, outlier.SD.scale=4, smooth.SD.scale=2, trim=0.025, impute.LOH, zero.homo=FALSE, verbose=1, ...) {
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Local functions
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  findHeterozygousSNPs <- function(yTA, yTB) {
-    res <- findheterozygous(yTA, yTB, het.lower, het.upper, het.minimum.window, het.stepsize.window, het.stepsize.within);
-    res$is.heterozygous;
-  } # findHeterozygousSNPs()
-
-
+psSegment <- function(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het.lower=0.1, het.upper=0.75, het.minimum.window=0.05, het.stepsize.window=0.01, het.stepsize.within=0.01, trim.mean=0.1, min.hetero=5, alpha.homozygous=0.05, alpha.equality=0.05, maf=0.075, min.homo.region=100, modeOffset=0.025, smooth.segmentation=TRUE, smooth.region=2, outlier.SD.scale=4, smooth.SD.scale=2, trim=0.025, impute.LOH, zero.homo=FALSE, verbose=1, ...) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  nbrOfSamples <- nbrOfSamples(x);
-  nbrOfRefSamples <- nbrOfReferenceSamples(x);
-  if (matching.reference && nbrOfRefSamples != nbrOfSamples) {
-    stop("If matching normal (matching.reference=TRUE), number of test and reference samples must be the same: ", nbrOfSamples, " != ", nbrOfRefSamples)
+  # Argument 'x':
+  if (!inherits(x, 'psCNA')) {
+    stop("First arg must be an psCNA object")
+  }
+
+  nsample <- ncol(x[[1]])
+  nsample.normal <- ncol(x[[5]])
+  if (matching.reference && nsample.normal != nsample) {
+    stop("If matching normal (matching.reference=TRUE), number of test and reference samples must be the same: ", nsample, " != ", nsample.normal)
   }
 
   # Argument 'alpha' and 'alpha1':
@@ -116,231 +111,177 @@ setMethodS3("psSegment", "psCNA", function(x, matching.reference=FALSE, alpha=0.
 
   call <- match.call()
   alpha2 <- alpha-alpha1
-  sampleid <- getSampleNames(x);
-  nbrOfLoci <- nbrOfLoci(x);
+  sampleid <- colnames(x[[1]])
+  nprobe <-  nrow(x[[1]])
 
-  if (!matching.reference && is.null(x$normaldat.hetmatrix)) {
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # Calculate expected mirrored allele B fractions for heterozygous SNPs
-    # from a set of normal reference samples that are not matched.
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    hetCounts <- rep(0, times=nbrOfLoci);
-    rhoRHets <- rep(0, times=nbrOfLoci);  # Should initialize to NAs? /HB 2010-07-08
-
-    for (ii in seq(length=nbrOfRefSamples)) {
-      # Extract (yA,yB)
-      yNA <- x$normaldat.a[,ii];
-      yNB <- x$normaldat.b[,ii];
-
-      # Calculate allele B fractions (beta)
-      yN <- yNA + yNB;
-      betaN <- yNB/yN;
-      betaN[abs(betaN) == Inf] <- 1;  # Does this happen? /HB 2010-07-08
-
-      # Calculate mirrored allele B fractions (rho)
-      ## SLOW: rhoN <- apply(cbind(betaN, 1-betaN), MARGIN=1, FUN=max);
-      rhoN <- abs(betaN - 1/2) + 1/2;
-      rhoN[abs(rhoN) == Inf] <- 1;  # Does this happen? /HB 2010-07-08
-
-      # Find heterozygous SNPs (according to the normal)
-      isHetsN <- findHeterozygousSNPs(yNA, yNB);
-      hetCounts[isHetsN] <- hetCounts[isHetsN] + 1;
-      rhoRHets[isHetsN] <- rhoRHets[isHetsN] + rhoN[isHetsN];
-
-      # Not needed anymore
-      rm(yNA, yNB, betaN, rhoN, isHetsN);
+  if (!matching.reference && is.null(x[[8]])) {
+    count.heterozygous <- rep(0, times=nprobe)
+    typical.mbaf.heterozygous <- rep(0, times=nprobe)
+    for (ii in 1:nsample.normal) {
+      normal.a.vector <- x[[5]][,ii]
+      normal.b.vector <- x[[6]][,ii]
+      normal.baf.vector <- normal.b.vector/(normal.a.vector+normal.b.vector)
+      normal.baf.vector[abs(normal.baf.vector) == Inf] <- 1             
+      normal.mbaf.vector <- apply(cbind(normal.baf.vector, 1-normal.baf.vector), MARGIN=1, FUN=max)
+      normal.mbaf.vector[abs(normal.mbaf.vector) == Inf] <- 1                
+      normal.fit.heterozygous <- findheterozygous(normal.a.vector, normal.b.vector, het.lower, het.upper, het.minimum.window, het.stepsize.window, het.stepsize.within)
+      normal.het.vector <- which(normal.fit.heterozygous$is.heterozygous)
+      count.heterozygous[normal.het.vector] <- count.heterozygous[normal.het.vector] + 1
+      typical.mbaf.heterozygous[normal.het.vector] <- typical.mbaf.heterozygous[normal.het.vector] + normal.mbaf.vector[normal.het.vector]
     } # for (ii ...)
 
-    rhoRHets <- rhoRHets/hetCounts;
-    nok <- is.na(rhoRHets);
-    rhoRHets[nok] <- mean(rhoRHets[!nok]);
+    reference.mbaf.heterozygous <- typical.mbaf.heterozygous/count.heterozygous
+    reference.mbaf.heterozygous[is.na(reference.mbaf.heterozygous)] <- mean(reference.mbaf.heterozygous, na.rm=TRUE)
+ }
 
-    # Not needed anymore
-    rm(hetCounts, nok);
-  }
-
-  if (is.null(x$genomdat.hetmatrix)) {
-    predict.genomdat.heterozygous <- TRUE;
+  if (is.null(x[[7]])) {
+    predict.genomdat.heterozygous <- TRUE
   } else {
-    predict.genomdat.heterozygous <- FALSE;
+    predict.genomdat.heterozygous <- FALSE
   }
 
-  if (is.null(x$normaldat.hetmatrix)) {
-    predict.normal.heterozygous <- TRUE;
+  if (is.null(x[[8]])) {
+    predict.normal.heterozygous <- TRUE
   } else {
-    predict.normal.heterozygous <- FALSE;
+    predict.normal.heterozygous <- FALSE
   }
 
-  # Extract (chromosome, position)
-  chr <- x$chrom;
-  pos <- x$maploc;
-
-  # Find out which loci has a known location
-  hasPosition <- (!is.na(chr) & !is.na(pos));
-
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Segment each sample independently
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  for (ii in seq(length=nbrOfSamples)) {
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # Extract tumor signals
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # Extract (yA,yB)
-    yTA <- x$genomdat.a[,ii];
-    yTB <- x$genomdat.b[,ii];
-
-    # Calculate allele B fractions (beta)
-    yT <- yTA + yTB;
-    betaT <- yTB / yT;
-
-    betaT[abs(betaT) == Inf] <- 1;  # Does this happen? /HB 2010-07-08
-     
-    # Calculate mirrored allele B fractions (rho)
-    ## SLOW: rhoT <- apply(cbind(betaT, 1-betaT), MARGIN=1, FUN=max)
-    rhoT <- abs(betaT - 1/2) + 1/2;
-    rhoT[abs(rhoT) == Inf] <- 1;  # Does this happen? /HB 2010-07-08
-
-    # Check which loci has valid data
-    hasBetaT <- (!is.na(betaT));
-    okT <- (hasPosition & hasBetaT);
-
-
+  chrom.vector <- x[[3]]
+  position.vector <- x[[4]]
+  for (ii in 1:nsample) {
+    a.vector <- x[[1]][,ii]
+    b.vector <- x[[2]][,ii]
+    baf.vector <- b.vector / (a.vector + b.vector)
+    baf.vector[abs(baf.vector) == Inf] <- 1             
+    mbaf.vector <- apply(cbind(baf.vector, 1-baf.vector), MARGIN=1, FUN=max)
+    mbaf.vector[abs(mbaf.vector) == Inf] <- 1
 
     if (matching.reference) {
-      isHetsN <- rep(NA, length=nbrOfLoci);
-
       if (predict.normal.heterozygous) {
-        # Extract (yA,yB)
-        yNA <- x$normaldat.a[,ii];
-        yNB <- x$normaldat.b[,ii];
-
-        # Calculate allele B fractions (beta)
-        yN <- yNA + yNB;
-        betaN <- yNB/yN;
-        hasBetaN <- (!is.na(betaN));
-
-        # Calculate mirrored allele B fractions (rho)
-        ## SLOW: rhoN <- apply(cbind(betaN, 1-betaN), MARGIN=1, FUN=max)
-        rhoN <- abs(betaN - 1/2) + 1/2;
-        rhoN[abs(rhoN) == Inf] <- 1;  # Does this happen? /HB 2010-07-08
-
-        ok <- which(okT & hasBetaN);
-        isHetsN[ok] <- findHeterozygousSNPs(yNA[ok], yNB[ok]);
-        normal.het.vector.notmissing <- isHetsN
+        normal.a.vector <- x[[5]][,ii]
+        normal.b.vector <- x[[6]][,ii]
+        normal.baf.vector <- normal.b.vector/(normal.a.vector+normal.b.vector)
+        normal.mbaf.vector <- apply(cbind(normal.baf.vector, 1-normal.baf.vector), MARGIN=1, FUN=max)
+        normal.mbaf.vector[abs(normal.mbaf.vector) == Inf] <- 1                
+        which.notmissing <- which(!is.na(a.vector) & !is.na(b.vector) & !is.na(chrom.vector) & !is.na(position.vector) & !is.na(normal.a.vector) & !is.na(normal.b.vector))
+        normal.a.vector.notmissing <- normal.a.vector[which.notmissing]
+        normal.b.vector.notmissing <- normal.b.vector[which.notmissing]
+        normal.baf.vector.notmissing <- normal.baf.vector[which.notmissing]
+        normal.mbaf.vector.notmissing <- normal.mbaf.vector[which.notmissing]                
+        normal.fit.heterozygous <- findheterozygous(normal.a.vector.notmissing, normal.b.vector.notmissing, het.lower, het.upper, het.minimum.window, het.stepsize.window, het.stepsize.within)
+        normal.het.vector.notmissing <- normal.fit.heterozygous$is.heterozygous
       } else {
-        normal.het.vector <- x$normaldat.hetmatrix[,ii]
-        ok <- which(okT & !is.na(normal.het.vector))
-        # ok <- which(okT & !is.na(normal.het.vector) & !is.na(genomdat.het.vector))                
-        normal.het.vector.notmissing <- normal.het.vector[ok]
+        normal.het.vector <- x[[8]][,ii]
+        which.notmissing <- which(!is.na(a.vector) & !is.na(b.vector) & !is.na(chrom.vector) & !is.na(position.vector) & !is.na(normal.het.vector))
+        # which.notmissing <- which(!is.na(a.vector) & !is.na(b.vector) & !is.na(chrom.vector) & !is.na(position.vector) & !is.na(normal.het.vector) & !is.na(genomdat.het.vector))                
+        normal.het.vector.notmissing <- normal.het.vector[which.notmissing]
         # stop("Code not yet written for normal genotyping data; must use normal copy number data")
-      } # if (predict.normal.heterozygous)
-    } else {
-      ok <- which(okT);
-    } # if (matching.reference)
+     } # if (predict.normal.heterozygous)
+   } else {
+     which.notmissing <- which(!is.na(a.vector) & !is.na(b.vector) & !is.na(chrom.vector) & !is.na(position.vector))
+   } # if (matching.reference)
 
-    yTA.notmissing <- yTA[ok];
-    yTB.notmissing <- yTB[ok];
+    a.vector.notmissing <- a.vector[which.notmissing]
+    b.vector.notmissing <- b.vector[which.notmissing]
+    baf.vector.notmissing <- baf.vector[which.notmissing]
+    mbaf.vector.notmissing <- mbaf.vector[which.notmissing]        
+    chrom.vector.notmissing <- chrom.vector[which.notmissing]
+    position.vector.notmissing <- position.vector[which.notmissing]
 
     if (predict.genomdat.heterozygous) {
-      isHets <- findHeterozygousSNPs(yTA[ok], yTB[ok]);
-      het.vector.notmissing <- isHets
+      fit.heterozygous <- findheterozygous(a.vector.notmissing, b.vector.notmissing, het.lower, het.upper, het.minimum.window, het.stepsize.window, het.stepsize.within)
+      het.vector.notmissing <- fit.heterozygous$is.heterozygous
     } else {
-      het.vector <- x$genomdat.hetmatrix[,ii]
-      het.vector.notmissing <- het.vector[ok]
+      het.vector <- x[[7]][,ii]
+      het.vector.notmissing <- het.vector[which.notmissing]
 #     stop("Code not yet written for test genotyping data; must use test copy number data")
     } # if (predict.genomdat.heterozygous)
 
     # Make the smaller value of all homozygotes be zero if desired
     if (zero.homo) {
-      min.indicator <- rep(FALSE, times=length(yTA[ok]));
-      min.indicator[yTB[ok] < yTA[ok]] <- TRUE;
-      yTA.notmissing[!het.vector.notmissing & !min.indicator] <- 0;
-      yTB.notmissing[!het.vector.notmissing &  min.indicator] <- 0;
+      min.indicator <- rep(FALSE, times=length(a.vector.notmissing))
+      min.indicator[b.vector.notmissing < a.vector.notmissing] <- TRUE
+      a.vector.notmissing[!het.vector.notmissing & !min.indicator] <- 0
+      b.vector.notmissing[!het.vector.notmissing & min.indicator] <- 0
     }
 
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # Identification of change points in total copy numbers
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # Calculate yT = yTA + yTB
-    yT.notmissing <- yTA.notmissing + yTB.notmissing;
+    sum.notmissing <- a.vector.notmissing+b.vector.notmissing
     # Must make negatives zero else thrown out, but negatives come back later
-    yT.notmissing[yT.notmissing < 0] <- 0
-    sqrt.yT.notmissing <- sqrt(yT.notmissing)
-    CNA.sqrt.yT.notmissing <- CNA(sqrt.yT.notmissing, chr[ok], pos[ok], sampleid=sampleid[ii])
+    sum.notmissing[sum.notmissing < 0] <- 0
+    sqrt.sum.notmissing <- sqrt(sum.notmissing)
+    CNA.sqrt.sum.notmissing <- CNA(sqrt.sum.notmissing, chrom.vector.notmissing, position.vector.notmissing, sampleid=sampleid[ii])
 
     # By default smoothing is done
     if (smooth.segmentation) {
-      smoothed.CNA.sqrt.yT.notmissing <- smooth.CNA(CNA.sqrt.yT.notmissing, smooth.region=smooth.region, outlier.SD.scale=outlier.SD.scale, smooth.SD.scale=smooth.SD.scale, trim=trim)
-      # smoothed.CNA.sqrt.yT.notmissing <- smooth.CNA(CNA.sqrt.yT.notmissing, ...)            
-      segmented.smoothed.CNA.sqrt.yT.notmissing <- segment(smoothed.CNA.sqrt.yT.notmissing, alpha=alpha1, verbose=verbose, ...)
+      smoothed.CNA.sqrt.sum.notmissing <- smooth.CNA(CNA.sqrt.sum.notmissing, smooth.region=smooth.region, outlier.SD.scale=outlier.SD.scale, smooth.SD.scale=smooth.SD.scale, trim=trim)
+      # smoothed.CNA.sqrt.sum.notmissing <- smooth.CNA(CNA.sqrt.sum.notmissing, ...)            
+      segmented.smoothed.CNA.sqrt.sum.notmissing <- segment(smoothed.CNA.sqrt.sum.notmissing, alpha=alpha1, verbose=verbose, ...)
     } else {
-      segmented.smoothed.CNA.sqrt.yT.notmissing <- segment(CNA.sqrt.yT.notmissing, alpha=alpha1, verbose=verbose, ...)
+      segmented.smoothed.CNA.sqrt.sum.notmissing <- segment(CNA.sqrt.sum.notmissing, alpha=alpha1, verbose=verbose, ...)
     }
 
-    segmented.output <- segmented.smoothed.CNA.sqrt.yT.notmissing$output
+    segmented.output <- segmented.smoothed.CNA.sqrt.sum.notmissing$output
     segment.lengths <- as.numeric(segmented.output[,5])
     segment.ends <- cumsum(segment.lengths)
     n.segment <- length(segment.ends)
     segment.starts <- c(1, segment.ends[-n.segment]+1)
-    chr.starts <- chr[ok][segment.starts]
-    # first.LOH <- first.call(segment.starts, segment.ends, het.vector.notmissing, chr.starts, maf, homozygous.pvalue.cutoff)
+    chrom.vector.starts <- chrom.vector.notmissing[segment.starts]
+    # first.LOH <- first.call(segment.starts, segment.ends, het.vector.notmissing, chrom.vector.starts, maf, homozygous.pvalue.cutoff)
     # print(first.LOH)
     # segmented.output.LOH <- cbind(segmented.output, first.LOH)
 
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # Identification of additional change points using DH
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Second round of segmentation
     if (matching.reference) {
       if (predict.normal.heterozygous) {
-        tumorBoostBAFNotmissing <- 0.5*betaT[ok]/betaN[ok];
-        whichTumorGreater <- which(betaT[ok] > betaN[ok]);
-        tumorBoostBAFNotmissing[whichTumorGreater] <- (1-0.5*((1-betaT[ok])/(1-betaN[ok])))[whichTumorGreater]
-        diff.mbaf.vector.notmissing <- rhoT[ok]-rhoN[ok];
+        tumorBoostBAFNotmissing <- 0.5*baf.vector.notmissing/normal.baf.vector.notmissing
+        whichTumorGreater <- which(baf.vector.notmissing > normal.baf.vector.notmissing)
+        tumorBoostBAFNotmissing[whichTumorGreater] <- (1-0.5*((1-baf.vector.notmissing)/(1-normal.baf.vector.notmissing)))[whichTumorGreater]
+        diff.mbaf.vector.notmissing <- mbaf.vector.notmissing-normal.mbaf.vector.notmissing
       } else {
-        tumorBoostBAFNotmissing <- betaT[ok];
-        diff.mbaf.vector.notmissing <- rep(NA, times=length(betaT[ok]));
+        tumorBoostBAFNotmissing <- baf.vector.notmissing
+        diff.mbaf.vector.notmissing <- rep(NA, times=length(baf.vector.notmissing))
       }
 
       foldedTumorBoostBAFNotmissing <- 2*abs(tumorBoostBAFNotmissing-0.5)
-      second.output <- second.segment.matching(matching.reference, foldedTumorBoostBAFNotmissing, normal.het.vector.notmissing, alpha2, segmented.output, pos[ok])
-      # second.output <- second.segment.matching(matching.reference, diff.mbaf.vector.notmissing, normal.het.vector.notmissing, alpha2, segmented.output, pos[ok])            
+      second.output <- second.segment.matching(matching.reference, foldedTumorBoostBAFNotmissing, normal.het.vector.notmissing, alpha2, segmented.output, position.vector.notmissing)
+      # second.output <- second.segment.matching(matching.reference, diff.mbaf.vector.notmissing, normal.het.vector.notmissing, alpha2, segmented.output, position.vector.notmissing)            
     } else {
-      diff.mbaf.vector.notmissing <- rhoT[ok]-rhoN[ok]
-      second.output <- second.segment.matching(matching.reference, diff.mbaf.vector.notmissing, het.vector.notmissing, alpha2, segmented.output, pos[ok])
+      reference.mbaf.heterozygous.notmissing <- reference.mbaf.heterozygous[which.notmissing]
+      diff.mbaf.vector.notmissing <- mbaf.vector.notmissing-reference.mbaf.heterozygous.notmissing
+      second.output <- second.segment.matching(matching.reference, diff.mbaf.vector.notmissing, het.vector.notmissing, alpha2, segmented.output, position.vector.notmissing)
     } # if (matching.reference)
 
+    # print("second.output")
+    # print(second.output)
+    # write.table(second.output, "second-output.txt", sep="\t", row.names=FALSE, col.names=FALSE, quote=FALSE)
 
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # Build table of PSCN segments
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    segment.lengths <- as.numeric(second.output[,5]);
+    # second.output <- secondsegment(het.vector.notmissing, normal.het.vector.notmissing, alpha2, window.size=window.size, quantile.values=quantile.values, frequency.sample.markers=frequency.sample.markers, segmented.output, position.vector.notmissing, first.LOH)
+    # second.output <- secondsegment(abs(a.vector.notmissing-b.vector.notmissing), alpha2, window.size=window.size, quantile.values=quantile.values, frequency.sample.markers=frequency.sample.markers, segmented.output, position.vector.notmissing)
+
+    segment.lengths <- as.numeric(second.output[,5])
     # print(paste("segment.lengths=", segment.lengths))
 
-    segment.ends <- cumsum(segment.lengths);
+    segment.ends <- cumsum(segment.lengths)
     # print(paste("segment.ends=", segment.ends))
 
-    n.segment <- length(segment.ends);
+    n.segment <- length(segment.ends)
     # print(paste("n.segment=", n.segment))
 
-    segment.starts <- c(1, segment.ends[-n.segment]+1);
+    segment.starts <- c(1, segment.ends[-n.segment]+1)
     # print(paste("segement.starts=", segment.starts))
 
-    chr.starts <- as.numeric(chr[ok])[segment.starts];
-    # print(paste("chr.starts=", chr.starts))
+    chrom.vector.starts <- as.numeric(chrom.vector.notmissing)[segment.starts]
+    # print(paste("chrom.vector.starts=", chrom.vector.starts))
 
-    total.vector.starts <- as.numeric(second.output[,6]);
+    total.vector.starts <- as.numeric(second.output[,6])
     # print(paste("total.vector.starts=", total.vector.starts))
     # print("Before called segments")
 
     if (matching.reference) {
-      called.segments <- callsegments.matching(matching=matching.reference, segment.starts=segment.starts, segment.ends=segment.ends, a.vector=yTA.notmissing, b.vector=yTB.notmissing, diff.mbaf.vector=diff.mbaf.vector.notmissing, het.vector=het.vector.notmissing, normal.het.vector=normal.het.vector.notmissing, foldedTumorBoostBAF=foldedTumorBoostBAFNotmissing, chrom.vector.starts=chr.starts, total.vector.starts=total.vector.starts, min.hetero=min.hetero, trim.mean=trim.mean, alpha.equality=alpha.equality, modeOffset=modeOffset, maf=1-maf, alpha.homozygous=alpha.homozygous, min.homo.region=min.homo.region, impute.LOH=impute.LOH)
+      called.segments <- callsegments.matching(matching=matching.reference, segment.starts=segment.starts, segment.ends=segment.ends, a.vector=a.vector.notmissing, b.vector=b.vector.notmissing, diff.mbaf.vector=diff.mbaf.vector.notmissing, het.vector=het.vector.notmissing, normal.het.vector=normal.het.vector.notmissing, foldedTumorBoostBAF=foldedTumorBoostBAFNotmissing, chrom.vector.starts=chrom.vector.starts, total.vector.starts=total.vector.starts, min.hetero=min.hetero, trim.mean=trim.mean, alpha.equality=alpha.equality, modeOffset=modeOffset, maf=1-maf, alpha.homozygous=alpha.homozygous, min.homo.region=min.homo.region, impute.LOH=impute.LOH)
     } else {
       foldedTumorBoostBAFNotmissing <- diff.mbaf.vector.notmissing
-      called.segments <- callsegments.matching(matching=matching.reference, segment.starts=segment.starts, segment.ends=segment.ends, a.vector=yTA.notmissing, b.vector=yTB.notmissing, diff.mbaf.vector=diff.mbaf.vector.notmissing, het.vector=het.vector.notmissing, normal.het.vector=normal.het.vector.notmissing, foldedTumorBoostBAF=foldedTumorBoostBAFNotmissing, chrom.vector.starts=chr.starts, total.vector.starts=total.vector.starts, min.hetero=min.hetero, trim.mean=trim.mean, alpha.equality=alpha.equality, modeOffset=modeOffset, maf=1-maf, alpha.homozygous=alpha.homozygous, min.homo.region=min.homo.region, impute.LOH=impute.LOH)
+      called.segments <- callsegments.matching(matching=matching.reference, segment.starts=segment.starts, segment.ends=segment.ends, a.vector=a.vector.notmissing, b.vector=b.vector.notmissing, diff.mbaf.vector=diff.mbaf.vector.notmissing, het.vector=het.vector.notmissing, normal.het.vector=normal.het.vector.notmissing, foldedTumorBoostBAF=foldedTumorBoostBAFNotmissing, chrom.vector.starts=chrom.vector.starts, total.vector.starts=total.vector.starts, min.hetero=min.hetero, trim.mean=trim.mean, alpha.equality=alpha.equality, modeOffset=modeOffset, maf=1-maf, alpha.homozygous=alpha.homozygous, min.homo.region=min.homo.region, impute.LOH=impute.LOH)
     } # if (matching.reference)
 
     # print("After called segments")
@@ -351,7 +292,7 @@ setMethodS3("psSegment", "psCNA", function(x, matching.reference=FALSE, alpha=0.
     } else {
       output <- rbind(output, called.segments$n.hetero, called.segments$mean.diff.mbaf, called.segments$mindiff.output, called.segments$maxdiff.output, called.segments$confidence95NewModes, called.segments$min.output, called.segments$max.output, called.segments$total.output)
     }
-  } # for (ii in ...)
+  } # for (ii in 1:nsample)
 
 
   # Merge 0s
@@ -365,22 +306,22 @@ setMethodS3("psSegment", "psCNA", function(x, matching.reference=FALSE, alpha=0.
     merge.same[(output[2:n.segments,11] == output[1:(n.segments-1),11]) & (output[2:n.segments,13] == output[1:(n.segments-1),13])] <- TRUE
     # merge.same[(output[2:n.segments,6] == output[1:(n.segments-1),6]) & (output[2:n.segments,8] == output[1:(n.segments-1),8])] <- TRUE
 
-    for (kk in 2:n.segments) {
-      if (merge.same[kk-1]) {
-        merge.index[kk] <- merge.index[kk-1]
+    for (ii in 2:n.segments) {
+      if (merge.same[ii-1]) {
+        merge.index[ii] <- merge.index[ii-1]
       } else {
-        merge.index[kk] <- merge.index[kk-1] + 1
+        merge.index[ii] <- merge.index[ii-1] + 1
       }
     }
 
     new.output <- matrix(NA, nrow=max(merge.index), ncol=13)
-    for (kk in seq(length=max(merge.index))) {
-      which.i <- which(merge.index == kk)
+    for (ii in 1:max(merge.index)) {
+      which.i <- which(merge.index == ii)
       which.i.1 <- which.i[1]
-      new.output[kk,c(1:3,7:13)] <- output[which.i.1,c(1:3,7:13)]
-      new.output[kk,4] <- output[max(which.i),4]
-      new.output[kk,5] <- sum(as.numeric(output[which.i,5]))
-      new.output[kk,6] <- sum(as.numeric(output[which.i,6]))
+      new.output[ii,c(1:3,7:13)] <- output[which.i.1,c(1:3,7:13)]
+      new.output[ii,4] <- output[max(which.i),4]
+      new.output[ii,5] <- sum(as.numeric(output[which.i,5]))
+      new.output[ii,6] <- sum(as.numeric(output[which.i,6]))
     }
   } else {
     output <- as.data.frame(output)
@@ -389,16 +330,4 @@ setMethodS3("psSegment", "psCNA", function(x, matching.reference=FALSE, alpha=0.
   colnames(output) <- c("ID", "chrom", "loc.start", "loc.end", "num.mark", "num.hetero", "mean.diff.mbaf", "mindiff.mean", "maxdiff.mean", "confidence95", "min.mean", "max.mean", "total.mean")
 
   output
-}) # psSegment()
-
-
-
-############################################################################
-# HISTORY:
-# 2010-07-08
-# o ROBUSTNESS: Now samples are index by 'ii' and regions by 'kk'.
-# o ROBUSTNESS: Replaced all 1:n with seq(length=n) to deal with n == 0.
-# o ROBUSTNESS: Now all interator variables i & j are written as ii & jj.
-# o ROBUSTNESS: Now all list elements are referenced by name.
-# o Made psSegment() an S3 method for the psCNA class.
-############################################################################
+} # psSegment()

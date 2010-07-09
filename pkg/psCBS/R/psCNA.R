@@ -118,8 +118,15 @@ psCNA <- function(genomdat.a, genomdat.b, chrom, maploc, normaldat.a, normaldat.
     warning("markers with missing chrom and/or maploc removed\n");
   }
 
+  # Allocate empty vector
+  zzz <- vector("list", length=8);
+  names(zzz) <- c("genomdat.a", "genomdat.b",
+                  "chrom", "maploc", 
+                  "normaldat.a", "normaldat.b", 
+                  "genomdat.hetmatrix", "normaldat.hetmatrix");
+
+
   sortindex <- order(chrom, maploc, na.last=NA);
-  zzz <- list();
   zzz$genomdat.a <- as.matrix(genomdat.a[sortindex,]);
   zzz$genomdat.b <- as.matrix(genomdat.b[sortindex,]);
   colnames(zzz$genomdat.a) <- sampleid;
@@ -142,12 +149,6 @@ psCNA <- function(genomdat.a, genomdat.b, chrom, maploc, normaldat.a, normaldat.
     zzz$normaldat.hetmatrix <- as.matrix(normaldat.hetmatrix[sortindex,]);
     colnames(zzz$normaldat.hetmatrix) <- sampleid;
   }
-
-# str(zzz);
-# print(names(zzz));
-
-  # Sanity check
-#  stopifnot(all(names(zzz) == c("genomdat.a", "genomdat.b", "chrom", "maploc", "normaldat.a", "normaldat.b", "genomdat.hetmatrix", "normaldat.hetmatrix")));
 
   class(zzz) <- c("psCNA", "list");
 
@@ -184,6 +185,8 @@ setMethodS3("nbrOfReferenceSamples", "psCNA", function(x, ...) {
 
 ############################################################################
 # HISTORY:
+# 2010-07-09
+# o BACKWARD COMPATIBILITY: Now psCNA() returns a list of length 8.
 # 2010-07-08
 # o ROBUSTNESS: Replaced all 1:n with seq(length=n) to deal with n == 0.
 # o ROBUSTNESS: Now the constructor assign list elements by names.

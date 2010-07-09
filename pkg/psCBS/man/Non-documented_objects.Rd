@@ -20,8 +20,11 @@
 \alias{getSampleNames.psCNA}
 \alias{nbrOfSamples}
 \alias{nbrOfSamples.psCNA}
-\alias{psSegment}
 \alias{psSegmentPaired}
+\alias{callSegmentsByPSCBS}
+\alias{callSegmentsByPSCBS.default}
+\alias{drawLevels}
+\alias{drawLevels.DNAcopy}
 
 \description{
   This page contains aliases for all "non-documented" objects that

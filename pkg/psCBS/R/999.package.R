@@ -21,7 +21,7 @@
 # \section{To get started}{
 #   To get started, see:
 #   \enumerate{
-#     \item @see "psSegment.psCNA" 
+#     \item @see "segmentByPairedPSCBS" 
 #   }
 # }
 # 
