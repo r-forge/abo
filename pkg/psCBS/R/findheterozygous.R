@@ -60,3 +60,9 @@ findheterozygous <- function(a.vector, b.vector, lower.bound=0, upper.bound=0.5,
   list(is.heterozygous=is.heterozygous, heterozygous.cutoff=heterozygous.cutoff)
 } # findheterozygous()
 
+
+############################################################################
+# HISTORY:
+# 2010-07-08
+# o ROBUSTNESS: Replaced all 1:n with seq(length=n) to deal with n == 0.
+############################################################################

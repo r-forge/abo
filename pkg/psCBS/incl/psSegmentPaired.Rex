@@ -24,7 +24,7 @@ print(pd)
 ## Number of Test Samples 1 Number of Reference Samples 1
 ## Number of Probes  14670
 
-fit <- psSegment(pd, matching.reference=TRUE, impute.LOH=TRUE, verbose=1)
+fit <- psSegmentPaired(pd, impute.LOH=TRUE, verbose=1)
 ## [1] "Heterozygous cutoff is 0.702"
 ## [1] "Heterozygous cutoff is 0.697"
 ## Analyzing: Sample.1

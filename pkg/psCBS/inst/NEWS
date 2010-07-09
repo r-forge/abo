@@ -1,6 +1,18 @@
 Package: psCBS
 ==============
 
+Version: 0.6.0 [2010-07-08]
+o Now psSegmentPaired() returns a data frame (no longer a matrix).
+o CLEANUP: Major cleanup, i.e. renaming variables, reordering etc.
+o CLEANUP: Created psSegmentPaired() from psSegment().
+o ROBUSTNESS: Replaced all 1:n with seq(length=n) to deal with n == 0.
+o ROBUSTNESS: Now all list elements are referenced by name.
+o ROBUSTNESS: Now all iterator variables are written as ii, jj etc.
+o Using setMethodS3() of R.methodsS3 to define S3 method.
+o Dropping NAMESPACE while package is finished.  This makes it
+  easier to patch methods etc.
+
+
 Version: 0.5.6 [2010-07-07]
 o Added example(psSegment).
 o BUG FIX: Previous clean up introduced bugs.

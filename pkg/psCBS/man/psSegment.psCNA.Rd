@@ -6,8 +6,10 @@
 % by the Rdoc compiler part of the R.oo package.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
- \name{psSegment}
-\alias{psSegment}
+
+ \name{psSegment.psCNA}
+\alias{psSegment.psCNA}
+\alias{psSegment.psCNA}
 
 
  \title{Parent specific DNA copy number segmentation algorithm}
@@ -19,7 +21,7 @@
    further segmenting when parental copy numbers change.
  }
 
- \usage{psSegment(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het.lower=0.1, het.upper=0.75, het.minimum.window=0.05, het.stepsize.window=0.01, het.stepsize.within=0.01, trim.mean=0.1, min.hetero=5, alpha.homozygous=0.05, alpha.equality=0.05, maf=0.075, min.homo.region=100, modeOffset=0.025, smooth.segmentation=TRUE, smooth.region=2, outlier.SD.scale=4, smooth.SD.scale=2, trim=0.025, impute.LOH, zero.homo=FALSE, verbose=1, ...)}
+ \usage{\method{psSegment}{psCNA}(x, matching.reference=FALSE, alpha=0.01, alpha1=0.009, het.lower=0.1, het.upper=0.75, het.minimum.window=0.05, het.stepsize.window=0.01, het.stepsize.within=0.01, trim.mean=0.1, min.hetero=5, alpha.homozygous=0.05, alpha.equality=0.05, maf=0.075, min.homo.region=100, modeOffset=0.025, smooth.segmentation=TRUE, smooth.region=2, outlier.SD.scale=4, smooth.SD.scale=2, trim=0.025, impute.LOH, zero.homo=FALSE, verbose=1, ...)}
 
  \arguments{
    \item{x}{an object of class \code{\link{psCNA}}().}
@@ -106,7 +108,7 @@ data$CNA <- data$CN - data$CNB
 
 # Subset to speed up example
 data0 <- data
-keep <- seq(from=1, to=nrow(data), by=5)
+keep <- seq(from=1, to=nrow(data), by=10)
 data <- data[keep,,drop=FALSE]
 str(data)
 R.oo::attachLocally(data)
@@ -149,4 +151,5 @@ str(fit)
 }
 
 
+\keyword{methods}
 \keyword{nonparametric}
