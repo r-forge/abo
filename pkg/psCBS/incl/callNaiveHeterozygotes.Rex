@@ -24,7 +24,7 @@ pch <- ".";
 yB <- betaN * CN;
 yA <- CN - yB;
 
-layout(matrix(1:3, ncol=1));
+layout(matrix(1:4, ncol=1));
 par(mar=c(2,4,1,1)+0.1);
 
 # Default parameters for psSement() that are not the same as
@@ -49,6 +49,11 @@ stopifnot(all(isHet2 == isHet1));
 
 muN <- callNaiveGenotypes(betaN);
 isHet3 <- isHet <- (muN == 1/2);
+print(table(isHet));
+col <- c("#aaaaaa", "#000000")[isHet+1];
+plot(xMb,betaN, pch=pch, col=col, ylim=c(0,1), xlab=xlab);
+
+isHet4 <- isHet <- callNaiveHeterozygotes(1-betaN, betaN, range=c(0,1/2));
 print(table(isHet));
 col <- c("#aaaaaa", "#000000")[isHet+1];
 plot(xMb,betaN, pch=pch, col=col, ylim=c(0,1), xlab=xlab);
