@@ -1,6 +1,13 @@
 Package: psCBS
 ==============
 
+Version: 0.6.2 [2010-07-14]
+o CLEAN UP: Added callNaiveHeterzygotes() which is a cleaned up
+  version of findheterozygous().  Added an Rd example that asserts
+  that the two are identical and compares the calls to those of
+  aroma.light::callNaiveGenotypes().
+
+
 Version: 0.6.1 [2010-07-09]
 o Added low-level segmentByPairedPSCBS(), which runs paired PSCBS
   segmentation on a single sample and a single chromosome.
