@@ -10,10 +10,10 @@
 \alias{segmentByCBS.default}
 \alias{segmentByCBS}
 
- \title{Segment copy numbers using the CBS method}
+ \title{Segment genomic signals using the CBS method}
 
  \description{
-  Segment copy numbers using the CBS method of the \pkg{DNAcopy} package.
+  Segment genomic signals using the CBS method of the \pkg{DNAcopy} package.
   This is a convenient low-level wrapper for the \code{DNAcopy::segment()}
   method.  It is intended to be applied to one sample and one chromosome
   at the time.
@@ -49,6 +49,14 @@
    through random sampling for some estimates.  Because of this,
    repeated calls using the same signals may result in slightly
    different results.
+ }
+
+ \section{Missing and non-finite values}{
+   The signals to be segmented as well as any optional positions
+   must not contain missing values, i.e. \code{\link[base]{NA}}s or \code{\link[base:is.finite]{NaN}}s.
+   If there are any, an informative error is thrown.
+   Furthermore, none of the input signals may have infinite values,
+   i.e. -\code{\link[base:is.finite]{Inf}} or \code{\link[base:is.finite]{Inf}}. If so, an informative error is thrown.
  }
 
  \examples{

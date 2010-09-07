@@ -1,7 +1,7 @@
 ###########################################################################/**
 # @RdocDefault segmentByCBS
 #
-# @title "Segment copy numbers using the CBS method"
+# @title "Segment genomic signals using the CBS method"
 #
 # \description{
 #  @get "title" of the \pkg{DNAcopy} package.
@@ -42,6 +42,14 @@
 #   different results.  
 # }
 #
+# \section{Missing and non-finite values}{
+#   The signals to be segmented as well as any optional positions
+#   must not contain missing values, i.e. @NAs or @NaNs.
+#   If there are any, an informative error is thrown.
+#   Furthermore, none of the input signals may have infinite values,
+#   i.e. -@Inf or @Inf. If so, an informative error is thrown.
+# }
+#
 # @examples "../incl/segmentByCBS.Rex"
 #
 # @author
@@ -63,19 +71,21 @@ setMethodS3("segmentByCBS", "default", function(y, x=NULL, w=NULL, ..., knownCPs
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'y':
-  y <- Arguments$getDoubles(y);
+  disallow <- c("NA", "NaN", "Inf");
+  y <- Arguments$getDoubles(y, disallow=disallow);
   nbrOfLoci <- length(y);
+
   length2 <- rep(nbrOfLoci, 2);
 
   # Argument 'x':
   if (!is.null(x)) {
-    x <- Arguments$getDoubles(x, length=length2);
+    x <- Arguments$getDoubles(x, length=length2, disallow=disallow);
   }
 
   # Argument 'w':
   hasWeights <- !is.null(w);
   if (hasWeights) {
-    w <- Arguments$getDoubles(w, range=c(0,1), length=length2);
+    w <- Arguments$getDoubles(w, range=c(0,1), length=length2, disallow=disallow);
   }
 
   # Argument 'knownChangePoints':
@@ -122,7 +132,7 @@ setMethodS3("segmentByCBS", "default", function(y, x=NULL, w=NULL, ..., knownCPs
   require(pkgName, character.only=TRUE) || throw("Package not loaded: ", pkgName);
 
   # Get the fit function for the segmentation method
-  fitFcn <- getExportedValue(pkgName, methodName);
+#  fitFcn <- getExportedValue(pkgName, methodName);
   fitFcn <- getFromNamespace(methodName, pkgName);
   verbose && str(verbose, "Function: ", fitFcn);
   formals <- formals(fitFcn);
@@ -211,6 +221,12 @@ setMethodS3("segmentByCBS", "default", function(y, x=NULL, w=NULL, ..., knownCPs
   # Calling segmentation function
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   verbose && enter(verbose, sprintf("Calling %s() of %s", methodName, pkgName));
+
+  # WORKAROUND for the case when there are no data points.
+  if (nbrOfLoci == 0) {
+    args[[1]] <- CNA(genomdat=0, chrom=0, maploc=0);
+  }
+
   # In case the method writes to stdout, we capture it
   # Note: DNAcopy::segment() *does* this.
   stdout <- capture.output({
@@ -230,6 +246,14 @@ setMethodS3("segmentByCBS", "default", function(y, x=NULL, w=NULL, ..., knownCPs
   attr(fit, "pkgDetails") <- pkgDetails;
   attr(fit, "randomSeed") <- seed;
 
+  # WORKAROUND for the case when there are no data points.
+  if (nbrOfLoci == 0) {
+    # Drop dummy data point...
+    fit$data <- fit$data[-1,,drop=FALSE];
+    # ...dummy region found
+    fit$output <- fit$output[-1,,drop=FALSE];
+  }
+
   verbose && cat(verbose, "Captured output that was sent to stdout:");
   stdout <- paste(stdout, collapse="\n");
   verbose && cat(verbose, stdout);
@@ -239,6 +263,9 @@ setMethodS3("segmentByCBS", "default", function(y, x=NULL, w=NULL, ..., knownCPs
 
   verbose && cat(verbose, "Fitting time per 1000 loci (in seconds):");
   verbose && print(verbose, 1000*t/nbrOfLoci);
+
+  # Coerce
+  fit$output$num.mark <- as.integer(fit$output$num.mark);
 
   verbose && cat(verbose, "Results object:");
   verbose && str(verbose, fit);
@@ -255,6 +282,8 @@ setMethodS3("segmentByCBS", "default", function(y, x=NULL, w=NULL, ..., knownCPs
 
 ############################################################################
 # HISTORY:
+# 2010-09-02
+# o ROBUSTNESS: Now segmentByCBS() also works if there are no data points.
 # 2010-07-09
 # o Created from segmentByCBS() for RawGenomicSignals in aroma.core.
 #   The latter will eventually call this method.

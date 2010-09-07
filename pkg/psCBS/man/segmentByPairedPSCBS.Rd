@@ -14,11 +14,11 @@
 
  \description{
   Segment copy numbers using the paired PSCBS method.
-  This is a low-level method.
+  This is a low-level segmentation method.
   It is intended to be applied to one sample and one chromosome at the time.
  }
 
- \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, x=NULL, ..., seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, x=NULL, ..., flavor=c("dh|tcn", "tcn|dh", "tcn&dh"), seed=NULL, verbose=FALSE)}
 
  \arguments{
    \item{CT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor total copy numbers to be segmented.}
@@ -29,6 +29,8 @@
    \item{x}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genomic locations.
             If \code{\link[base]{NULL}}, index locations \code{1:J} are used.}
    \item{...}{Not used.}
+   \item{flavor}{A \code{\link[base]{character}} specifying what type of segmentation and
+     calling algorithm to be used.}
    \item{seed}{An (optional) \code{\link[base]{integer}} specifying the random seed to be
      set before calling the segmentation method.  The random seed is
      set to its original state when exiting.  If \code{\link[base]{NULL}}, it is not set.}
@@ -46,7 +48,18 @@
    The "DNAcopy::segment" implementation of CBS uses approximation
    through random sampling for some estimates.  Because of this,
    repeated calls using the same signals may result in slightly
-   different results.
+   different results, unless the random seed is fixed.
+ }
+
+ \section{Missing and non-finite values}{
+   The total copy number signals as well as any optional positions
+   must not contain missing values, i.e. \code{\link[base]{NA}}s or \code{\link[base:is.finite]{NaN}}s.
+   If there are any, an informative error is thrown.
+   Allele B fractions may contain missing values, because such are
+   interpreted as representing non-polymorphic loci.
+
+   None of the input signals can have infinite values, i.e. -\code{\link[base:is.finite]{Inf}} or \code{\link[base:is.finite]{Inf}}.
+   If so, an informative error is thrown.
  }
 
  \examples{
@@ -69,37 +82,14 @@ x <- position;
 
 # PSCBS segmentation
 fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN, x=x, verbose=-10);
-segs <- fit$output;
-segs <- segs[,-(1:2)];
+
+# Extract segments
+segs <- as.data.frame(fit$output);
 print(segs);
 
-# Plotting data
-xMb <- x/1e6;
-xlab <- "Position (Mb)";
-pch <- ".";
+# Plot results
+plot(fit);
 
-muN <- callNaiveGenotypes(betaN);
-isHet <- (muN == 1/2);
-betaTN <- normalizeTumorBoost(betaT, betaN, muN=muN);
-rhoTN <- 2*abs(betaTN-1/2);
-cps <- sort(c(segs$loc.start, segs$loc.end));
-
-layout(matrix(1:5, ncol=1));
-par(mar=c(2,4,1,1)+0.1);
-plot(xMb,CT, pch=pch, col="#000000", ylim=c(0,5), xlab=xlab);
-abline(v=cps/1e6, lwd=2);
-drawLevels(fit, field="tcn.mean", xScale=1e-6);
-col <- c("#aaaaaa", "#000000", "#aaaaaa")[2*muN+1];
-plot(xMb,betaN, pch=pch, col=col, ylim=c(0,1), xlab=xlab);
-abline(v=cps/1e6, lwd=2);
-plot(xMb,betaT, pch=pch, col=col, ylim=c(0,1), xlab=xlab);
-abline(v=cps/1e6, lwd=2);
-plot(xMb,betaTN, pch=pch, col=col, ylim=c(0,1), xlab=xlab);
-abline(v=cps/1e6, lwd=2);
-rho <- rhoTN[isHet];
-plot(xMb[isHet],rho, pch=pch, col="#000000", ylim=c(0,1), xlab=xlab);
-abline(v=cps/1e6, lwd=2);
-drawLevels(fit, field="dh.mean", xScale=1e-6);
 }
 
  \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}

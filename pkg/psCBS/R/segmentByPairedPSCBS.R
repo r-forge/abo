@@ -5,7 +5,7 @@
 #
 # \description{
 #  @get "title".
-#  This is a low-level method.
+#  This is a low-level segmentation method.
 #  It is intended to be applied to one sample and one chromosome at the time.
 # }
 #
@@ -20,6 +20,8 @@
 #   \item{x}{Optional @numeric @vector of J genomic locations.
 #            If @NULL, index locations \code{1:J} are used.}
 #   \item{...}{Not used.}
+#   \item{flavor}{A @character specifying what type of segmentation and 
+#     calling algorithm to be used.}
 #   \item{seed}{An (optional) @integer specifying the random seed to be 
 #     set before calling the segmentation method.  The random seed is
 #     set to its original state when exiting.  If @NULL, it is not set.}
@@ -37,7 +39,18 @@
 #   The "DNAcopy::segment" implementation of CBS uses approximation
 #   through random sampling for some estimates.  Because of this,
 #   repeated calls using the same signals may result in slightly 
-#   different results.  
+#   different results, unless the random seed is fixed.  
+# }
+#
+# \section{Missing and non-finite values}{
+#   The total copy number signals as well as any optional positions
+#   must not contain missing values, i.e. @NAs or @NaNs.
+#   If there are any, an informative error is thrown.
+#   Allele B fractions may contain missing values, because such are
+#   interpreted as representing non-polymorphic loci.
+#
+#   None of the input signals can have infinite values, i.e. -@Inf or @Inf.
+#   If so, an informative error is thrown.
 # }
 #
 # @examples "../incl/segmentByPairedPSCBS.Rex"
@@ -50,32 +63,41 @@
 #
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, x=NULL, ..., seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, x=NULL, ..., flavor=c("dh|tcn", "tcn|dh", "tcn&dh"), seed=NULL, verbose=FALSE) {
   require("R.utils") || throw("Package not loaded: R.utils");
   require("aroma.light") || throw("Package not loaded: aroma.light");
+  ver <- packageDescription("aroma.light")$Version;
+  stopifnot(compareVersion(ver, "1.17.2") >= 0);
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'CT':
-  CT <- Arguments$getDoubles(CT);
+  disallow <- c("NA", "NaN", "Inf");
+  CT <- Arguments$getDoubles(CT, disallow=disallow);
   nbrOfLoci <- length(CT);
   length2 <- rep(nbrOfLoci, 2);
 
   # Argument 'betaT':
-  betaT <- Arguments$getDoubles(betaT, length=length2);
+  betaT <- Arguments$getDoubles(betaT, length=length2, disallow="Inf");
 
   # Argument 'betaN':
-  betaN <- Arguments$getDoubles(betaN, length=length2);
+  betaN <- Arguments$getDoubles(betaN, length=length2, disallow="Inf");
 
   # Argument 'muN':
   if (!is.null(muN)) {
-    muN <- Arguments$getDoubles(muN, length=length2, range=c(0,1));
+    muN <- Arguments$getDoubles(muN, length=length2, range=c(0,1), disallow="Inf");
   }
 
   # Argument 'x':
   if (!is.null(x)) {
-    x <- Arguments$getDoubles(x, length=length2);
+    x <- Arguments$getDoubles(x, length=length2, disallow=disallow);
+  }
+
+  # Argument 'flavor':
+  flavor <- match.arg(flavor);
+  if (flavor != "dh|tcn") {
+    throw("Segmentation flavor not supported. Currently only \"dh|tcn\" is implemented: ", flavor);
   }
 
   # Argument 'seed':
@@ -135,44 +157,108 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # Normalize betaT using betaN (TumorBoost normalization)
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   verbose && enter(verbose, "Normalizing betaT using betaN (TumorBoost)");
-  betaTN <- aroma.light::normalizeTumorBoost(betaT=betaT, betaN=betaN, muN=muN);
-  verbose && cat(verbose, "Normalized betaT:");
+  betaTN <- aroma.light::normalizeTumorBoost(betaT=betaT, betaN=betaN, muN=muN, preserveScale=TRUE);
+  verbose && cat(verbose, "Normalized BAFs:");
   verbose && str(verbose, betaTN);
   verbose && exit(verbose);
 
+  # Assert that no missing values where introduced
+  keep <- (is.finite(betaT) & is.finite(betaN) & is.finite(muN));
+  if (any(is.na(betaTN[keep]))) {
+    throw("Internal error: normalizeTumorBoost() introduced missing values.");
+  }
 
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Record input data
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  data <- list(CT=CT, betaT=betaT, betaN=betaN, muN=muN, x=x);
+
+  # Physical positions of loci
   if (is.null(x)) {
     x <- seq(length=nbrOfLoci);
   }
 
+  # SNPs are identifies as those loci that have non-missing 'betaTN' & 'muN'
+  isSnp <- (!is.na(betaTN) & !is.na(muN));
+  nbrOfSnps <- sum(isSnp);
+  verbose && cat(verbose, "Number of SNPs: ", nbrOfSnps);
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Calculate decrease-of-heterozygosity signals (DHs)
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  verbose && enter(verbose, "Calculating DHs");
+  # DH is by definition only defined for heterozygous SNPs.  
+  # For simplicity, we set it to be NA for non-heterozygous loci.
+  isHet <- isSnp & (muN == 1/2);
+  verbose && printf(verbose, "Number of heterozygous SNPs: %d (%.2f%%)\n",
+                                     sum(isHet), 100*sum(isHet)/nbrOfSnps);
+  naValue <- as.double(NA);
+  rho <- rep(naValue, length=nbrOfLoci);
+  rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
+  verbose && cat(verbose, "Normalized DHs:");
+  verbose && str(verbose, rho);
+  verbose && exit(verbose);
+
+
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # 1a. Identification of change points in total copy numbers
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # TO DO: Deal with negative values
+  h <- function(x) { 
+    y <- x;
+    y[x >= 0] <- sqrt(x[x >= 0]);
+    y;
+  }
+  hinv <- function(y) {
+    x <- y;
+    x[y >= 0] <- y[y >= 0]^2;
+    x;
+  }
+
   verbose && enter(verbose, "Identification of change points by total copy numbers");
-  h <- function(x) { sqrt(x) };
-  hinv <- function(y) { y^2 };
-  verbose && enter(verbose, "Transforming signals");
-  verbose && cat(verbose, "Input signals:");
-  verbose && str(verbose, CT);
+  if (!is.null(h)) {
+    verbose && enter(verbose, "Transforming signals");
+    verbose && cat(verbose, "Input signals:");
+    verbose && str(verbose, CT);
 
-  # Segment total CN ratios (CT) using CBS.
-  # We actually segment sqrt(CT).
-  # All loci are utilized, i.e. all SNPs and all non-polymorphic markers
-  yT <- h(CT);
+    # Segment total CN ratios (CT) using CBS.
+    # We actually segment sqrt(CT).
+    # All loci are utilized, i.e. all SNPs and all non-polymorphic markers
+    yT <- h(CT);
 
-  verbose && cat(verbose, "Signals to be segmented:");
-  verbose && str(verbose, yT);
-  verbose && exit(verbose);
+    verbose && cat(verbose, "Signals to be segmented:");
+    verbose && str(verbose, yT);
+    verbose && exit(verbose);
+  } else {
+    yT <- CT;
+  } # if (!is.null(h))
 
   fit <- segmentByCBS(yT, x=x, verbose=verbose);
+  verbose && str(verbose, fit);
   tcnSegments <- fit$output;
-  rm(yT);
+  rm(yT, fit);
 
-  verbose && enter(verbose, "Backtransforming segmented mean levels");
-  tcnSegments[,"seg.mean"] <- hinv(tcnSegments[,"seg.mean"]);
-  verbose && exit(verbose);
+  if (!is.null(hinv)) {
+    verbose && enter(verbose, "Backtransforming segmented mean levels");
+    tcnSegments[,"seg.mean"] <- hinv(tcnSegments[,"seg.mean"]);
+    verbose && exit(verbose);
+  }
 
+  # Drop dummy columns
+  keep <- setdiff(colnames(tcnSegments), c("ID", "chrom"));
+  tcnSegments <- tcnSegments[,keep,drop=FALSE];
+
+  # Tag fields by TCN
+  names <- names(tcnSegments);
+  names <- gsub("seg.mean", "mean", names, fixed=TRUE);
+  names <- sprintf("tcn.%s", names);
+  names(tcnSegments) <- names;
+  rm(names);
   verbose && print(verbose, tcnSegments);
+
   nbrOfSegs <- nrow(tcnSegments);
   verbose && cat(verbose, "Number of TCN segments: ", nbrOfSegs);
 
@@ -183,82 +269,109 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # 1b. Identification of additional change points using DH
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # For each segment independently, segment decrease of heterozygousity (DH)
-  # using CBS. DH is by definition only defined for heterozygous SNPs.
-  # Only heterozygous SNPs are used.
-
-  # Calculate DH, which is NA for non-heterozygous loci.
-  isHet <- (muN == 1/2);
-  naValue <- as.double(NA);
-  rho <- rep(naValue, length=nbrOfLoci);
-  rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
+  # using CBS. By definition, only heterozygous SNPs are used.
 
   # For each TCN segment...
   segs <- vector("list", length=nbrOfSegs);
   for (kk in seq(length=nbrOfSegs)) {
-    verbose && enter(verbose, sprintf("Total CN segment #%d of %d", kk, nbrOfSegs));
+    # Extract the region
+    xStart <- tcnSegments[kk,"tcn.loc.start"];
+    xEnd <- tcnSegments[kk,"tcn.loc.end"];
+    gammaT <- tcnSegments[kk,"tcn.mean"];
 
-    xStart <- tcnSegments[kk,"loc.start"];
-    xEnd <- tcnSegments[kk,"loc.end"];
-    gammaT <- tcnSegments[kk,"seg.mean"];
+    regionTag <- sprintf("[%d,%d]", xStart, xEnd);
+    verbose && enter(verbose, sprintf("Total CN segment #%d (%s) of %d", kk, regionTag, nbrOfSegs));
 
+    # Identify subset of loci
     keep <- (xStart <= x & x <= xEnd);
     xKK <- x[keep];
-    verbose && cat(verbose, "Number of loci: ", length(xKK));
+    nbrOfLociKK <- length(xKK);
+    rhoKK <- rho[keep];
+    isSnpKK <- isSnp[keep];
+    nbrOfSnpsKK <- sum(isSnpKK);
+    isHetKK <- isHet[keep];
+    verbose && cat(verbose, "Number of loci in region: ", nbrOfLociKK);
+    verbose && cat(verbose, "Number of SNPs in region: ", nbrOfSnpsKK);
+    rm(keep);
 
-    keep <- keep & isHet;
-    xKKHet <- x[keep];
-    rhoKKHet <- rho[keep];
-    verbose && cat(verbose, "Number of heterozygous SNPs: ", length(xKKHet));
+    # Identify heterozygous SNPs
+    keep <- isHetKK;
+    xKKHet <- xKK[keep];
+    rhoKKHet <- rhoKK[keep];
+    nbrOfHetsKK <- length(xKKHet);
+    verbose && printf(verbose, "Number of heterozygous SNPs: %d (%.2f%%)\n",
+                                  nbrOfHetsKK, 100*nbrOfHetsKK/nbrOfSnpsKK);
+    rm(keep);
 
-    # Drop non-finite data points
-    keep <- (is.finite(xKKHet) & is.finite(rhoKKHet));
-    xKKHet <- xKKHet[keep];
-    rhoKKHet <- rhoKKHet[keep];
-
-    # Nothing to do?
-    if (length(xKKHet) == 0) {
-      verbose && cat(verbose, "No heterozygous SNPs with (finite) DHs. Skipping DH segmentation.");
-      # Need to return something for the total CNs...
-      verbose && exit(verbose);    
-      next;
-    }
-
-    fit <- segmentByCBS(rhoKKHet, x=xKKHet, verbose=less(verbose, 5));
-
-    # Extract regions
+    verbose && enter(verbose, "Segmenting DH signals");
+    fit <- segmentByCBS(rhoKKHet, x=xKKHet, verbose=less(verbose, 10));
+    verbose && str(verbose, fit);
     dhSegments <- fit$output;
-    names <- names(dhSegments);
-    names <- gsub("seg.mean", "dh.mean", names, fixed=TRUE);
-    names <- gsub("num.mark", "num.het.mark", names, fixed=TRUE);
-    names(dhSegments) <- names;
+    verbose && exit(verbose);
+    rm(rhoKKHet, xKKHet, fit);
 
-    # For each DH segment, count number of loci and update TCN mean
-    dhSegments$num.mark <- -1L;
-    dhSegments$tcn.mean <- gammaT;
-    for (ll in seq(length=nrow(dhSegments))) {
-      xStart <- dhSegments[ll,"loc.start"];
-      xEnd <- dhSegments[ll,"loc.end"];
-      keep <- (xStart <= x & x <= xEnd);
-      dhSegments[ll,"num.mark"] <- sum(keep);
-      dhSegments[ll,"tcn.mean"] <- mean(CT[keep], na.rm=TRUE);
+    # Drop dummy columns
+    keep <- setdiff(colnames(dhSegments), c("ID", "chrom"));
+    dhSegments <- dhSegments[,keep,drop=FALSE];
+
+    # Tag fields by DH
+    names <- names(dhSegments);
+    names <- gsub("seg.mean", "mean", names, fixed=TRUE);
+    names <- sprintf("dh.%s", names);
+    names(dhSegments) <- names;
+    rm(names);
+
+    # Special case: If there where not enough data to segment DH...
+    if (nrow(dhSegments) == 0) {
+      dhSegments <- dhSegments[as.integer(NA),];
     }
 
+    # Insert that last column
+    at <- which(colnames(dhSegments) == "dh.num.mark");
+
+    verbose && cat(verbose, "DH segmentation table:");
     verbose && print(verbose, dhSegments);
 
-    segs[[kk]] <- dhSegments;
+
+    # Expand the TCN segmentation result data frame
+    if (nrow(dhSegments) > 0) {
+      tcnSegmentsKK <- rep(list(tcnSegments[kk,]), times=nrow(dhSegments));
+      tcnSegmentsKK <- Reduce(rbind, tcnSegmentsKK);
+    } else {
+      tcnSegmentsKK <- tcnSegments[integer(0),,drop=FALSE];
+    }
+    # Append information on number of SNPs and hets in CN region
+    tcnSegmentsKK <- cbind(
+      tcnSegmentsKK, 
+      tcn.num.snps=nbrOfSnpsKK,
+      tcn.num.hets=nbrOfHetsKK
+    );
+    verbose && cat(verbose, "Total CN segmentation table (expanded):");
+    verbose && print(verbose, tcnSegmentsKK);
+
+    # Combine TCN and DH segmentation results
+    tcndhSegments <- cbind(
+      tcn.id=rep(kk, times=nrow(dhSegments)),
+      dh.id=seq(length=nrow(dhSegments)),
+      tcnSegmentsKK,
+      dhSegments
+    );
+
+    segs[[kk]] <- tcndhSegments;
 
     verbose && exit(verbose);    
   } # for (kk ...)
 
   segs <- Reduce(rbind, segs);
+  rownames(segs) <- NULL;
 
   # Reorder columns
-  fields <- c("ID", "chrom", "loc.start", "loc.end", "num.mark", "num.het.mark", "dh.mean", "tcn.mean");
-  segs <- segs[,fields];
+#  fields <- c("loc.start", "loc.end", "num.mark", "num.het.mark", "dh.mean", "tcn.mean");
+#  segs <- segs[,fields,drop=FALSE];
   verbose && print(verbose, segs);
 
   nbrOfSegs <- nrow(segs);
-  verbose && cat(verbose, "Number of TCN and DH segments: ", nbrOfSegs);
+  verbose && cat(verbose, "Number of segments: ", nbrOfSegs);
 
   verbose && exit(verbose);
 
@@ -269,27 +382,117 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     data = data,
     output = segs
   );
-  class(fit) <- c("PSCBS", "DNAcopy");
+  class(fit) <- c("PairedPSCBS", "PSCBS");
 
   # Return segments found
   fit;
 }) # segmentByPairedPSCBS()
 
 
+setMethodS3("as.data.frame", "PairedPSCBS", function(x, ...) {
+  # To please R CMD check
+  fit <- x;
+
+  fit$output;
+})
 
 
-setMethodS3("callSegmentsByPSCBS", "default", function(data, ...) {
+setMethodS3("print", "PairedPSCBS", function(x, ...) {
+  # To please R CMD check
+  fit <- x;
+
+  segs <- as.data.frame(fit, ...);
+  print(segs);
+})
+
+
+setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "dh"), ...) {
+  # Argument 'what':
+  what <- match.arg(what);
+
+  # Get segmentation results
+  segs <- as.data.frame(fit);
+
+  # Extract subset of segments
+  fields <- c("loc.start", "loc.end", "mean");
+  fields <- sprintf("%s.%s", what, fields);
+  segs <- segs[,fields, drop=FALSE];
+  segs <- unique(segs);
+
+  colnames(segs) <- c("loc.start", "loc.end", "seg.mean");
+
+  dummy <- list(output=segs);
+  class(dummy) <- "DNAcopy";
+  drawLevels(dummy, ...);
+})
+
+
+setMethodS3("plot", "PairedPSCBS", function(x, pch=".", Clim=c(0,6), Blim=c(0,1), ...) {
+  # To please R CMD check
+  fit <- x;
+
+  # Extract the input data
+  data <- fit$data;
+  if (is.null(data)) {
+    throw("Cannot plot segmentation results. No input data available.");
+  }
+
+  x <- data$x;
+  CT <- data$CT;
+  betaT <- data$betaT;
+  betaN <- data$betaN;
+  muN <- data$muN;
+
+  # Extract the segmentation
+  segs <- fit$output;
+
+  subplots(5, ncol=1);
+  par(mar=c(1,4,1,2)+1);
+
+  plot(x, CT, pch=pch, col="gray", ylim=Clim);
+  drawLevels(fit, what="tcn");
+
+  col <- c("gray", "black")[(muN == 1/2) + 1];
+  plot(x, betaN, pch=pch, col=col, ylim=Blim);
+  plot(x, betaT, pch=pch, col=col, ylim=Blim);
+
+  betaTN <- aroma.light::normalizeTumorBoost(betaT=betaT, betaN=betaN, muN=muN, preserveScale=TRUE);
+  plot(x, betaTN, pch=pch, col=col, ylim=Blim);
+
+  isSnp <- (!is.na(betaTN) & !is.na(muN));
+  isHet <- isSnp & (muN == 1/2);
+	  naValue <- as.double(NA);
+  rho <- rep(naValue, length=nbrOfLoci);
+  rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
+  plot(x, rho, pch=pch, col=col, ylim=Blim);
+  drawLevels(fit, what="dh");
+})
+
+
+
+setMethodS3("bootstrapCIs", "PairedPSCBS", function(fit, ...) {
+  # ...
+})
+
+
+setMethodS3("callSegments", "PairedPSCBS", function(fit, ...) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # 2. Calling regions
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Call region
-  # a. Testing for LOH in the Tumor
-  # b. Classifying non-LOH regions as balanced or not balanced
-}) # callSegmentsByPSCBS()
+  # a. Classifying non-LOH regions as balanced or not balanced
+  # b. Testing for LOH in the Tumor
+}) # callSegments()
+
 
 
 ############################################################################
 # HISTORY:
+# 2010-09-04
+# o Added drawLevels() for PairedPSCBS.
+# o Added as.data.frame() and print() for PairedPSCBS.
+# 2010-09-03
+# o Added plot().
 # 2010-07-09
 # o The segmentByPairedPSCBS() method was written completely from scratch.
 # o Created.

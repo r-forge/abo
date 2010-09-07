@@ -25,6 +25,14 @@
 \alias{callSegmentsByPSCBS.default}
 \alias{drawLevels}
 \alias{drawLevels.DNAcopy}
+\alias{as.data.frame.PairedPSCBS}
+\alias{bootstrapCIs}
+\alias{bootstrapCIs.PairedPSCBS}
+\alias{callSegments}
+\alias{callSegments.PairedPSCBS}
+\alias{drawLevels.PairedPSCBS}
+\alias{plot.PairedPSCBS}
+\alias{print.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

@@ -1,6 +1,18 @@
 Package: psCBS
 ==============
 
+Version: 0.7.0 [2010-09-04]
+o Updated segmentByPairedPSCBS() to provide two-step segmentation 
+  from first segmenting the total copy numbers and then the
+  decrease-of-heterozygosity signals.  Added utility functions for
+  plotting the results.  The code for calling allelic imbalance
+  and LOH is still to be added.
+
+
+Version: 0.6.3 [2010-09-02]
+o ROBUSTNESS: Now segmentByCBS() also works if there are no data points.
+
+
 Version: 0.6.2 [2010-07-14]
 o CLEAN UP: Added callNaiveHeterzygotes() which is a cleaned up
   version of findheterozygous().  Added an Rd example that asserts

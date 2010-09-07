@@ -4,3 +4,6 @@ getSampleNames getSampleNames.psCNA nbrOfSamples nbrOfSamples.psCNA
 psSegmentPaired
   callSegmentsByPSCBS callSegmentsByPSCBS.default drawLevels
   drawLevels.DNAcopy
+  as.data.frame.PairedPSCBS bootstrapCIs bootstrapCIs.PairedPSCBS
+  callSegments callSegments.PairedPSCBS drawLevels.PairedPSCBS
+  plot.PairedPSCBS print.PairedPSCBS
