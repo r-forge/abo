@@ -33,6 +33,16 @@
 \alias{drawLevels.PairedPSCBS}
 \alias{plot.PairedPSCBS}
 \alias{print.PairedPSCBS}
+\alias{extractMinorMajorCNs}
+\alias{extractMinorMajorCNs.PairedPSCBS}
+\alias{extractTotalAndDH}
+\alias{extractTotalAndDH.PairedPSCBS}
+\alias{plotC1C2}
+\alias{plotC1C2.PairedPSCBS}
+\alias{pointsC1C2}
+\alias{pointsC1C2.PairedPSCBS}
+\alias{extractTCNAndDHs}
+\alias{extractTCNAndDHs.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

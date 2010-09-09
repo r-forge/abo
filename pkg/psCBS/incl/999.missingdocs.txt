@@ -7,3 +7,7 @@ psSegmentPaired
   as.data.frame.PairedPSCBS bootstrapCIs bootstrapCIs.PairedPSCBS
   callSegments callSegments.PairedPSCBS drawLevels.PairedPSCBS
   plot.PairedPSCBS print.PairedPSCBS
+  extractMinorMajorCNs extractMinorMajorCNs.PairedPSCBS
+  extractTotalAndDH extractTotalAndDH.PairedPSCBS plotC1C2
+  plotC1C2.PairedPSCBS pointsC1C2 pointsC1C2.PairedPSCBS
+ extractTCNAndDHs extractTCNAndDHs.PairedPSCBS

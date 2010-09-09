@@ -1,6 +1,11 @@
 Package: psCBS
 ==============
 
+Version: 0.7.1 [2010-09-08]
+o Added more methods for the PSCBS class.
+o Now segmentByPairedPSCBS() also returns the TumorBoost normalized data.
+
+
 Version: 0.7.0 [2010-09-04]
 o Updated segmentByPairedPSCBS() to provide two-step segmentation 
   from first segmenting the total copy numbers and then the

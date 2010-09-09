@@ -9,6 +9,7 @@
  \name{segmentByPairedPSCBS}
 \alias{segmentByPairedPSCBS.default}
 \alias{segmentByPairedPSCBS}
+ \alias{segmentByPairedPSCBS}
 
  \title{Segment copy numbers using the paired PSCBS method}
 

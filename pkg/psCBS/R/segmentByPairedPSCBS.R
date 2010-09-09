@@ -1,5 +1,6 @@
 ###########################################################################/**
 # @RdocDefault segmentByPairedPSCBS
+# @alias segmentByPairedPSCBS
 #
 # @title "Segment copy numbers using the paired PSCBS method"
 #
@@ -172,8 +173,6 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Record input data
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  data <- list(CT=CT, betaT=betaT, betaN=betaN, muN=muN, x=x);
-
   # Physical positions of loci
   if (is.null(x)) {
     x <- seq(length=nbrOfLoci);
@@ -376,7 +375,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   verbose && exit(verbose);
 
   # Create result object
-  data <- list(CT=CT, betaT=betaT, betaN=betaN, muN=muN, x=x);
+  data <- list(CT=CT, betaT=betaT, betaTN=betaTN, betaN=betaN, muN=muN, x=x);
 
   fit <- list(
     data = data,
@@ -389,105 +388,14 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 }) # segmentByPairedPSCBS()
 
 
-setMethodS3("as.data.frame", "PairedPSCBS", function(x, ...) {
-  # To please R CMD check
-  fit <- x;
-
-  fit$output;
-})
-
-
-setMethodS3("print", "PairedPSCBS", function(x, ...) {
-  # To please R CMD check
-  fit <- x;
-
-  segs <- as.data.frame(fit, ...);
-  print(segs);
-})
-
-
-setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "dh"), ...) {
-  # Argument 'what':
-  what <- match.arg(what);
-
-  # Get segmentation results
-  segs <- as.data.frame(fit);
-
-  # Extract subset of segments
-  fields <- c("loc.start", "loc.end", "mean");
-  fields <- sprintf("%s.%s", what, fields);
-  segs <- segs[,fields, drop=FALSE];
-  segs <- unique(segs);
-
-  colnames(segs) <- c("loc.start", "loc.end", "seg.mean");
-
-  dummy <- list(output=segs);
-  class(dummy) <- "DNAcopy";
-  drawLevels(dummy, ...);
-})
-
-
-setMethodS3("plot", "PairedPSCBS", function(x, pch=".", Clim=c(0,6), Blim=c(0,1), ...) {
-  # To please R CMD check
-  fit <- x;
-
-  # Extract the input data
-  data <- fit$data;
-  if (is.null(data)) {
-    throw("Cannot plot segmentation results. No input data available.");
-  }
-
-  x <- data$x;
-  CT <- data$CT;
-  betaT <- data$betaT;
-  betaN <- data$betaN;
-  muN <- data$muN;
-
-  # Extract the segmentation
-  segs <- fit$output;
-
-  subplots(5, ncol=1);
-  par(mar=c(1,4,1,2)+1);
-
-  plot(x, CT, pch=pch, col="gray", ylim=Clim);
-  drawLevels(fit, what="tcn");
-
-  col <- c("gray", "black")[(muN == 1/2) + 1];
-  plot(x, betaN, pch=pch, col=col, ylim=Blim);
-  plot(x, betaT, pch=pch, col=col, ylim=Blim);
-
-  betaTN <- aroma.light::normalizeTumorBoost(betaT=betaT, betaN=betaN, muN=muN, preserveScale=TRUE);
-  plot(x, betaTN, pch=pch, col=col, ylim=Blim);
-
-  isSnp <- (!is.na(betaTN) & !is.na(muN));
-  isHet <- isSnp & (muN == 1/2);
-	  naValue <- as.double(NA);
-  rho <- rep(naValue, length=nbrOfLoci);
-  rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
-  plot(x, rho, pch=pch, col=col, ylim=Blim);
-  drawLevels(fit, what="dh");
-})
-
-
-
-setMethodS3("bootstrapCIs", "PairedPSCBS", function(fit, ...) {
-  # ...
-})
-
-
-setMethodS3("callSegments", "PairedPSCBS", function(fit, ...) {
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  # 2. Calling regions
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  # Call region
-  # a. Classifying non-LOH regions as balanced or not balanced
-  # b. Testing for LOH in the Tumor
-}) # callSegments()
-
 
 
 ############################################################################
 # HISTORY:
+# 2010-09-08
+# o Now segmentByPairedPSCBS() also returns the TumorBoost normalized data.
+#   This also means that plot() for PairedPSCBS no longer has to 
+#   recalculate them.
 # 2010-09-04
 # o Added drawLevels() for PairedPSCBS.
 # o Added as.data.frame() and print() for PairedPSCBS.
