@@ -47,6 +47,8 @@
 \alias{arrowsC1C2.PairedPSCBS}
 \alias{linesC1C2}
 \alias{linesC1C2.PairedPSCBS}
+\alias{subsetBySegments}
+\alias{subsetBySegments.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

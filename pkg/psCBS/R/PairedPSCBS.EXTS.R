@@ -15,6 +15,54 @@ setMethodS3("print", "PairedPSCBS", function(x, ...) {
 })
 
 
+setMethodS3("subsetBySegments", "PairedPSCBS", function(fit, idxs, ..., verbose=FALSE) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Extract the segmentation result
+  segs <- fit$output;
+  stopifnot(!is.null(segs));
+  nbrOfSegments <- nrow(segs);
+
+  # Argument 'idxs':
+  idxs <- Arguments$getIndices(idxs, max=nbrOfSegments);
+
+
+  # Extract the data
+  data <- fit$data;
+  stopifnot(!is.null(data));
+  x <- data$x;
+  nbrOfLoci <- length(x);
+
+  # Subset the region-level data
+  segs <- segs[idxs,,drop=FALSE];
+
+  nbrOfSegments <- nrow(segs);
+
+  # Subset the locus-level data
+  keep <- logical(nbrOfLoci);
+  for (kk in seq(length=nbrOfSegments)) {
+    xRange <- as.numeric(segs[kk,c("dh.loc.start", "dh.loc.end")]);
+    # Identify all SNPs in the region
+    keep <- keep | (xRange[1] <= x & x <= xRange[2]);
+  } # for (kk ...)
+  keep <- whichVector(keep);
+
+  for (ff in seq(along=data)) {
+    values <- data[[ff]];
+    if (length(values) == nbrOfLoci) {
+      values <- values[keep];
+      data[[ff]] <- values;
+    }
+  }
+  rm(keep, values); # Not needed anymore
+
+  fitS <- fit;
+  fitS$data <- data;
+  fitS$output <- segs;
+
+  fitS;
+})
 
 
 
@@ -173,6 +221,7 @@ setMethodS3("arrowsC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
 ############################################################################
 # HISTORY:
 # 2010-09-15
+# o Added subsetBySegments().
 # o Added linesC1C2() and arrowsC1C2().
 # o Now the default 'cex' for pointsC1C2() corresponds to 'dh.num.mark'.
 # o Now extractTotalAndDH() also returns 'dh.num.mark'.
