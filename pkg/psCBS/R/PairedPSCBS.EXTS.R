@@ -39,7 +39,7 @@ setMethodS3("extractTCNAndDHs", "PairedPSCBS", function(fit, ...) {
   segs <- fit$output;
   stopifnot(!is.null(segs));
 
-  data <- segs[,c("tcn.mean", "dh.mean", "tcn.num.mark"), drop=FALSE];
+  data <- segs[,c("tcn.mean", "dh.mean", "tcn.num.mark", "dh.num.mark"), drop=FALSE];
   data;
 })
 
@@ -137,7 +137,8 @@ setMethodS3("plotC1C2", "PairedPSCBS", function(fit, ..., xlab=expression(C[1]),
 setMethodS3("pointsC1C2", "PairedPSCBS", function(fit, cex=NULL, ...) {
   data <- extractMinorMajorCNs(fit);
   X <- data[,1:2,drop=FALSE];
-  n <- data[,3,drop=TRUE];
+  n <- data[,4,drop=TRUE];
+  n <- sqrt(n);
   w <- n / sum(n, na.rm=TRUE);
 
   if (is.null(cex)) {
@@ -150,10 +151,31 @@ setMethodS3("pointsC1C2", "PairedPSCBS", function(fit, cex=NULL, ...) {
 })
 
 
+setMethodS3("linesC1C2", "PairedPSCBS", function(fit, ...) {
+  xy <- extractMinorMajorCNs(fit);
+  xy <- xy[,1:2,drop=FALSE];
+  lines(xy, ...);
+}) # linessC1C2()
+
+
+setMethodS3("arrowsC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
+  xy <- extractMinorMajorCNs(fit);
+  xy <- xy[,1:2,drop=FALSE];
+  x <- xy[,1,drop=TRUE];
+  y <- xy[,2,drop=TRUE];
+  s <- seq(length=length(x)-1);
+  arrows(x0=x[s],y=y[s], x1=x[s+1],y1=y[s+1], code=2, length=length, ...);
+}) # arrowsC1C2()
+
+
 
 
 ############################################################################
 # HISTORY:
+# 2010-09-15
+# o Added linesC1C2() and arrowsC1C2().
+# o Now the default 'cex' for pointsC1C2() corresponds to 'dh.num.mark'.
+# o Now extractTotalAndDH() also returns 'dh.num.mark'.
 # 2010-09-08
 # o Added argument 'add=FALSE' to plot().
 # o Added plotC1C2().

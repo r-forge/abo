@@ -43,6 +43,10 @@
 \alias{pointsC1C2.PairedPSCBS}
 \alias{extractTCNAndDHs}
 \alias{extractTCNAndDHs.PairedPSCBS}
+\alias{arrowsC1C2}
+\alias{arrowsC1C2.PairedPSCBS}
+\alias{linesC1C2}
+\alias{linesC1C2.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

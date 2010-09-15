@@ -11,3 +11,4 @@ psSegmentPaired
   extractTotalAndDH extractTotalAndDH.PairedPSCBS plotC1C2
   plotC1C2.PairedPSCBS pointsC1C2 pointsC1C2.PairedPSCBS
  extractTCNAndDHs extractTCNAndDHs.PairedPSCBS
+ arrowsC1C2 arrowsC1C2.PairedPSCBS linesC1C2 linesC1C2.PairedPSCBS
