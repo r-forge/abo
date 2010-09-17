@@ -1,6 +1,11 @@
 Package: psCBS
 ==============
 
+Version: 0.7.3 [2010-09-16]
+o Added callABandHighAI() for calling paired PSCBS segmentation results.
+o Added internal bootstrapping functions.
+
+
 Version: 0.7.2 [2010-09-15]
 o Added more methods for the PSCBS class.
 

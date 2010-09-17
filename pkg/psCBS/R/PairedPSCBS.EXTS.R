@@ -174,6 +174,17 @@ setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "dh"), ...)
 
 
 
+setMethodS3("extractC1C2", "PairedPSCBS", function(...) {
+  extractMinorMajorCNs(...);
+})
+
+setMethodS3("extractDeltaC1C2", "PairedPSCBS", function(...) {
+  xy <- extractC1C2(...);
+  X <- xy[,1:2,drop=FALSE];
+  dX <- matrixStats::colDiffs(X);
+  dX;
+})
+
 
 setMethodS3("plotC1C2", "PairedPSCBS", function(fit, ..., xlab=expression(C[1]), ylab=expression(C[2]), Clim=c(0,4)) {
   plot(NA, xlim=Clim, ylim=Clim, xlab=xlab, ylab=ylab);
@@ -183,7 +194,7 @@ setMethodS3("plotC1C2", "PairedPSCBS", function(fit, ..., xlab=expression(C[1]),
 
 
 setMethodS3("pointsC1C2", "PairedPSCBS", function(fit, cex=NULL, ...) {
-  data <- extractMinorMajorCNs(fit);
+  data <- extractC1C2(fit);
   X <- data[,1:2,drop=FALSE];
   n <- data[,4,drop=TRUE];
   n <- sqrt(n);
@@ -214,6 +225,42 @@ setMethodS3("arrowsC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
   s <- seq(length=length(x)-1);
   arrows(x0=x[s],y=y[s], x1=x[s+1],y1=y[s+1], code=2, length=length, ...);
 }) # arrowsC1C2()
+
+
+
+
+setMethodS3("plotDeltaC1C2", "PairedPSCBS", function(fit, ..., xlab=expression(Delta*C[1]), ylab=expression(Delta*C[2]), Clim=c(-2,2)) {
+  plot(NA, xlim=Clim, ylim=Clim, xlab=xlab, ylab=ylab);
+  abline(h=0, lty=3);
+  abline(v=0, lty=3);
+  pointsDeltaC1C2(fit, ...);
+})
+
+
+setMethodS3("pointsDeltaC1C2", "PairedPSCBS", function(fit, ...) {
+  data <- extractDeltaC1C2(fit);
+  X <- data[,1:2,drop=FALSE];
+  points(X, ...);
+})
+
+
+setMethodS3("linesDeltaC1C2", "PairedPSCBS", function(fit, ...) {
+  xy <- extractDeltaC1C2(fit);
+  xy <- xy[,1:2,drop=FALSE];
+  lines(xy, ...);
+})
+
+
+setMethodS3("arrowsDeltaC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
+  xy <- extractDeltaC1C2(fit);
+  xy <- xy[,1:2,drop=FALSE];
+  x <- xy[,1,drop=TRUE];
+  y <- xy[,2,drop=TRUE];
+  s <- seq(length=length(x)-1);
+  arrows(x0=x[s],y=y[s], x1=x[s+1],y1=y[s+1], code=2, length=length, ...);
+})
+
+
 
 
 

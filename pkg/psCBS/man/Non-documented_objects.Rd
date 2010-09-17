@@ -49,6 +49,26 @@
 \alias{linesC1C2.PairedPSCBS}
 \alias{subsetBySegments}
 \alias{subsetBySegments.PairedPSCBS}
+\alias{bootstrapDHByRegion}
+\alias{bootstrapDHByRegion.PairedPSCBS}
+\alias{arrowsDeltaC1C2}
+\alias{arrowsDeltaC1C2.PairedPSCBS}
+\alias{extractC1C2}
+\alias{extractC1C2.PairedPSCBS}
+\alias{extractDeltaC1C2}
+\alias{extractDeltaC1C2.PairedPSCBS}
+\alias{linesDeltaC1C2}
+\alias{linesDeltaC1C2.PairedPSCBS}
+\alias{plotDeltaC1C2}
+\alias{plotDeltaC1C2.PairedPSCBS}
+\alias{pointsDeltaC1C2}
+\alias{pointsDeltaC1C2.PairedPSCBS}
+\alias{callABandHighAI}
+\alias{callABandHighAI.PairedPSCBS}
+\alias{callAllelicBalance}
+\alias{callAllelicBalance.PairedPSCBS}
+\alias{callExtremeAllelicImbalance}
+\alias{callExtremeAllelicImbalance.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

@@ -1,6 +1,7 @@
 library("R.utils");
 library("aroma.light");
 
+
 pathname <- system.file("data-ex/pcCBS,exData,chr01.Rbin", package="psCBS");
 data <- R.utils::loadObject(pathname);
 
@@ -15,13 +16,14 @@ str(data);
 R.oo::attachLocally(data);
 x <- position;
 
-# PSCBS segmentation
+# Paired PSCBS segmentation
 fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN, x=x, verbose=-10);
 
-# Extract segments
-segs <- as.data.frame(fit$output);
-print(segs);
+# Call allelic balance and "LOH" (= extreme allelic imbalance)
+fit <- callABandHighAI(fit, verbose=-10);
+
+# Display segmentation and calls
+print(fit);
 
 # Plot results
 plot(fit);
-

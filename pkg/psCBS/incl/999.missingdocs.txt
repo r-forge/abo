@@ -13,3 +13,11 @@ psSegmentPaired
  extractTCNAndDHs extractTCNAndDHs.PairedPSCBS
  arrowsC1C2 arrowsC1C2.PairedPSCBS linesC1C2 linesC1C2.PairedPSCBS
   subsetBySegments subsetBySegments.PairedPSCBS
+bootstrapDHByRegion bootstrapDHByRegion.PairedPSCBS
+  arrowsDeltaC1C2 arrowsDeltaC1C2.PairedPSCBS extractC1C2
+  extractC1C2.PairedPSCBS extractDeltaC1C2 extractDeltaC1C2.PairedPSCBS
+  linesDeltaC1C2 linesDeltaC1C2.PairedPSCBS plotDeltaC1C2
+  plotDeltaC1C2.PairedPSCBS pointsDeltaC1C2 pointsDeltaC1C2.PairedPSCBS
+  callABandHighAI callABandHighAI.PairedPSCBS callAllelicBalance
+  callAllelicBalance.PairedPSCBS callExtremeAllelicImbalance
+  callExtremeAllelicImbalance.PairedPSCBS
