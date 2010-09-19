@@ -1,6 +1,10 @@
 Package: psCBS
 ==============
 
+Version: 0.7.4 [2010-09-18]
+o BUG FIX: plot() for PairedPSCBS used a non-defined variable.
+
+
 Version: 0.7.3 [2010-09-16]
 o Added callABandHighAI() for calling paired PSCBS segmentation results.
 o Added internal bootstrapping functions.

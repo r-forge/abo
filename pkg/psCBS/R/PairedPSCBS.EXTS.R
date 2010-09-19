@@ -125,6 +125,7 @@ setMethodS3("plot", "PairedPSCBS", function(x, pch=".", Clim=c(0,6), Blim=c(0,1)
   betaN <- data$betaN;
   betaTN <- data$betaTN;
   muN <- data$muN;
+  nbrOfLoci <- length(x);
 
   # Extract the segmentation
   segs <- fit$output;
@@ -144,7 +145,7 @@ setMethodS3("plot", "PairedPSCBS", function(x, pch=".", Clim=c(0,6), Blim=c(0,1)
 
   isSnp <- (!is.na(betaTN) & !is.na(muN));
   isHet <- isSnp & (muN == 1/2);
-	  naValue <- as.double(NA);
+  naValue <- as.double(NA);
   rho <- rep(naValue, length=nbrOfLoci);
   rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
   plot(x, rho, pch=pch, col=col, ylim=Blim);
@@ -263,10 +264,40 @@ setMethodS3("arrowsDeltaC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
 
 
 
+setMethodS3("updateTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Extract the data
+  data <- fit$data;
+  stopifnot(!is.null(data));
+  x <- data$x;
+  nbrOfLoci <- length(x);
+
+  # Extract the segmentation result
+  segs <- fit$output;
+  stopifnot(!is.null(segs));
+  nbrOfSegments <- nrow(segs);
+
+  for (kk in seq(length=nbrOfSegments)) {
+    segsKK <- segs[kk,,drop=FALSE];
+  } # for (kk ...)
+
+  # TO DO TO DO /HB 2010-09-18
+
+  fitS <- fit;
+  fitS$data <- data;
+  fitS$output <- segs;
+
+  fitS;
+})
+
 
 
 ############################################################################
 # HISTORY:
+# 2010-09-19
+# o BUG FIX: plot() used non-defined nbrOfLoci; now length(x).
 # 2010-09-15
 # o Added subsetBySegments().
 # o Added linesC1C2() and arrowsC1C2().
