@@ -18,6 +18,7 @@
 #   \item{betaN}{A @numeric @vector of J matched normal BAFs.}
 #   \item{muN}{An optional @numeric @vector of J genotype calls.
 #       If not given, they are estimated from the normal BAFs.}
+#   \item{chromosome}{Optional @integer scalar.  Only used for annotation purposes.}
 #   \item{x}{Optional @numeric @vector of J genomic locations.
 #            If @NULL, index locations \code{1:J} are used.}
 #   \item{...}{Not used.}
@@ -64,7 +65,7 @@
 #
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, x=NULL, ..., flavor=c("dh|tcn", "tcn|dh", "tcn&dh"), seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=NULL, x=NULL, ..., flavor=c("dh|tcn", "tcn|dh", "tcn&dh"), seed=NULL, verbose=FALSE) {
   require("R.utils") || throw("Package not loaded: R.utils");
   require("aroma.light") || throw("Package not loaded: aroma.light");
   ver <- packageDescription("aroma.light")$Version;
@@ -88,6 +89,11 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # Argument 'muN':
   if (!is.null(muN)) {
     muN <- Arguments$getDoubles(muN, length=length2, range=c(0,1), disallow="Inf");
+  }
+
+  # Argument 'chromosome':
+  if (!is.null(chromosome)) {
+    chromosome <- Arguments$getInteger(chromosome, range=c(0,Inf));
   }
 
   # Argument 'x':
@@ -367,6 +373,11 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # Reorder columns
 #  fields <- c("loc.start", "loc.end", "num.mark", "num.het.mark", "dh.mean", "tcn.mean");
 #  segs <- segs[,fields,drop=FALSE];
+
+  # Add chromosome annotation
+  if (!is.null(chromosome)) {
+    segs <- cbind(chromosome=chromosome, segs);
+  }
   verbose && print(verbose, segs);
 
   nbrOfSegs <- nrow(segs);
@@ -375,7 +386,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   verbose && exit(verbose);
 
   # Create result object
-  data <- list(CT=CT, betaT=betaT, betaTN=betaTN, betaN=betaN, muN=muN, x=x);
+  data <- list(CT=CT, betaT=betaT, betaTN=betaTN, betaN=betaN, muN=muN, chromosome=chromosome, x=x);
 
   fit <- list(
     data = data,
@@ -392,6 +403,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-09-18
+# o Added argument 'chromosome' to segmentByPairedPSCBS(), which, if given,
+#   adds a chromosome column to the data and segmentation results.
 # 2010-09-08
 # o Now segmentByPairedPSCBS() also returns the TumorBoost normalized data.
 #   This also means that plot() for PairedPSCBS no longer has to 

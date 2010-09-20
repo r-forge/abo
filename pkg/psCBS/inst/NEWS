@@ -2,6 +2,8 @@ Package: psCBS
 ==============
 
 Version: 0.7.4 [2010-09-18]
+o Added argument 'chromosome' to segmentByPairedPSCBS(), which, if given,
+  adds a chromosome column to the data and segmentation results.
 o BUG FIX: plot() for PairedPSCBS used a non-defined variable.
 
 

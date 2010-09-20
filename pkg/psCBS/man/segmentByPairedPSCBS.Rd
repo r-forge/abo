@@ -19,7 +19,7 @@
   It is intended to be applied to one sample and one chromosome at the time.
  }
 
- \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, x=NULL, ..., flavor=c("dh|tcn", "tcn|dh", "tcn&dh"), seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, chromosome=NULL, x=NULL, ..., flavor=c("dh|tcn", "tcn|dh", "tcn&dh"), seed=NULL, verbose=FALSE)}
 
  \arguments{
    \item{CT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor total copy numbers to be segmented.}
@@ -27,6 +27,7 @@
    \item{betaN}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J matched normal BAFs.}
    \item{muN}{An optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genotype calls.
        If not given, they are estimated from the normal BAFs.}
+   \item{chromosome}{Optional \code{\link[base]{integer}} scalar.  Only used for annotation purposes.}
    \item{x}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genomic locations.
             If \code{\link[base]{NULL}}, index locations \code{1:J} are used.}
    \item{...}{Not used.}
