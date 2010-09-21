@@ -1,6 +1,12 @@
 Package: psCBS
 ==============
 
+Version: 0.7.5 [2010-09-21]
+o Added postsegmentTCN() for PairedPSCBS, which updates the 
+  TCN segment start and ends, estimates and counts given the
+  DH segments.
+
+
 Version: 0.7.4 [2010-09-18]
 o Added argument 'chromosome' to segmentByPairedPSCBS(), which, if given,
   adds a chromosome column to the data and segmentation results.

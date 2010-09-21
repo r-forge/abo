@@ -103,7 +103,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
   # Argument 'flavor':
   flavor <- match.arg(flavor);
-  if (flavor != "dh|tcn") {
+  if (!is.element(flavor, "dh|tcn") {
     throw("Segmentation flavor not supported. Currently only \"dh|tcn\" is implemented: ", flavor);
   }
 

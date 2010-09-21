@@ -264,38 +264,101 @@ setMethodS3("arrowsDeltaC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
 
 
 
-setMethodS3("updateTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
+setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  # Extract the data
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Extract the data and segmentation results
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   data <- fit$data;
   stopifnot(!is.null(data));
   x <- data$x;
+  CT <- data$CT;
+  muN <- data$muN;
+  isSnp <- !is.na(muN);
+  isHet <- isSnp & (muN == 1/2);
   nbrOfLoci <- length(x);
 
-  # Extract the segmentation result
   segs <- fit$output;
   stopifnot(!is.null(segs));
   nbrOfSegments <- nrow(segs);
 
-  for (kk in seq(length=nbrOfSegments)) {
-    segsKK <- segs[kk,,drop=FALSE];
-  } # for (kk ...)
 
-  # TO DO TO DO /HB 2010-09-18
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Update the TCN segments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  tcnIds <- sort(unique(segs[["tcn.id"]]));
+  I <- length(tcnIds);
+  for (ii in seq(length=I)) {
+    tcnId <- tcnIds[ii];
+    rows <- which(segs[["tcn.id"]] == tcnId);
+    segsII <- segs[rows,,drop=FALSE];
 
+    J <- nrow(segsII);
+    for (jj in seq(length=J)) {
+      seg <- segsII[jj,,drop=FALSE];
+
+      # (a) Start and end of TCN segment is (somewhere) in 
+      #     the middle of the end of previous DH segment and
+      #     the start of the current DH segment.
+      if (jj == 1) {
+        start <- seg[["tcn.loc.start"]];
+      } else if (jj > 1) {
+        starts <- c(segsII[jj-1,"dh.loc.end"], seg[["dh.loc.start"]]);
+        start <- mean(starts);
+      }
+      if (jj == J) {
+        end <- seg[["tcn.loc.end"]];
+      } else if (jj < J) {
+        ends <- c(seg[["dh.loc.end"]], segsII[jj+1,"dh.loc.start"]);
+        end <- mean(ends);
+      }
+
+      # (b) Find the units within this first guess of the TCN segment
+      #     HB: (x <= end) or (x < end); is it possible that we
+      #         include the same locus in two segments? /HB 2010-09-21
+      units <- (start <= x & x <= end);
+      units <- whichVector(units);
+
+      # (c) Adjust the start and end of the TCN segment
+      xJJ <- x[units];
+      start <- min(xJJ, na.rm=TRUE);
+      end <- max(xJJ, na.rm=TRUE);
+
+      # (d) Identify the actual units
+      units <- (start <= x & x <= end);
+      units <- whichVector(units);
+
+      # Update the segment, estimates and counts
+      seg[["tcn.loc.start"]] <- start;
+      seg[["tcn.loc.end"]] <- end;
+      seg[["tcn.mean"]] <- mean(CT[units], na.rm=TRUE);
+      seg[["tcn.num.mark"]] <- length(units);
+      seg[["tcn.num.snps"]] <- sum(isSnp[units]);
+      seg[["tcn.num.hets"]] <- sum(isHet[units]);
+
+      segsII[jj,] <- seg;
+    } # for (jj ...)
+    segs[rows,] <- segsII;
+  } # for (ii ...)
+
+  # Return results
   fitS <- fit;
   fitS$data <- data;
   fitS$output <- segs;
 
   fitS;
-})
+}) # postsegmentTCN()
 
 
 
 ############################################################################
 # HISTORY:
+# 2010-09-21
+# o Added postsegmentTCN() for PairedPSCBS.
 # 2010-09-19
 # o BUG FIX: plot() used non-defined nbrOfLoci; now length(x).
 # 2010-09-15
