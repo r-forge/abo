@@ -21,3 +21,4 @@ bootstrapDHByRegion bootstrapDHByRegion.PairedPSCBS
   callABandHighAI callABandHighAI.PairedPSCBS callAllelicBalance
   callAllelicBalance.PairedPSCBS callExtremeAllelicImbalance
   callExtremeAllelicImbalance.PairedPSCBS
+postsegmentTCN postsegmentTCN.PairedPSCBS

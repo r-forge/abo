@@ -69,6 +69,8 @@
 \alias{callAllelicBalance.PairedPSCBS}
 \alias{callExtremeAllelicImbalance}
 \alias{callExtremeAllelicImbalance.PairedPSCBS}
+\alias{postsegmentTCN}
+\alias{postsegmentTCN.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that
