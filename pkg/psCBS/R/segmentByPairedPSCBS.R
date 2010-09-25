@@ -18,7 +18,9 @@
 #   \item{betaN}{A @numeric @vector of J matched normal BAFs.}
 #   \item{muN}{An optional @numeric @vector of J genotype calls.
 #       If not given, they are estimated from the normal BAFs.}
-#   \item{chromosome}{Optional @integer scalar.  Only used for annotation purposes.}
+#   \item{chromosome}{(Optional) An @integer scalar 
+#       (or a @vector of length J contain a unique value).
+#       Only used for annotation purposes.}
 #   \item{x}{Optional @numeric @vector of J genomic locations.
 #            If @NULL, index locations \code{1:J} are used.}
 #   \item{...}{Not used.}
@@ -65,7 +67,7 @@
 #
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=NULL, x=NULL, ..., flavor=c("dh|tcn", "tcn|dh", "tcn&dh"), seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=as.integer(NA), x=NULL, ..., flavor=c("dh|tcn", "tcn|dh", "tcn&dh"), seed=NULL, verbose=FALSE) {
   require("R.utils") || throw("Package not loaded: R.utils");
   require("aroma.light") || throw("Package not loaded: aroma.light");
   ver <- packageDescription("aroma.light")$Version;
@@ -92,8 +94,16 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   }
 
   # Argument 'chromosome':
-  if (!is.null(chromosome)) {
-    chromosome <- Arguments$getInteger(chromosome, range=c(0,Inf));
+  chromosome <- Arguments$getInteger(chromosome, range=c(0,Inf), disallow="NaN", "Inf");
+  if (length(chromosome) > 1) {
+    chromosome <- Arguments$getIntegers(chromosomes, length=length2);
+    # If 'chromosome' is a vector of length J, then it must contain
+    # a unique chromosome.
+    chromosomes <- sort(unique(chromosome));
+    if (length(chromosomes) > 1) {
+      throw("Argument 'chromosome' specifies more than one unique chromosome: ", length(chromosomes));
+    }
+    chromosome <- chromosomes;
   }
 
   # Argument 'x':
@@ -374,10 +384,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 #  fields <- c("loc.start", "loc.end", "num.mark", "num.het.mark", "dh.mean", "tcn.mean");
 #  segs <- segs[,fields,drop=FALSE];
 
-  # Add chromosome annotation
-  if (!is.null(chromosome)) {
-    segs <- cbind(chromosome=chromosome, segs);
-  }
+  # Add chromosome annotation to table of segments
+  segs <- cbind(chromosome=chromosome, segs);
   verbose && print(verbose, segs);
 
   nbrOfSegs <- nrow(segs);
@@ -385,24 +393,44 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
   verbose && exit(verbose);
 
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Create result object
-  data <- list(CT=CT, betaT=betaT, betaTN=betaTN, betaN=betaN, muN=muN, chromosome=chromosome, x=x);
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  data <- data.frame(
+    CT=CT,
+    betaT=betaT,
+    betaTN=betaTN,
+    betaN=betaN,
+    muN=muN,
+    chromosome=rep(chromosome, times=nbrOfLoci),
+    x=x
+  );
+  # Should we drop attributes? /HB 2010-09-24
+  class(data) <- c("PairedPSCNData", class(data));
+
+  class(segs) <- c("PairedPSCNSegments", class(segs));
 
   fit <- list(
     data = data,
     output = segs
   );
+
   class(fit) <- c("PairedPSCBS", "PSCBS");
 
-  # Return segments found
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Return results
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   fit;
 }) # segmentByPairedPSCBS()
 
 
-
-
 ############################################################################
 # HISTORY:
+# 2010-09-24
+# o Now the 'data' field returned is a data.frame (no longer a list).
+# o Now the 'chromosome' field of the data field is expanded to have the
+#   same number of elements as the other locus fields.
 # 2010-09-18
 # o Added argument 'chromosome' to segmentByPairedPSCBS(), which, if given,
 #   adds a chromosome column to the data and segmentation results.

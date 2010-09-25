@@ -6,7 +6,7 @@ pathname <- system.file("data-ex/pcCBS,exData,chr01.Rbin", package="psCBS");
 data <- R.utils::loadObject(pathname);
 
 # Subset to speed up example
-data0 <- data;
+#data0 <- data;
 #keep <- seq(from=1, to=nrow(data), by=5);
 #data <- data[keep,,drop=FALSE];
 # Order
@@ -20,7 +20,7 @@ x <- position;
 fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN, x=x, verbose=-10);
 
 # Call allelic balance and "LOH" (= extreme allelic imbalance)
-fit <- callABandHighAI(fit, verbose=-10);
+cfit <- callABandHighAI(fit, verbose=-10);
 
 # Display segmentation and calls
 print(fit);

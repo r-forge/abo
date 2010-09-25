@@ -1,6 +1,12 @@
 Package: psCBS
 ==============
 
+Version: 0.7.6 [2010-09-24]
+o Added support to annotating and subsetting also by chromosomes,
+  as well as appending segmentation results from different chromosomes
+  together.
+
+
 Version: 0.7.5 [2010-09-21]
 o Added postsegmentTCN() for PairedPSCBS, which updates the 
   TCN segment start and ends, estimates and counts given the

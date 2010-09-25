@@ -5,6 +5,11 @@ setMethodS3("plot", "PairedPSCBS", function(x, what=c("tcn", "betaN", "betaT", "
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Argument 'fit':
+  if (nbrOfChromosomes(fit) > 1) {
+    throw("Argument 'fit' contains more than one chromosome: ", nbrOfChromosomes(fit));
+  }
+
   # Argument 'what':
   what <- match.arg(what, several.ok=TRUE);
   what <- unique(what);
@@ -25,6 +30,7 @@ setMethodS3("plot", "PairedPSCBS", function(x, what=c("tcn", "betaN", "betaT", "
 
   # Extract the segmentation
   segs <- fit$output;
+
 
   if (!add) {
     subplots(length(what), ncol=1);
@@ -183,4 +189,4 @@ setMethodS3("arrowsDeltaC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
 # 2010-09-03
 # o Added plot() for PairedPSCBS.
 # o Created.
-############################################################################
+############################################################################ 
