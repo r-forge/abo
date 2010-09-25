@@ -19,7 +19,7 @@
   It is intended to be applied to one sample and one chromosome at the time.
  }
 
- \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, chromosome=NULL, x=NULL, ..., flavor=c("dh|tcn", "tcn|dh", "tcn&dh"), seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, chromosome=as.integer(NA), x=NULL, ..., flavor=c("dh|tcn", "tcn|dh", "tcn&dh"), seed=NULL, verbose=FALSE)}
 
  \arguments{
    \item{CT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor total copy numbers to be segmented.}
@@ -27,7 +27,9 @@
    \item{betaN}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J matched normal BAFs.}
    \item{muN}{An optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genotype calls.
        If not given, they are estimated from the normal BAFs.}
-   \item{chromosome}{Optional \code{\link[base]{integer}} scalar.  Only used for annotation purposes.}
+   \item{chromosome}{(Optional) An \code{\link[base]{integer}} scalar
+       (or a \code{\link[base]{vector}} of length J contain a unique value).
+       Only used for annotation purposes.}
    \item{x}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genomic locations.
             If \code{\link[base]{NULL}}, index locations \code{1:J} are used.}
    \item{...}{Not used.}
@@ -73,7 +75,7 @@ pathname <- system.file("data-ex/pcCBS,exData,chr01.Rbin", package="psCBS");
 data <- R.utils::loadObject(pathname);
 
 # Subset to speed up example
-data0 <- data;
+#data0 <- data;
 #keep <- seq(from=1, to=nrow(data), by=5);
 #data <- data[keep,,drop=FALSE];
 # Order
@@ -87,7 +89,7 @@ x <- position;
 fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN, x=x, verbose=-10);
 
 # Call allelic balance and "LOH" (= extreme allelic imbalance)
-fit <- callABandHighAI(fit, verbose=-10);
+cfit <- callABandHighAI(fit, verbose=-10);
 
 # Display segmentation and calls
 print(fit);

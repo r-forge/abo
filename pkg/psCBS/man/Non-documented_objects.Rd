@@ -71,6 +71,17 @@
 \alias{callExtremeAllelicImbalance.PairedPSCBS}
 \alias{postsegmentTCN}
 \alias{postsegmentTCN.PairedPSCBS}
+\alias{append}
+\alias{append.default}
+\alias{append.PSCBS}
+\alias{extractByChromosome}
+\alias{extractByChromosome.PSCBS}
+\alias{getChromosomes}
+\alias{getChromosomes.PSCBS}
+\alias{nbrOfChromosomes}
+\alias{nbrOfChromosomes.PSCBS}
+\alias{nbrOfSegments}
+\alias{nbrOfSegments.PSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

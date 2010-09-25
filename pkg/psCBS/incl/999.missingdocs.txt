@@ -22,3 +22,7 @@ bootstrapDHByRegion bootstrapDHByRegion.PairedPSCBS
   callAllelicBalance.PairedPSCBS callExtremeAllelicImbalance
   callExtremeAllelicImbalance.PairedPSCBS
 postsegmentTCN postsegmentTCN.PairedPSCBS
+ append append.default append.PSCBS extractByChromosome
+ extractByChromosome.PSCBS getChromosomes getChromosomes.PSCBS
+ nbrOfChromosomes nbrOfChromosomes.PSCBS nbrOfSegments
+ nbrOfSegments.PSCBS

@@ -47,15 +47,8 @@ setMethodS3("subsetBySegments", "PairedPSCBS", function(fit, idxs, ..., verbose=
     keep <- keep | (xRange[1] <= x & x <= xRange[2]);
   } # for (kk ...)
   keep <- whichVector(keep);
-
-  for (ff in seq(along=data)) {
-    values <- data[[ff]];
-    if (length(values) == nbrOfLoci) {
-      values <- values[keep];
-      data[[ff]] <- values;
-    }
-  }
-  rm(keep, values); # Not needed anymore
+  data <- data[keep,,drop=FALSE];
+  rm(keep); # Not needed anymore
 
   fitS <- fit;
   fitS$data <- data;
