@@ -1,13 +1,13 @@
 Package: psCBS
 Title: Analysis of Parent Specific DNA Copy Numbers
-Version: 0.7.6
-Date: 2010-09-24
+Version: 0.7.7
+Date: 2010-09-26
 Author: Adam Olshen, Venkatraman E. Seshan
 Description: Segments allele specific DNA copy number data to detect regions 
 	with abnormal copy number within each parental chromosome
 Maintainer: Venkatraman E. Seshan <seshanv@mskcc.org>
-Depends: DNAcopy (>= 1.20.0), R.methodsS3 (>= 1.2.0), R.utils (>= 1.5.0)
-Suggests: aroma.light (>= 1.16.0), matrixStats (>= 0.2.1)
+Depends: DNAcopy (>= 1.20.0), R.methodsS3 (>= 1.2.1), R.utils (>= 1.5.2)
+Suggests: aroma.light (>= 1.16.1), matrixStats (>= 0.2.1)
 License: GPL (>= 2)
 LazyLoad: yes
 biocViews: Microarray, CopyNumberVariants

@@ -1,6 +1,10 @@
 Package: psCBS
 ==============
 
+Version: 0.7.7 [2010-09-26]
+o Now postsegmentTCN() can process multiple chromosomes.
+
+
 Version: 0.7.6 [2010-09-24]
 o Added support to annotating and subsetting also by chromosomes,
   as well as appending segmentation results from different chromosomes
