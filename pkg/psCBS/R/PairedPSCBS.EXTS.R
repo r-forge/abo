@@ -19,40 +19,84 @@ setMethodS3("subsetBySegments", "PairedPSCBS", function(fit, idxs, ..., verbose=
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  # Extract the segmentation result
   segs <- fit$output;
-  stopifnot(!is.null(segs));
+  stopifnot(!is.null(segs)); 
   nbrOfSegments <- nrow(segs);
 
   # Argument 'idxs':
   idxs <- Arguments$getIndices(idxs, max=nbrOfSegments);
 
+  # Argument 'verbose':
+  verbose <- Arguments$getVerbose(verbose);
+  if (verbose) {
+    pushState(verbose);
+    on.exit(popState(verbose));
+  } 
 
-  # Extract the data
+
+
+  verbose && enter(verbose, "Extracting a subset of the segments");
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Extract the data and segmentation results
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   data <- fit$data;
   stopifnot(!is.null(data));
+
+  chromosomes <- getChromosomes(fit);
+  nbrOfChromosomes <- length(chromosomes);
+  verbose && cat(verbose, "Number of chromosomes: ", nbrOfChromosomes);
+  verbose && print(verbose, chromosomes); 
+
+  verbose && cat(verbose, "Number of segments: ", nbrOfSegments);
+
+
+  chromosome <- data$chromosome;
   x <- data$x;
   nbrOfLoci <- length(x);
 
+  verbose && enter(verbose, "Subsetting segments");
   # Subset the region-level data
   segs <- segs[idxs,,drop=FALSE];
+  verbose && print(verbose, segs);
+  verbose && cat(verbose, "Number of TCN markers: ", sum(segs[["tcn.num.mark"]], na.rm=TRUE));
+  verbose && exit(verbose);
 
-  nbrOfSegments <- nrow(segs);
-
+  verbose && enter(verbose, "Subsetting data");
   # Subset the locus-level data
   keep <- logical(nbrOfLoci);
   for (kk in seq(length=nbrOfSegments)) {
+    chrKK <- as.numeric(segs[kk,"chromosome"]);
     xRange <- as.numeric(segs[kk,c("dh.loc.start", "dh.loc.end")]);
+    # Skip NA divider?
+    if (all(is.na(xRange))) {
+      next;
+    }
     # Identify all SNPs in the region
-    keep <- keep | (xRange[1] <= x & x <= xRange[2]);
+    keepKK <- (xRange[1] <= x & x <= xRange[2]);
+    if (!is.na(chrKK)) keepKK <- keepKK & (chromosome == chrKK);
+    nKK <- sum(keepKK, na.rm=TRUE);
+    verbose && cat(verbose, "Number of units: ", nKK);
+    verbose && cat(verbose, "Number of TCN markers: ", segs[kk,"tcn.num.mark"]);
+    keep <- keep | keepKK;
   } # for (kk ...)
   keep <- whichVector(keep);
+  verbose && cat(verbose, "Units to keep:");
+  verbose && str(verbose, keep);
+
   data <- data[keep,,drop=FALSE];
   rm(keep); # Not needed anymore
+  verbose && cat(verbose, "Number of units: ", nrow(data));
+  verbose && exit(verbose);
+
+  # Sanity check
+#  stopifnot(nrow(data) == sum(segs[["tcn.num.mark"]], na.rm=TRUE));
 
   fitS <- fit;
   fitS$data <- data;
   fitS$output <- segs;
+
+  verbose && exit(verbose);
 
   fitS;
 })
@@ -136,21 +180,14 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
 
   segs <- fit$output;
   stopifnot(!is.null(segs));
-  nbrOfSegments <- nrow(segs);
-  verbose && cat(verbose, "Number of segments: ", nbrOfSegments);
 
-  chromosome <- segs$chromosome;
-  chromosomes <- sort(unique(chromosome), na.last=TRUE);
+  chromosomes <- getChromosomes(fit);
   nbrOfChromosomes <- length(chromosomes);
-  if (nbrOfChromosomes > 1) {
-    # Ignore NA chromosomes, because they are dividers
-    chromosomes <- chromosomes[is.finite(chromosomes)];
-  }
-  nbrOfChromosomes <- length(chromosomes);
-
   verbose && cat(verbose, "Number of chromosomes: ", nbrOfChromosomes);
   verbose && print(verbose, chromosomes);
 
+  nbrOfSegments <- nrow(segs);
+  verbose && cat(verbose, "Number of segments: ", nbrOfSegments);
 
   chromosome <- data$chromosome;
   x <- data$x;
@@ -166,7 +203,7 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
   for (cc in seq(length=nbrOfChromosomes)) {
     chr <- chromosomes[cc];
     chrTag <- sprintf("chr%02d", chr);
-    verbose && enter(verbose, sprintf("Chromosome %d ('%s') of %d", chr, chrTag, 22));
+    verbose && enter(verbose, sprintf("Chromosome %d ('%s') of %d", chr, chrTag, nbrOfChromosomes));
     rows <- which(is.element(segs[["chromosome"]], chr));
     segsCC <- segs[rows,,drop=FALSE];
     nbrOfSegmentsCC <- nrow(segsCC);
@@ -205,7 +242,8 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
         # (b) Find the units within this first guess of the TCN segment
         #     HB: (x <= end) or (x < end); is it possible that we
         #         include the same locus in two segments? /HB 2010-09-21
-        units <- (chromosome == chr & start <= x & x <= end);
+        units <- (start <= x & x <= end);
+        if (!is.na(chr)) units <- units & (chromosome == chr);
   
         # (c) Adjust the start and end of the TCN segment
         xJJ <- x[units];
@@ -213,7 +251,8 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
         end <- max(xJJ, na.rm=TRUE);
   
         # (d) Identify the actual units
-        units <- (chromosome == chr & start <= x & x <= end);
+        units <- (start <= x & x <= end);
+        if (!is.na(chr)) units <- units & (chromosome == chr);
         units <- whichVector(units);
         verbose && cat(verbose, "Units:");
         verbose && str(verbose, units);
@@ -257,7 +296,8 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
 ############################################################################
 # HISTORY:
 # 2010-09-26
-# o Now postsegmentTCN() processes multiple chromosomes.
+# o Now subsetBySegments() for PairedPSCBS handles multiple chromosomes.
+# o Now postsegmentTCN() PairedPSCBS handles multiple chromosomes.
 # 2010-09-21
 # o Added postsegmentTCN() for PairedPSCBS.
 # 2010-09-19

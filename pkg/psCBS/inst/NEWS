@@ -2,7 +2,8 @@ Package: psCBS
 ==============
 
 Version: 0.7.7 [2010-09-26]
-o Now postsegmentTCN() can process multiple chromosomes.
+o Now subsetBySegments() and postsegmentTCN() for PairedPSCBS 
+  handles multiple chromosomes.
 
 
 Version: 0.7.6 [2010-09-24]

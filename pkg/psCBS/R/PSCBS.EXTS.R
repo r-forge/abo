@@ -1,6 +1,13 @@
 setMethodS3("getChromosomes", "PSCBS", function(this, ...) {
   segs <- this$output;
-  sort(unique(segs$chromosome), na.last=TRUE);
+  chromosomes <- sort(unique(segs$chromosome), na.last=TRUE);
+
+  # Drop NA dividers
+  if (length(chromosomes) > 1) {
+    chromosomes <- chromosomes[!is.na(chromosomes)];
+  }
+
+  chromosomes;
 })
 
 setMethodS3("nbrOfChromosomes", "PSCBS", function(this, ...) {
@@ -84,6 +91,8 @@ setMethodS3("append", "PSCBS", function(x, other, addSplit=TRUE, ...) {
 
 ############################################################################
 # HISTORY:
+# 2010-09-26
+# o getChromosomes() no longer returns NA divers.
 # 2010-09-24
 # o Added append() and more for PSCBS objects.
 ############################################################################
