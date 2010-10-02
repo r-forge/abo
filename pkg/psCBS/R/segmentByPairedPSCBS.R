@@ -67,7 +67,7 @@
 #
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=as.integer(NA), x=NULL, ..., flavor=c("dh|tcn", "tcn|dh", "tcn&dh"), seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, ..., flavor=c("dh|tcn", "tcn|dh", "tcn&dh"), seed=NULL, verbose=FALSE) {
   require("R.utils") || throw("Package not loaded: R.utils");
   require("aroma.light") || throw("Package not loaded: aroma.light");
   ver <- packageDescription("aroma.light")$Version;
@@ -94,7 +94,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   }
 
   # Argument 'chromosome':
-  chromosome <- Arguments$getInteger(chromosome, range=c(0,Inf), disallow="NaN", "Inf");
+  chromosome <- Arguments$getInteger(chromosome, range=c(0,Inf), disallow=disallow);
   if (length(chromosome) > 1) {
     chromosome <- Arguments$getIntegers(chromosomes, length=length2);
     # If 'chromosome' is a vector of length J, then it must contain
@@ -427,6 +427,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-10-02
+# o Argument 'chromosome' default to 0 and have to be a finite integer.
 # 2010-09-24
 # o Now the 'data' field returned is a data.frame (no longer a list).
 # o Now the 'chromosome' field of the data field is expanded to have the

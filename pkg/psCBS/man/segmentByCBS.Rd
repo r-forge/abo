@@ -21,10 +21,13 @@
   see [1,2].
  }
 
- \usage{\method{segmentByCBS}{default}(y, x=NULL, w=NULL, ..., knownCPs=NULL, seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByCBS}{default}(y, chromosome=0, x=NULL, w=NULL, ..., knownCPs=NULL, seed=NULL, verbose=FALSE)}
 
  \arguments{
    \item{y}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genomic signals to be segmented.}
+   \item{chromosome}{(Optional) An \code{\link[base]{integer}} scalar
+       (or a \code{\link[base]{vector}} of length J contain a unique value).
+       Only used for annotation purposes.}
    \item{x}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genomic locations.
             If \code{\link[base]{NULL}}, index locations \code{1:J} are used.}
    \item{w}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} in [0,1] of J weights.}

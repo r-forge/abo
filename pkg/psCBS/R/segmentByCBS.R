@@ -16,6 +16,9 @@
 #
 # \arguments{
 #   \item{y}{A @numeric @vector of J genomic signals to be segmented.}
+#   \item{chromosome}{(Optional) An @integer scalar 
+#       (or a @vector of length J contain a unique value).
+#       Only used for annotation purposes.}
 #   \item{x}{Optional @numeric @vector of J genomic locations.
 #            If @NULL, index locations \code{1:J} are used.}
 #   \item{w}{Optional @numeric @vector in [0,1] of J weights.}
@@ -66,7 +69,7 @@
 #
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByCBS", "default", function(y, x=NULL, w=NULL, ..., knownCPs=NULL, seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL, ..., knownCPs=NULL, seed=NULL, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -76,6 +79,19 @@ setMethodS3("segmentByCBS", "default", function(y, x=NULL, w=NULL, ..., knownCPs
   nbrOfLoci <- length(y);
 
   length2 <- rep(nbrOfLoci, 2);
+
+  # Argument 'chromosome':
+  chromosome <- Arguments$getInteger(chromosome, range=c(0,Inf), disallow=disallow);
+  if (length(chromosome) > 1) {
+    chromosome <- Arguments$getIntegers(chromosomes, length=length2);
+    # If 'chromosome' is a vector of length J, then it must contain
+    # a unique chromosome.
+    chromosomes <- sort(unique(chromosome));
+    if (length(chromosomes) > 1) {
+      throw("Argument 'chromosome' specifies more than one unique chromosome: ", length(chromosomes));
+    }
+    chromosome <- chromosomes;
+  }
 
   # Argument 'x':
   if (!is.null(x)) {
@@ -95,6 +111,7 @@ setMethodS3("segmentByCBS", "default", function(y, x=NULL, w=NULL, ..., knownCPs
     } else {
       knownCPs <- Arguments$getDoubles(knownCPs);
     }
+    throw("Support for specifying known change points (argument 'knownCPs') is not yet implemented as of 2010-10-02.");
   }
 
   # Argument 'seed':
@@ -149,7 +166,6 @@ setMethodS3("segmentByCBS", "default", function(y, x=NULL, w=NULL, ..., knownCPs
   verbose && enter(verbose, "Setting up ", pkgName, " data structure"); 
 
   sampleName <- "Unnamed sample";
-  chromosome <- 0;
 
   if (is.null(x)) {
     x <- seq(length=nbrOfLoci);
@@ -282,6 +298,8 @@ setMethodS3("segmentByCBS", "default", function(y, x=NULL, w=NULL, ..., knownCPs
 
 ############################################################################
 # HISTORY:
+# 2010-10-02
+# o Added argument optional 'chromosome'.
 # 2010-09-02
 # o ROBUSTNESS: Now segmentByCBS() also works if there are no data points.
 # 2010-07-09
