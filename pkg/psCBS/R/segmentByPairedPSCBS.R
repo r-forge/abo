@@ -53,7 +53,7 @@
 #   Allele B fractions may contain missing values, because such are
 #   interpreted as representing non-polymorphic loci.
 #
-#   None of the input signals can have infinite values, i.e. -@Inf or @Inf.
+#   None of the input signals may have infinite values, i.e. -@Inf or @Inf.
 #   If so, an informative error is thrown.
 # }
 #
@@ -80,7 +80,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   disallow <- c("NA", "NaN", "Inf");
   CT <- Arguments$getDoubles(CT, disallow=disallow);
   nbrOfLoci <- length(CT);
-  length2 <- rep(nbrOfLoci, 2);
+  length2 <- rep(nbrOfLoci, times=2);
 
   # Argument 'betaT':
   betaT <- Arguments$getDoubles(betaT, length=length2, disallow="Inf");
@@ -187,7 +187,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Record input data
+  # Setup input data
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Physical positions of loci
   if (is.null(x)) {
@@ -219,7 +219,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # 1a. Identification of change points in total copy numbers
+  # 1a. Transform total copy-number signals
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # TO DO: Deal with negative values
   h <- function(x) { 
@@ -233,7 +233,6 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     x;
   }
 
-  verbose && enter(verbose, "Identification of change points by total copy numbers");
   if (!is.null(h)) {
     verbose && enter(verbose, "Transforming signals");
     verbose && cat(verbose, "Input signals:");
@@ -251,25 +250,40 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     yT <- CT;
   } # if (!is.null(h))
 
-  fit <- segmentByCBS(yT, x=x, verbose=verbose);
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # 1b. Identification of change points in total copy numbers
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  verbose && enter(verbose, "Identification of change points by total copy numbers");
+
+  fit <- segmentByCBS(yT, chromosome=chromosome, x=x, verbose=verbose);
   verbose && str(verbose, fit);
   tcnSegments <- fit$output;
   rm(yT, fit);
 
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # 1c. Backtransform estimates
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (!is.null(hinv)) {
     verbose && enter(verbose, "Backtransforming segmented mean levels");
     tcnSegments[,"seg.mean"] <- hinv(tcnSegments[,"seg.mean"]);
     verbose && exit(verbose);
   }
 
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # 1d. Restructure data 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Drop dummy columns
-  keep <- setdiff(colnames(tcnSegments), c("ID", "chrom"));
+  keep <- setdiff(colnames(tcnSegments), c("ID"));
   tcnSegments <- tcnSegments[,keep,drop=FALSE];
 
   # Tag fields by TCN
   names <- names(tcnSegments);
   names <- gsub("seg.mean", "mean", names, fixed=TRUE);
   names <- sprintf("tcn.%s", names);
+  names <- gsub("tcn.chrom", "chromosome", names, fixed=TRUE);
   names(tcnSegments) <- names;
   rm(names);
   verbose && print(verbose, tcnSegments);
@@ -280,8 +294,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   verbose && exit(verbose);
 
 
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # 1b. Identification of additional change points using DH
+  # 2a. Identification of additional change points using DH
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # For each segment independently, segment decrease of heterozygousity (DH)
   # using CBS. By definition, only heterozygous SNPs are used.
@@ -319,7 +334,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     rm(keep);
 
     verbose && enter(verbose, "Segmenting DH signals");
-    fit <- segmentByCBS(rhoKKHet, x=xKKHet, verbose=less(verbose, 10));
+    fit <- segmentByCBS(rhoKKHet, chromosome=chromosome, x=xKKHet, verbose=less(verbose, 10));
     verbose && str(verbose, fit);
     dhSegments <- fit$output;
     verbose && exit(verbose);
@@ -380,12 +395,10 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   segs <- Reduce(rbind, segs);
   rownames(segs) <- NULL;
 
-  # Reorder columns
-#  fields <- c("loc.start", "loc.end", "num.mark", "num.het.mark", "dh.mean", "tcn.mean");
-#  segs <- segs[,fields,drop=FALSE];
-
-  # Add chromosome annotation to table of segments
-  segs <- cbind(chromosome=chromosome, segs);
+  # Move 'chrom' column to the first column
+  idx <- match("chromosome", names(segs));
+  idxs <- c(idx, seq(length=ncol(segs))[-idx]);
+  segs <- segs[,idxs,drop=FALSE];
   verbose && print(verbose, segs);
 
   nbrOfSegs <- nrow(segs);
@@ -427,6 +440,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-10-03
+# o CLEAN UP: Now segmentByPairedPSCBS() is making use of argument
+#   'chromosome' of segmentByCBS().
 # 2010-10-02
 # o Argument 'chromosome' default to 0 and have to be a finite integer.
 # 2010-09-24

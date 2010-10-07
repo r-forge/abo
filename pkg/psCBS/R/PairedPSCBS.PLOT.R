@@ -1,4 +1,4 @@
-setMethodS3("plot", "PairedPSCBS", function(x, what=c("tcn", "betaN", "betaT", "betaTN", "rho"), pch=".", Clim=c(0,6), Blim=c(0,1), ..., add=FALSE) {
+setMethodS3("plot", "PairedPSCBS", function(x, what=c("tcn", "betaN", "betaT", "betaTN", "rho"), pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1, ..., add=FALSE) {
   # To please R CMD check
   fit <- x;
  
@@ -14,12 +14,17 @@ setMethodS3("plot", "PairedPSCBS", function(x, what=c("tcn", "betaN", "betaT", "
   what <- match.arg(what, several.ok=TRUE);
   what <- unique(what);
 
+  # Argument 'xScale':
+  xScale <- Arguments$getNumeric(xScale, range=c(0,Inf));
+
   # Extract the input data
   data <- fit$data;
   if (is.null(data)) {
     throw("Cannot plot segmentation results. No input data available.");
   }
 
+  chromosomes <- getChromosomes(fit);
+  chromosome <- chromosomes[1];
   x <- data$x;
   CT <- data$CT;
   betaT <- data$betaT;
@@ -32,6 +37,16 @@ setMethodS3("plot", "PairedPSCBS", function(x, what=c("tcn", "betaN", "betaT", "
   segs <- fit$output;
 
 
+  if (chromosome != 0) {
+    chrTag <- sprintf("Chr%02d", chromosome);
+  } else {
+    chrTag <- "";
+  }
+
+  if (xScale != 1) {
+    x <- xScale * x;
+  }
+
   if (!add) {
     subplots(length(what), ncol=1);
     par(mar=c(1,4,1,2)+1);
@@ -39,20 +54,24 @@ setMethodS3("plot", "PairedPSCBS", function(x, what=c("tcn", "betaN", "betaT", "
 
   if (is.element("tcn", what)) {
     plot(x, CT, pch=pch, col="gray", ylim=Clim);
-    drawLevels(fit, what="tcn");
+    stext(side=3, pos=1, chrTag);
+    drawLevels(fit, what="tcn", xScale=xScale);
   }
 
   col <- c("gray", "black")[(muN == 1/2) + 1];
   if (is.element("betaN", what)) {
     plot(x, betaN, pch=pch, col=col, ylim=Blim);
+    stext(side=3, pos=1, chrTag);
   }
 
   if (is.element("betaT", what)) {
     plot(x, betaT, pch=pch, col=col, ylim=Blim);
+    stext(side=3, pos=1, chrTag);
   }
 
   if (is.element("betaTN", what)) {
     plot(x, betaTN, pch=pch, col=col, ylim=Blim);
+    stext(side=3, pos=1, chrTag);
   }
 
   if (is.element("rho", what)) {
@@ -62,7 +81,8 @@ setMethodS3("plot", "PairedPSCBS", function(x, what=c("tcn", "betaN", "betaT", "
     rho <- rep(naValue, length=nbrOfLoci);
     rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
     plot(x, rho, pch=pch, col=col, ylim=Blim);
-    drawLevels(fit, what="dh");
+    stext(side=3, pos=1, chrTag);
+    drawLevels(fit, what="dh", xScale=xScale);
   }
 })
 
@@ -169,6 +189,9 @@ setMethodS3("arrowsDeltaC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
 
 ############################################################################
 # HISTORY:
+# 2010-10-03
+# o Added argument 'xScale' to plot() for PairedPSCBS.
+# o Now plot() for PairedPSCBS adds a chromosome tag.
 # 2010-09-21
 # o Added argument 'what' to plot() for PairedPSCBS.
 # o Added postsegmentTCN() for PairedPSCBS.

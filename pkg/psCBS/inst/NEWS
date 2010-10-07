@@ -1,7 +1,11 @@
 Package: psCBS
 ==============
 
-Version: 0.7.8 [2010-10-02]
+Version: 0.8.0 [2010-10-06]
+o CLEAN UP: Removed all old code, native code and help pages.
+
+
+Version: 0.7.8 [2010-10-03]
 o Added optional argument 'chromosome' to segmentByCBS().
   Note that at this point it is only used for annotating the
   results; it can not be used to segmented multiple chromosomes

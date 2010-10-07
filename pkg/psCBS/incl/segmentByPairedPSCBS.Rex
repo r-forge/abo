@@ -26,4 +26,4 @@ cfit <- callABandHighAI(fit, verbose=-10);
 print(fit);
 
 # Plot results
-plot(fit);
+plot(fit, xScale=1e-6);

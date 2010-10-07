@@ -62,7 +62,7 @@
    Allele B fractions may contain missing values, because such are
    interpreted as representing non-polymorphic loci.
 
-   None of the input signals can have infinite values, i.e. -\code{\link[base:is.finite]{Inf}} or \code{\link[base:is.finite]{Inf}}.
+   None of the input signals may have infinite values, i.e. -\code{\link[base:is.finite]{Inf}} or \code{\link[base:is.finite]{Inf}}.
    If so, an informative error is thrown.
  }
 
@@ -95,7 +95,7 @@ cfit <- callABandHighAI(fit, verbose=-10);
 print(fit);
 
 # Plot results
-plot(fit);
+plot(fit, xScale=1e-6);
 }
 
  \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
