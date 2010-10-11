@@ -1,6 +1,12 @@
 Package: psCBS
 ==============
 
+Version: 0.8.1 [2010-10-10]
+o The default for segmentByPairedPSCBS() is now to segment TCN on
+  the original scale, not the sqrt().
+o Added plotTracks() for PairedPSCBS.
+
+
 Version: 0.8.0 [2010-10-06]
 o CLEAN UP: Removed all old code, native code and help pages.
 

@@ -1,4 +1,41 @@
-setMethodS3("plot", "PairedPSCBS", function(x, what=c("tcn", "betaN", "betaT", "betaTN", "rho"), pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1, ..., add=FALSE) {
+###########################################################################/**
+# @set "class=PairedPSCBS"
+# @RdocMethod plotTracks
+# @alias plotTracks
+#
+# @title "Plots parental specific copy numbers along the genome"
+#
+# \description{
+#  @get "title" for one or more chromosomes.
+#  It is possible to specify what type of tracks to plot.
+#  Each type of track is plotted in its own panel.
+# }
+#
+# @synopsis
+#
+# \arguments{
+#   \item{x}{A @see "PairedPSCBS" result object.}
+#   \item{tracks}{A @character @vector specifying what types of tracks to plot.}
+#   \item{pch}{The type of points to use.}
+#   \item{Clim}{The range of copy numbers.}
+#   \item{Blim}{The range of allele B fractions (BAFs) and 
+#     decrease of heterozygosity (DHs).}
+#   \item{xScale}{The scale factor used for genomic positions.}
+#   \item{...}{Not used.}
+#   \item{add}{If @TRUE, the panels plotted are added to the existing plot,
+#     otherwise a new plot is created.}
+# }
+#
+# \value{
+#   Returns nothing.
+# }
+# 
+# @author
+#
+# @keyword IO
+# @keyword internal
+#*/########################################################################### 
+setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE) {
   # To please R CMD check
   fit <- x;
  
@@ -10,9 +47,9 @@ setMethodS3("plot", "PairedPSCBS", function(x, what=c("tcn", "betaN", "betaT", "
     throw("Argument 'fit' contains more than one chromosome: ", nbrOfChromosomes(fit));
   }
 
-  # Argument 'what':
-  what <- match.arg(what, several.ok=TRUE);
-  what <- unique(what);
+  # Argument 'tracks':
+  tracks <- match.arg(tracks, several.ok=TRUE);
+  tracks <- unique(tracks);
 
   # Argument 'xScale':
   xScale <- Arguments$getNumeric(xScale, range=c(0,Inf));
@@ -48,51 +85,82 @@ setMethodS3("plot", "PairedPSCBS", function(x, what=c("tcn", "betaN", "betaT", "
   }
 
   if (!add) {
-    subplots(length(what), ncol=1);
+    subplots(length(tracks), ncol=1);
     par(mar=c(1,4,1,2)+1);
   }
 
-  if (is.element("tcn", what)) {
-    plot(x, CT, pch=pch, col="gray", ylim=Clim);
-    stext(side=3, pos=1, chrTag);
-    drawLevels(fit, what="tcn", xScale=xScale);
-  }
-
-  col <- c("gray", "black")[(muN == 1/2) + 1];
-  if (is.element("betaN", what)) {
-    plot(x, betaN, pch=pch, col=col, ylim=Blim);
-    stext(side=3, pos=1, chrTag);
-  }
-
-  if (is.element("betaT", what)) {
-    plot(x, betaT, pch=pch, col=col, ylim=Blim);
-    stext(side=3, pos=1, chrTag);
-  }
-
-  if (is.element("betaTN", what)) {
-    plot(x, betaTN, pch=pch, col=col, ylim=Blim);
-    stext(side=3, pos=1, chrTag);
-  }
-
-  if (is.element("rho", what)) {
-    isSnp <- (!is.na(betaTN) & !is.na(muN));
-    isHet <- isSnp & (muN == 1/2);
-    naValue <- as.double(NA);
-    rho <- rep(naValue, length=nbrOfLoci);
-    rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
-    plot(x, rho, pch=pch, col=col, ylim=Blim);
-    stext(side=3, pos=1, chrTag);
-    drawLevels(fit, what="dh", xScale=xScale);
-  }
+  for (track in tracks) {
+    if (track == "tcn") {
+      plot(x, CT, pch=pch, col="gray", ylim=Clim, ylab="TCN");
+      stext(side=3, pos=1, chrTag);
+      drawLevels(fit, what="tcn", xScale=xScale);
+    }
+  
+    if (track == "tcn,c1,c2") {
+      plot(x, CT, pch=pch, col="gray", ylim=Clim, ylab="C1, C2, TCN");
+      stext(side=3, pos=1, chrTag);
+      drawLevels(fit, what="tcn", xScale=xScale);
+      drawLevels(fit, what="c2", col="purple", xScale=xScale);
+      drawLevels(fit, what="c1", col="blue", xScale=xScale);
+    }
+  
+    col <- c("gray", "black")[(muN == 1/2) + 1];
+    if (track == "betaN") {
+      plot(x, betaN, pch=pch, col=col, ylim=Blim, ylab="BAF_N");
+      stext(side=3, pos=1, chrTag);
+    }
+  
+    if (track == "betaT") {
+      plot(x, betaT, pch=pch, col=col, ylim=Blim, ylab="BAF_T");
+      stext(side=3, pos=1, chrTag);
+    }
+  
+    if (track == "betaTN") {
+      plot(x, betaTN, pch=pch, col=col, ylim=Blim, ylab="BAF_TN");
+      stext(side=3, pos=1, chrTag);
+    }
+  
+    if (track == "rho") {
+      isSnp <- (!is.na(betaTN) & !is.na(muN));
+      isHet <- isSnp & (muN == 1/2);
+      naValue <- as.double(NA);
+      rho <- rep(naValue, length=nbrOfLoci);
+      rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
+      plot(x, rho, pch=pch, col="gray", ylim=Blim, ylab="DH");
+      stext(side=3, pos=1, chrTag);
+      drawLevels(fit, what="dh", xScale=xScale);
+    }
+  } # for (track ...)
 })
 
 
-setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "dh"), ...) {
+setMethodS3("plot", "PairedPSCBS", function(x, ...) {
+  plotTracks(x, ...);
+})
+
+
+setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "dh", "c1", "c2"), xScale=1e-6, ...) {
   # Argument 'what':
   what <- match.arg(what);
 
   # Get segmentation results
   segs <- as.data.frame(fit);
+
+
+  if (is.element(what, c("c1", "c2"))) {
+    c1c2 <- extractC1C2(fit);
+    c1c2 <- c1c2[,1:2,drop=FALSE];
+    # Sanity check
+    stopifnot(nrow(c1c2) == nrow(segs));
+
+    # AD HOC
+    if (what == "c1") {
+      segs[,"dh.mean"] <- c1c2[,1];
+    } else if (what == "c2") {
+      segs[,"dh.mean"] <- c1c2[,2];
+    }
+    what <- "dh";
+  }
 
   # Extract subset of segments
   fields <- c("loc.start", "loc.end", "mean");
@@ -100,11 +168,11 @@ setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "dh"), ...)
   segs <- segs[,fields, drop=FALSE];
   segs <- unique(segs);
 
+  # Reuse drawLevels() for the DNAcopy class
   colnames(segs) <- c("loc.start", "loc.end", "seg.mean");
-
   dummy <- list(output=segs);
   class(dummy) <- "DNAcopy";
-  drawLevels(dummy, ...);
+  drawLevels(dummy, xScale=xScale, ...);
 })
 
 
@@ -140,16 +208,6 @@ setMethodS3("linesC1C2", "PairedPSCBS", function(fit, ...) {
 }) # linessC1C2()
 
 
-setMethodS3("arrowsC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
-  xy <- extractMinorMajorCNs(fit);
-  xy <- xy[,1:2,drop=FALSE];
-  x <- xy[,1,drop=TRUE];
-  y <- xy[,2,drop=TRUE];
-  s <- seq(length=length(x)-1);
-  arrows(x0=x[s],y=y[s], x1=x[s+1],y1=y[s+1], code=2, length=length, ...);
-}) # arrowsC1C2()
-
-
 
 
 setMethodS3("plotDeltaC1C2", "PairedPSCBS", function(fit, ..., xlab=expression(Delta*C[1]), ylab=expression(Delta*C[2]), Clim=c(-2,2)) {
@@ -174,6 +232,17 @@ setMethodS3("linesDeltaC1C2", "PairedPSCBS", function(fit, ...) {
 })
 
 
+
+setMethodS3("arrowsC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
+  xy <- extractMinorMajorCNs(fit);
+  xy <- xy[,1:2,drop=FALSE];
+  x <- xy[,1,drop=TRUE];
+  y <- xy[,2,drop=TRUE];
+  s <- seq(length=length(x)-1);
+  arrows(x0=x[s],y=y[s], x1=x[s+1],y1=y[s+1], code=2, length=length, ...);
+}) # arrowsC1C2()
+
+
 setMethodS3("arrowsDeltaC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
   xy <- extractDeltaC1C2(fit);
   xy <- xy[,1:2,drop=FALSE];
@@ -190,6 +259,9 @@ setMethodS3("arrowsDeltaC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
 ############################################################################
 # HISTORY:
 # 2010-10-03
+# o Now the default is that plotTracks() for PairedPSCBS generated three
+#   panels: (1) TCN, (2) DH, and (3) C1+C2+TCN.
+# o Added plotTracks() to be more explicit than just plot().
 # o Added argument 'xScale' to plot() for PairedPSCBS.
 # o Now plot() for PairedPSCBS adds a chromosome tag.
 # 2010-09-21

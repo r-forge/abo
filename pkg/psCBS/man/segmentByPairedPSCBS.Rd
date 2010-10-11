@@ -19,7 +19,7 @@
   It is intended to be applied to one sample and one chromosome at the time.
  }
 
- \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, ..., flavor=c("dh|tcn", "tcn|dh", "tcn&dh"), seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), seed=NULL, verbose=FALSE)}
 
  \arguments{
    \item{CT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor total copy numbers to be segmented.}
@@ -86,7 +86,7 @@ R.oo::attachLocally(data);
 x <- position;
 
 # Paired PSCBS segmentation
-fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN, x=x, verbose=-10);
+fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN, chromosome=1, x=x, verbose=-10);
 
 # Call allelic balance and "LOH" (= extreme allelic imbalance)
 cfit <- callABandHighAI(fit, verbose=-10);
@@ -95,7 +95,7 @@ cfit <- callABandHighAI(fit, verbose=-10);
 print(fit);
 
 # Plot results
-plot(fit, xScale=1e-6);
+plotTracks(fit, xScale=1e-6);
 }
 
  \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}

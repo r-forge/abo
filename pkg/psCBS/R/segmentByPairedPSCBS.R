@@ -67,7 +67,7 @@
 #
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, ..., flavor=c("dh|tcn", "tcn|dh", "tcn&dh"), seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), seed=NULL, verbose=FALSE) {
   require("R.utils") || throw("Package not loaded: R.utils");
   require("aroma.light") || throw("Package not loaded: aroma.light");
   ver <- packageDescription("aroma.light")$Version;
@@ -86,7 +86,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   betaT <- Arguments$getDoubles(betaT, length=length2, disallow="Inf");
 
   # Argument 'betaN':
-  betaN <- Arguments$getDoubles(betaN, length=length2, disallow="Inf");
+ betaN <- Arguments$getDoubles(betaN, length=length2, disallow="Inf");
 
   # Argument 'muN':
   if (!is.null(muN)) {
@@ -113,7 +113,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
   # Argument 'flavor':
   flavor <- match.arg(flavor);
-  if (!is.element(flavor, c("dh|tcn"))) {
+  if (!is.element(flavor, c("tcn,dh", "sqrt(tcn),dh"))) {
     throw("Segmentation flavor not supported. Currently only \"dh|tcn\" is implemented: ", flavor);
   }
 
@@ -221,20 +221,28 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # 1a. Transform total copy-number signals
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # TO DO: Deal with negative values
-  h <- function(x) { 
-    y <- x;
-    y[x >= 0] <- sqrt(x[x >= 0]);
-    y;
-  }
-  hinv <- function(y) {
-    x <- y;
-    x[y >= 0] <- y[y >= 0]^2;
-    x;
+  # The default is not to transform signals
+  h <- hinv <- NULL;
+
+  if (flavor == "sqrt(tcn),dh") {
+    # TO DO: Deal with negative values
+    h <- function(x) { 
+      y <- x;
+      y[x >= 0] <- sqrt(x[x >= 0]);
+      y;
+    }
+    hinv <- function(y) {
+      x <- y;
+      x[y >= 0] <- y[y >= 0]^2;
+      x;
+    }
   }
 
   if (!is.null(h)) {
     verbose && enter(verbose, "Transforming signals");
+    verbose && cat(verbose, "Transform:");
+    verbose && print(verbose, h);
+
     verbose && cat(verbose, "Input signals:");
     verbose && str(verbose, CT);
 
@@ -267,7 +275,11 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (!is.null(hinv)) {
     verbose && enter(verbose, "Backtransforming segmented mean levels");
+    verbose && cat(verbose, "Backtransform:");
+    verbose && print(verbose, hinv);
+
     tcnSegments[,"seg.mean"] <- hinv(tcnSegments[,"seg.mean"]);
+
     verbose && exit(verbose);
   }
 
@@ -440,6 +452,10 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-10-10
+# o The default is now to segment TCN on the original scale, not the sqrt().
+# o Added flavor "sqrt(tcn),dh", which is segments sqrt(TCN) and then DH,
+#   as original proposed by ABO.
 # 2010-10-03
 # o CLEAN UP: Now segmentByPairedPSCBS() is making use of argument
 #   'chromosome' of segmentByCBS().
