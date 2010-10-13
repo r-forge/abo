@@ -2,7 +2,7 @@
 # @RdocPackage psCBS
 #
 # \description{
-#   @eval "packageDescription('sfit')$Description".
+#   @eval "packageDescription('psCBS')$Description".
 #
 #   This package should be considered to be in an alpha or beta phase.
 #   You should expect the API to be changing over time.
