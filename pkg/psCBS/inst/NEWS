@@ -1,9 +1,13 @@
 Package: psCBS
 ==============
 
+Version: 0.9.0 [2010-10-18]
+o Added arguments 'alphaTCN' and 'alphaDH' to segmentByPairedPSCBS()
+  with defaults according to the paper.
+
+
 Version: 0.8.3 [2010-10-18]
 o Now segmentByPairedPSCBS() can segment multiple chromosomes.
-o Added arguments 'alphaTCN' and 'alphaDH' to segmentByPairedPSCBS().
 
 
 Version: 0.8.2 [2010-10-17]

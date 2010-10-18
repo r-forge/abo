@@ -341,7 +341,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     x <- seq(length=nbrOfLoci);
   }
 
-  fit <- segmentByCBS(yT, chromosome=chromosome, x=x, alpha=alphaTCN, verbose=verbose);
+  fit <- segmentByCBS(yT, chromosome=chromosome, x=x, alpha=alphaTCN, 
+                                                         verbose=verbose);
   verbose && str(verbose, fit);
   tcnSegments <- fit$output;
   rm(yT, fit);
@@ -424,7 +425,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
     verbose && enter(verbose, "Segmenting DH signals");
     fit <- segmentByCBS(rhoKKHet, chromosome=chromosome, x=xKKHet, 
-                        alpha=alphaDH, verbose=less(verbose, 10));
+                                           alpha=alphaDH, verbose=verbose);
     verbose && str(verbose, fit);
     dhSegments <- fit$output;
     verbose && exit(verbose);
