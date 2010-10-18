@@ -15,7 +15,8 @@
 
 
  \description{
-   This package provides a method for robustly fitting a K-dimensional simplex in M dimensions..
+   Segments allele specific DNA copy number data to detect regions
+with abnormal copy number within each parental chromosome.
 
    This package should be considered to be in an alpha or beta phase.
    You should expect the API to be changing over time.

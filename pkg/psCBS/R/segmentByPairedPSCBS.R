@@ -26,6 +26,8 @@
 #   \item{...}{Not used.}
 #   \item{flavor}{A @character specifying what type of segmentation and 
 #     calling algorithm to be used.}
+#   \item{tbn}{If @TRUE, \code{betaT} is normalized before segmentation
+#     using the TumorBoost method, otherwise not.}
 #   \item{seed}{An (optional) @integer specifying the random seed to be 
 #     set before calling the segmentation method.  The random seed is
 #     set to its original state when exiting.  If @NULL, it is not set.}
@@ -67,7 +69,7 @@
 #
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), tbn=TRUE, seed=NULL, verbose=FALSE) {
   require("R.utils") || throw("Package not loaded: R.utils");
   require("aroma.light") || throw("Package not loaded: aroma.light");
   ver <- packageDescription("aroma.light")$Version;
@@ -116,6 +118,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   if (!is.element(flavor, c("tcn,dh", "sqrt(tcn),dh"))) {
     throw("Segmentation flavor not supported. Currently only \"dh|tcn\" is implemented: ", flavor);
   }
+
+  # Argument 'tbn':
+  tbn <- Arguments$getLogical(tbn);
 
   # Argument 'seed':
   if (!is.null(seed)) {
@@ -173,17 +178,23 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Normalize betaT using betaN (TumorBoost normalization)
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  verbose && enter(verbose, "Normalizing betaT using betaN (TumorBoost)");
-  betaTN <- aroma.light::normalizeTumorBoost(betaT=betaT, betaN=betaN, muN=muN, preserveScale=TRUE);
-  verbose && cat(verbose, "Normalized BAFs:");
-  verbose && str(verbose, betaTN);
-  verbose && exit(verbose);
+  if (tbn) {
+    verbose && enter(verbose, "Normalizing betaT using betaN (TumorBoost)");
+    betaTN <- aroma.light::normalizeTumorBoost(betaT=betaT, betaN=betaN, muN=muN, preserveScale=TRUE);
+    verbose && cat(verbose, "Normalized BAFs:");
+    verbose && str(verbose, betaTN);
 
-  # Assert that no missing values where introduced
-  keep <- (is.finite(betaT) & is.finite(betaN) & is.finite(muN));
-  if (any(is.na(betaTN[keep]))) {
-    throw("Internal error: normalizeTumorBoost() introduced missing values.");
+    # Assert that no missing values where introduced
+    keep <- (is.finite(betaT) & is.finite(betaN) & is.finite(muN));
+    if (any(is.na(betaTN[keep]))) {
+      throw("Internal error: normalizeTumorBoost() introduced missing values.");
+    }
+    rm(keep);
+    verbose && exit(verbose);
+  } else {
+    betaTN <- betaT;
   }
+
 
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -452,6 +463,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-10-17
+# o Added argument 'tbn' to segmentByPairedPSCBS() specifying whether
+#   TumorBoostNormalization should be applied or not.
 # 2010-10-10
 # o The default is now to segment TCN on the original scale, not the sqrt().
 # o Added flavor "sqrt(tcn),dh", which is segments sqrt(TCN) and then DH,
