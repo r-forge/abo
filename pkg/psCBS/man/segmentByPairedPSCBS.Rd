@@ -19,7 +19,7 @@
   It is intended to be applied to one sample and one chromosome at the time.
  }
 
- \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), tbn=TRUE, seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), tbn=TRUE, seed=NULL, verbose=FALSE)}
 
  \arguments{
    \item{CT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor total copy numbers to be segmented.}
@@ -32,6 +32,9 @@
        Only used for annotation purposes.}
    \item{x}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genomic locations.
             If \code{\link[base]{NULL}}, index locations \code{1:J} are used.}
+   \item{alphaTCN, alphaDH}{The significance levels for segmenting total
+        copy numbers (TCNs) and decrease-in-heterozygosity signals (DHs),
+        respectively.}
    \item{...}{Not used.}
    \item{flavor}{A \code{\link[base]{character}} specifying what type of segmentation and
      calling algorithm to be used.}
@@ -104,6 +107,10 @@ plotTracks(fit, xScale=1e-6);
 
  \seealso{
    Internally \code{\link{segmentByCBS}}() is used for segmentation.
+ }
+
+ \references{
+   [1] Olshen et al, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, submitted, 2010.\cr
  }
 
 

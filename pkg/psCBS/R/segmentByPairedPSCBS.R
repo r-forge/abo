@@ -23,6 +23,9 @@
 #       Only used for annotation purposes.}
 #   \item{x}{Optional @numeric @vector of J genomic locations.
 #            If @NULL, index locations \code{1:J} are used.}
+#   \item{alphaTCN, alphaDH}{The significance levels for segmenting total
+#        copy numbers (TCNs) and decrease-in-heterozygosity signals (DHs),
+#        respectively.}
 #   \item{...}{Not used.}
 #   \item{flavor}{A @character specifying what type of segmentation and 
 #     calling algorithm to be used.}
@@ -67,9 +70,13 @@
 #   Internally @see "segmentByCBS" is used for segmentation.
 # }
 #
+# \references{
+#   [1] Olshen et al, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, submitted, 2010.\cr
+# }
+#
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), tbn=TRUE, seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), tbn=TRUE, seed=NULL, verbose=FALSE) {
   require("R.utils") || throw("Package not loaded: R.utils");
   require("aroma.light") || throw("Package not loaded: aroma.light");
   ver <- packageDescription("aroma.light")$Version;
@@ -96,22 +103,21 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   }
 
   # Argument 'chromosome':
-  chromosome <- Arguments$getInteger(chromosome, range=c(0,Inf), disallow=disallow);
+  chromosome <- Arguments$getIntegers(chromosome, range=c(0,Inf), disallow=disallow);
   if (length(chromosome) > 1) {
-    chromosome <- Arguments$getIntegers(chromosomes, length=length2);
-    # If 'chromosome' is a vector of length J, then it must contain
-    # a unique chromosome.
-    chromosomes <- sort(unique(chromosome));
-    if (length(chromosomes) > 1) {
-      throw("Argument 'chromosome' specifies more than one unique chromosome: ", length(chromosomes));
-    }
-    chromosome <- chromosomes;
+    chromosome <- Arguments$getIntegers(chromosome, length=length2);
   }
 
   # Argument 'x':
   if (!is.null(x)) {
     x <- Arguments$getDoubles(x, length=length2, disallow=disallow);
   }
+
+  # Argument 'alphaTCN':
+  alphaTCN <- Arguments$getDouble(alphaTCN, range=c(0,1));
+
+  # Argument 'alphaDH':
+  alphaDH <- Arguments$getDouble(alphaDH, range=c(0,1));
 
   # Argument 'flavor':
   flavor <- match.arg(flavor);
@@ -136,8 +142,6 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 
   verbose && enter(verbose, "Segmenting paired tumor-normal signals using PSCBS");
-  verbose && cat(verbose, "Number of loci: ", nbrOfLoci);
-
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Set the random seed
@@ -175,6 +179,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   }
 
 
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Normalize betaT using betaN (TumorBoost normalization)
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -198,12 +203,68 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Multiple chromosomes?
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  chromosomes <- sort(unique(chromosome));
+  nbrOfChromosomes <- length(chromosomes);
+  if (nbrOfChromosomes > 1) {
+    verbose && enter(verbose, "Segmenting multiple chromosomes");
+    verbose && cat(verbose, "Number of chromosomes: ", nbrOfChromosomes);
+
+    fitList <- list();
+    for (kk in seq(length=nbrOfChromosomes)) {
+      chromosomeKK <- chromosomes[kk];
+      chrTag <- sprintf("Chr%02d", chromosomeKK);
+      verbose && enter(verbose, sprintf("Chromosome #%d ('%s') of %d", kk, chrTag, nbrOfChromosomes));
+
+      units <- whichVector(chromosome == chromosomeKK);
+      verbose && cat(verbose, "Units:");
+      verbose && str(verbose, units); 
+
+      if (is.null(x)) {
+        xKK <- NULL;
+      } else {
+        xKK <- x[units];
+      }
+      fit <- segmentByPairedPSCBS(CT=CT[units], betaT=betaTN[units], 
+                betaN=betaN[units], muN=muN[units], chromosome=chromosomeKK,
+                                    x=xKK, tbn=FALSE, ..., verbose=verbose);
+      verbose && print(verbose, head(as.data.frame(fit)));
+      verbose && print(verbose, tail(as.data.frame(fit)));
+      
+      fitList[[chrTag]] <- fit;
+
+      # Not needed anymore
+      rm(units, fit);
+      verbose && exit(verbose);
+    } # for (kk ...)
+
+    verbose && enter(verbose, "Merging");
+    fit <- Reduce(append, fitList);
+    # Not needed anymore
+    rm(fitList);
+    verbose && exit(verbose);
+
+    verbose && print(verbose, head(as.data.frame(fit)));
+    verbose && print(verbose, tail(as.data.frame(fit)));
+   
+    verbose && exit(verbose);
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Return results
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    return(fit);
+  } # if (nbrOfChromosomes > 1)
+
+
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Setup input data
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Physical positions of loci
-  if (is.null(x)) {
-    x <- seq(length=nbrOfLoci);
-  }
+  verbose && cat(verbose, "alphaTCN: ", alphaTCN);
+  verbose && cat(verbose, "alphaDH: ", alphaDH);
+  verbose && cat(verbose, "Number of loci: ", nbrOfLoci);
 
   # SNPs are identifies as those loci that have non-missing 'betaTN' & 'muN'
   isSnp <- (!is.na(betaTN) & !is.na(muN));
@@ -275,7 +336,12 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   verbose && enter(verbose, "Identification of change points by total copy numbers");
 
-  fit <- segmentByCBS(yT, chromosome=chromosome, x=x, verbose=verbose);
+  # Physical positions of loci
+  if (is.null(x)) {
+    x <- seq(length=nbrOfLoci);
+  }
+
+  fit <- segmentByCBS(yT, chromosome=chromosome, x=x, alpha=alphaTCN, verbose=verbose);
   verbose && str(verbose, fit);
   tcnSegments <- fit$output;
   rm(yT, fit);
@@ -357,7 +423,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     rm(keep);
 
     verbose && enter(verbose, "Segmenting DH signals");
-    fit <- segmentByCBS(rhoKKHet, chromosome=chromosome, x=xKKHet, verbose=less(verbose, 10));
+    fit <- segmentByCBS(rhoKKHet, chromosome=chromosome, x=xKKHet, 
+                        alpha=alphaDH, verbose=less(verbose, 10));
     verbose && str(verbose, fit);
     dhSegments <- fit$output;
     verbose && exit(verbose);
@@ -433,6 +500,14 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Create result object
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  params <- list(
+    alphaTCN = alphaTCN,
+    alphaDH = alphaDH,
+    flavor = flavor,
+    tbn = tbn,
+    seed = seed
+  );
+
   data <- data.frame(
     CT=CT,
     betaT=betaT,
@@ -449,10 +524,14 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
   fit <- list(
     data = data,
-    output = segs
+    output = segs,
+    params = params
   );
 
   class(fit) <- c("PairedPSCBS", "PSCBS");
+
+  verbose && print(verbose, head(as.data.frame(fit)));
+  verbose && print(verbose, tail(as.data.frame(fit)));
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Return results
@@ -463,6 +542,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-10-18
+# o Added arguments 'alphaTCN' and 'alphaDH' to segmentByPairedPSCBS().
+# o Now segmentByPairedPSCBS() can segment multiple chromosomes.
 # 2010-10-17
 # o Added argument 'tbn' to segmentByPairedPSCBS() specifying whether
 #   TumorBoostNormalization should be applied or not.
