@@ -171,7 +171,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   if (is.null(muN)) {
     verbose && enter(verbose, "Calling genotypes from normal allele B fractions");
     verbose && str(verbose, betaN);
-    muN <- aroma.light::callNaiveGenotypes(betaN);
+    muN <- aroma.light::callNaiveGenotypes(betaN, censorAt=c(0,1));
     verbose && cat(verbose, "Called genotypes:");
     verbose && str(verbose, muN);
     verbose && print(verbose, table(muN));

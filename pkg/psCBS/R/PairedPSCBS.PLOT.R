@@ -44,7 +44,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Argument 'fit':
   if (nbrOfChromosomes(fit) > 1) {
-    throw("Argument 'fit' contains more than one chromosome: ", nbrOfChromosomes(fit));
+    return(plotTracksManyChromosomes(fit, tracks=tracks, pch=pch, Clim=Clim, Blim=Blim, xScale=xScale, ..., add=add));
   }
 
   # Argument 'tracks':
@@ -255,9 +255,229 @@ setMethodS3("arrowsDeltaC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
 
 
 
+setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ..., verbose=FALSE) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Argument 'chrStarts':
+  if (!is.null(chrStarts)) {
+    chrStarts <- Arguments$getDoubles(chrStarts);
+  }
+
+  # Argument 'verbose':
+  verbose <- Arguments$getVerbose(verbose);
+  if (verbose) {
+    pushState(verbose);
+    on.exit(popState(verbose));
+  }
+
+
+  verbose && enter(verbose, "Tile chromosomes");
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Extract data and segments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  data <- fit$data;
+  segs <- fit$output;
+
+  # Identify all chromosome
+  chromosomes <- getChromosomes(fit);
+  
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Additional chromosome annotations
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  if (is.null(chrStarts)) {
+    xRange <- matrix(0, nrow=length(chromosomes), ncol=2);
+    for (kk in seq(along=chromosomes)) {
+      chromosome <- chromosomes[kk];
+      idxs <- which(data$chromosome == chromosome);
+      x <- data$x[idxs];
+      r <- range(x, na.rm=TRUE);
+      r <- r / 1e6;
+      r[1] <- floor(r[1]);
+      r[2] <- ceiling(r[2]);
+      r <- 1e6 * r;
+      xRange[kk,] <- r;
+    } # for (kk ...)
+
+    chrLength <- xRange[,2];
+    chrStarts <- c(0, cumsum(chrLength)[-length(chrLength)]);
+    chrEnds <- chrStarts + chrLength;
+
+    # Not needed anymore
+    rm(x, idxs);
+  } # if (is.null(chrStarts))
+
+  verbose && cat(verbose, "Chromosome starts:");
+  chromosomeStats <- cbind(start=chrStarts, end=chrEnds, length=chrEnds-chrStarts);
+  verbose && print(chromosomeStats);
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Offset...
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  segFields <- grep("(start|end)$", colnames(segs), value=TRUE);
+  for (kk in seq(along=chromosomes)) {
+    chromosome <- chromosomes[kk];
+    chrTag <- sprintf("Chr%02d", chromosome);
+    verbose && enter(verbose, sprintf("Chromosome #%d ('%s') of %d", 
+                                         kk, chrTag, length(chromosomes)));
+
+    # Get offset for this chromosome
+    offset <- chrStarts[kk];
+    verbose && cat(verbose, "Offset: ", offset);
+
+    # Offset data
+    idxs <- which(data$chromosome == chromosome);
+    data$x[idxs] <- offset + data$x[idxs];
+
+    # Offset segmentation
+    idxs <- which(segs$chromosome == chromosome);
+    segs[idxs,segFields] <- offset + segs[idxs,segFields];
+
+    verbose && exit(verbose);
+  } # for (kk ...)
+
+  # Update results
+  fit$data <- data;
+  fit$output <- segs;
+  fit$chromosomeStats <- chromosomeStats;
+
+  verbose && exit(verbose);
+
+  fit;
+}) # tileChromosomes()
+
+
+
+setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, verbose=FALSE) {
+  # To please R CMD check
+  fit <- x;
+ 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Argument 'fit':
+
+  # Argument 'tracks':
+  tracks <- match.arg(tracks, several.ok=TRUE);
+  tracks <- unique(tracks);
+
+  # Argument 'xScale':
+  xScale <- Arguments$getNumeric(xScale, range=c(0,Inf));
+
+  # Argument 'subset':
+  if (!is.null(subset)) {
+    subset <- Arguments$getDouble(subset);
+  }
+
+  # Argument 'verbose':
+  verbose <- Arguments$getVerbose(verbose);
+  if (verbose) {
+    pushState(verbose);
+    on.exit(popState(verbose));
+  }
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Tile chromosomes
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  fit <- tileChromosomes(fit, verbose=verbose);
+  verbose && str(verbose, fit);
+
+  # Extract the input data
+  data <- fit$data;
+  if (is.null(data)) {
+    throw("Cannot plot segmentation results. No input data available.");
+  }
+
+  # Subset of the loci?
+  if (!is.null(subset)) {
+    n <- nrow(data);
+    keep <- sample(n, size=subset*n);
+    data <- data[keep,];
+  }
+
+  attachLocally(data);
+  x <- xScale * x;
+  vs <- xScale * fit$chromosomeStats[,1:2];
+  mids <- (vs[,1]+vs[,2])/2;
+
+  chromosomes <- getChromosomes(fit);
+  chrTags <- sprintf("Chr%02d", chromosomes);
+
+  if (!add) {
+    subplots(length(tracks), ncol=1);
+    par(mar=c(1,4,1,2)+1);
+  }
+
+  for (track in tracks) {
+    if (track == "tcn") {
+      plot(x, CT, pch=pch, col="gray", ylim=Clim, ylab="TCN", axes=FALSE);
+      mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
+      abline(v=vs, lty=3);
+      axis(side=2); box();
+      drawLevels(fit, what="tcn", xScale=xScale);
+    }
+  
+    if (track == "tcn,c1,c2") {
+      plot(x, CT, pch=pch, col="gray", ylim=Clim, ylab="C1, C2, TCN", axes=FALSE);
+      mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
+      abline(v=vs, lty=3);
+      axis(side=2); box();
+      drawLevels(fit, what="tcn", xScale=xScale);
+      drawLevels(fit, what="c2", col="purple", xScale=xScale);
+      drawLevels(fit, what="c1", col="blue", xScale=xScale);
+    }
+  
+    col <- c("gray", "black")[(muN == 1/2) + 1];
+    if (track == "betaN") {
+      plot(x, betaN, pch=pch, col=col, ylim=Blim, ylab="BAF_N", axes=FALSE);
+      mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
+      abline(v=vs, lty=3);
+      axis(side=2); box();
+    }
+  
+    if (track == "betaT") {
+      plot(x, betaT, pch=pch, col=col, ylim=Blim, ylab="BAF_T", axes=FALSE);
+      mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
+      abline(v=vs, lty=3);
+      axis(side=2); box();
+    }
+  
+    if (track == "betaTN") {
+      plot(x, betaTN, pch=pch, col=col, ylim=Blim, ylab="BAF_TN", axes=FALSE);
+      mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
+      abline(v=vs, lty=3);
+      axis(side=2); box();
+    }
+  
+    if (track == "rho") {
+      isSnp <- (!is.na(betaTN) & !is.na(muN));
+      isHet <- isSnp & (muN == 1/2);
+      naValue <- as.double(NA);
+      rho <- rep(naValue, length=nbrOfLoci);
+      rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
+      plot(x, rho, pch=pch, col="gray", ylim=Blim, ylab="DH", axes=FALSE);
+      mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
+      abline(v=vs, lty=3);
+      axis(side=2); box();
+      drawLevels(fit, what="dh", xScale=xScale);
+    }
+  } # for (track ...)
+}) # plotTracksManyChromosomes()
+
+
+
 
 ############################################################################
 # HISTORY:
+# 2010-10-18
+# o Now plotTracks() can plot whole-genome data.
+# o Now plotTracks() utilized plotTracksManyChromosomes() if there is
+#   more than one chromosome.
+# o Added internal plotTracksManyChromosomes().
+# o Added internal tileChromosomes().
 # 2010-10-03
 # o Now the default is that plotTracks() for PairedPSCBS generated three
 #   panels: (1) TCN, (2) DH, and (3) C1+C2+TCN.

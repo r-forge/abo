@@ -69,6 +69,10 @@
 \alias{print.PairedPSCBS}
 \alias{subsetBySegments}
 \alias{subsetBySegments.PairedPSCBS}
+\alias{plotTracksManyChromosomes}
+\alias{plotTracksManyChromosomes.PairedPSCBS}
+\alias{tileChromosomes}
+\alias{tileChromosomes.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that
