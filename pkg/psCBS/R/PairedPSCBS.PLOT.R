@@ -131,7 +131,9 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn
       drawLevels(fit, what="dh", xScale=xScale);
     }
   } # for (track ...)
-})
+
+  invisible();  
+}) # plotTracks()
 
 
 setMethodS3("plot", "PairedPSCBS", function(x, ...) {
@@ -350,7 +352,7 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
 
 
 
-setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, verbose=FALSE) {
+setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
   # To please R CMD check
   fit <- x;
  
@@ -398,11 +400,15 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
     data <- data[keep,];
   }
 
+  # To please R CMD check
+  CT <- muN <- betaT <- betaN <- betaTN <- NULL;
+  rm(CT, muN, betaT, betaN, betaTN);
   attachLocally(data);
   x <- xScale * x;
   vs <- xScale * fit$chromosomeStats[,1:2];
   mids <- (vs[,1]+vs[,2])/2;
 
+  nbrOfLoci <- length(x);
   chromosomes <- getChromosomes(fit);
   chrTags <- sprintf("Chr%02d", chromosomes);
 
@@ -411,45 +417,66 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
     par(mar=c(1,4,1,2)+1);
   }
 
+  gh <- fit;
+  gh$xScale <- xScale;
+
+  xlim <- range(x, na.rm=TRUE);
+  xlab <- "Genomic position";
+
   for (track in tracks) {
     if (track == "tcn") {
-      plot(x, CT, pch=pch, col="gray", ylim=Clim, ylab="TCN", axes=FALSE);
+      plot(NA, xlim=xlim, ylim=Clim, xlab=xlab, ylab="TCN", axes=FALSE);
+      if (!is.null(onBegin)) onBegin(gh=gh);
+      points(x, CT, pch=pch, col="gray");
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
       abline(v=vs, lty=3);
       axis(side=2); box();
       drawLevels(fit, what="tcn", xScale=xScale);
+      if (!is.null(onEnd)) onEnd(gh=gh);
     }
   
     if (track == "tcn,c1,c2") {
-      plot(x, CT, pch=pch, col="gray", ylim=Clim, ylab="C1, C2, TCN", axes=FALSE);
+      plot(NA, xlim=xlim, ylim=Clim, xlab=xlab, ylab="C1, C2, TCN", axes=FALSE);
+      if (!is.null(onBegin)) onBegin(gh=gh);
+      points(x, CT, pch=pch, col="gray");
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
       abline(v=vs, lty=3);
       axis(side=2); box();
       drawLevels(fit, what="tcn", xScale=xScale);
       drawLevels(fit, what="c2", col="purple", xScale=xScale);
       drawLevels(fit, what="c1", col="blue", xScale=xScale);
+      if (!is.null(onEnd)) onEnd(gh=gh);
     }
   
     col <- c("gray", "black")[(muN == 1/2) + 1];
     if (track == "betaN") {
-      plot(x, betaN, pch=pch, col=col, ylim=Blim, ylab="BAF_N", axes=FALSE);
+      plot(NA, xlim=xlim, ylim=Blim, xlab=xlab, ylab="BAF_N", axes=FALSE);
+      if (!is.null(onBegin)) onBegin(gh=gh);
+      points(x, betaN, pch=pch, col=col);
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
       abline(v=vs, lty=3);
       axis(side=2); box();
+      if (!is.null(onEnd)) onEnd(gh=gh);
     }
   
     if (track == "betaT") {
-      plot(x, betaT, pch=pch, col=col, ylim=Blim, ylab="BAF_T", axes=FALSE);
+      plot(NA, xlim=xlim, ylim=Blim, xlab=xlab, ylab="BAF_T", axes=FALSE);
+      if (!is.null(onBegin)) onBegin(gh=gh);
+      points(x, betaT, pch=pch, col=col);
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
       abline(v=vs, lty=3);
       axis(side=2); box();
+      if (!is.null(onEnd)) onEnd(gh=gh);
     }
   
     if (track == "betaTN") {
-      plot(x, betaTN, pch=pch, col=col, ylim=Blim, ylab="BAF_TN", axes=FALSE);
+      plot(NA, xlim=xlim, ylim=Blim, xlab=xlab, ylab="BAF_TN", axes=FALSE);
+      if (!is.null(onBegin)) onBegin(gh=gh);
+      points(x, betaTN, pch=pch, col=col);
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
       abline(v=vs, lty=3);
       axis(side=2); box();
+      if (!is.null(onEnd)) onEnd(gh=gh);
     }
   
     if (track == "rho") {
@@ -458,13 +485,18 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
       naValue <- as.double(NA);
       rho <- rep(naValue, length=nbrOfLoci);
       rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
-      plot(x, rho, pch=pch, col="gray", ylim=Blim, ylab="DH", axes=FALSE);
+      plot(NA, xlim=xlim, ylim=Blim, xlab=xlab, ylab="DH", axes=FALSE);
+      if (!is.null(onBegin)) onBegin(gh=gh);
+      points(x, rho, pch=pch, col="gray");
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
       abline(v=vs, lty=3);
       axis(side=2); box();
       drawLevels(fit, what="dh", xScale=xScale);
+      if (!is.null(onEnd)) onEnd(gh=gh);
     }
   } # for (track ...)
+
+  invisible(gh);
 }) # plotTracksManyChromosomes()
 
 
@@ -472,6 +504,8 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
 
 ############################################################################
 # HISTORY:
+# 2010-10-20
+# o Added arguments 'onBegin' and 'onEnd' to plotTracksManyChromosomes().
 # 2010-10-18
 # o Now plotTracks() can plot whole-genome data.
 # o Now plotTracks() utilized plotTracksManyChromosomes() if there is
