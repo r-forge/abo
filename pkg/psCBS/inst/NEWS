@@ -1,6 +1,11 @@
 Package: psCBS
 ==============
 
+Version: 0.9.3 [2010-10-25]
+o Added argument 'ciRange' to callAllelicBalance() and
+  callExtremeAllelicImbalance().
+
+
 Version: 0.9.2 [2010-10-24]
 o BUG FIX: plotTracks() would give "Error: object 'nbrOfLoci' not found'
   for whole-genome plots.
