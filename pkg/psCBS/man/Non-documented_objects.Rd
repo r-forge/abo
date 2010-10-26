@@ -67,8 +67,8 @@
 \alias{postsegmentTCN}
 \alias{postsegmentTCN.PairedPSCBS}
 \alias{print.PairedPSCBS}
-\alias{subsetBySegments}
-\alias{subsetBySegments.PairedPSCBS}
+\alias{subsetByDhSegments}
+\alias{subsetByDhSegments.PairedPSCBS}
 \alias{plotTracksManyChromosomes}
 \alias{plotTracksManyChromosomes.PairedPSCBS}
 \alias{tileChromosomes}

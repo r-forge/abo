@@ -1,6 +1,24 @@
 Package: psCBS
 ==============
 
+Version: 0.9.4 [2010-10-25]
+o Now the default is a 95% confidence interval for calls.
+o Now segmentByCBS() also returns element 'lociNotPartOfSegment',
+  if there are segments that share end points, which can happen if
+  a change point is called in middle of a set of loci that have the
+  same genomic positions.  In such cases, 'lociNotPartOfSegment'
+  specifies which loci are *not* part of which segment.  Then by
+  identifying the loci that are within a segment by their positions
+  and excluding any of the above, one knows exactly which loci
+  CBS included in each segment.
+o BUG FIX: Now bootstrapDHByRegion() for PairedPSCBS handles the
+  rare case when markers with the same positions are split in 
+  two different segments.
+o BUG FIX: Now the correct set of loci are extracted from each TCN
+  segment, in the rare case that two neighboring TCN segments have
+  the same end points.
+
+
 Version: 0.9.3 [2010-10-25]
 o Added argument 'ciRange' to callAllelicBalance() and
   callExtremeAllelicImbalance().

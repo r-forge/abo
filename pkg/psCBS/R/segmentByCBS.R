@@ -283,6 +283,87 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
   # Coerce
   fit$output$num.mark <- as.integer(fit$output$num.mark);
 
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Special case: Neighboring segments with "overlapping" end points
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Details: In case there are multiple loci at the same genomic
+  # positions ('maploc') and CBS happens to detect a change points
+  # in the middle of these loci, we here will infer, by "reverse
+  # engineering" which of these loci belongs to which segment.
+  segs <- fit$output;
+  nbrOfSegs <- nrow(segs);
+  if (nbrOfSegs > 1) {
+    # Identify change points of such cases
+    cpIdxs <- which(segs[-nbrOfSegs,"loc.end"] == segs[-1,"loc.start"]);
+    if (length(cpIdxs) > 0) {
+      verbose && enter(verbose, "Detected segments that share the same end points");
+      verbose && cat(verbose, "Number of shared end points: ", length(cpIdxs));
+
+      # The genomic positions for which there exist loci with
+      # the sample 'maploc' and that have been split between 
+      # two segments.
+      maplocs <- segs[cpIdxs,"loc.end"];
+      verbose && cat(verbose, "Locations of shared end points:");
+      verbose && print(verbose, maplocs);
+
+      segIdxs <- unique(sort(c(cpIdxs, cpIdxs+1L)));
+      verbose && cat(verbose, "Number of such segments: ", length(segIdxs));
+      segsT <- segs[segIdxs,];
+      verbose && print(verbose, segsT);
+
+      y <- fit$data[,3];
+
+      x <- fit$data$maploc;
+      lociNotPartOfSegment <- vector("list", length=nbrOfSegs);
+      names(lociNotPartOfSegment) <- rownames(segs);
+
+      prevSeg <- segsT[1L,];
+      for (ss in 2:nrow(segsT)) {
+        currSeg <- segsT[ss,];
+        currStart <- currSeg[,"loc.start"];
+        prevEnd <- prevSeg[,"loc.end"];
+        if (currStart == prevEnd) {
+          currCount <- currSeg[,"num.mark"];
+          currEnd <- currSeg[,"loc.end"];
+          units <- which(currStart <= x & x <= currEnd);
+          nbrOfUnits <- length(units);
+          nbrToMove <- nbrOfUnits - currCount;
+
+          # It should always be the case that nbrToMove > 0
+          verbose && cat(verbose, "Number of loci to move: ", nbrToMove);
+
+          # Identify units to move
+          units <- units[x[units] == currStart];
+          verbose && cat(verbose, "Number of loci with the sample genomic position: ", length(units));
+
+          # Sanity check
+          stopifnot(length(units) > nbrToMove);
+
+          # Alt 1. Move as they occur in the data vector
+          toMove <- 1:nbrToMove;
+
+          # Alt 2. ...or by some other rule?!?
+
+          unitsToMove <- units[toMove];
+          unitsToKeep <- units[-toMove];
+
+          segIdx <- segIdxs[ss];
+          lociNotPartOfSegment[[segIdx]] <- c(lociNotPartOfSegment[[segIdx]], unitsToMove);
+          lociNotPartOfSegment[[segIdx-1L]] <- c(lociNotPartOfSegment[[segIdx-1L]], unitsToKeep);
+        }
+
+        prevSeg <- currSeg;
+      } # for (ss ...)
+      verbose && cat(verbose, "Loci not part of segment:");
+      verbose && str(verbose, lociNotPartOfSegment);
+
+      verbose && exit(verbose);
+
+      fit$lociNotPartOfSegment <- lociNotPartOfSegment;
+    } # if (length(cpIdxs) > 0)
+  } # if (nbrOfSegs > 0)
+
   verbose && cat(verbose, "Results object:");
   verbose && str(verbose, fit);
 
@@ -298,6 +379,15 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
 
 ############################################################################
 # HISTORY:
+# 2010-10-25
+# o Now segmentByCBS() also returns element 'lociNotPartOfSegment',
+#   if there are segments that share end points, which can happen if
+#   a change point is called in middle of a set of loci that have the
+#   same genomic positions.  In such cases, 'lociNotPartOfSegment'
+#   specifies which loci are *not* part of which segment.  Then by
+#   identifying the loci that are within a segment by their positions
+#   and excluding any of the above, one knows exactly which loci
+#   CBS included in each segment.
 # 2010-10-02
 # o Added argument optional 'chromosome'.
 # 2010-09-02

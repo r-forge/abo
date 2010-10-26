@@ -1,4 +1,4 @@
-setMethodS3("callAllelicBalance", "PairedPSCBS", function(fit, tau=0.10, ciRange=c(0.05, 0.95), ...) {
+setMethodS3("callAllelicBalance", "PairedPSCBS", function(fit, tau=0.10, ciRange=c(0.025, 0.975), ...) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
@@ -39,7 +39,7 @@ setMethodS3("callAllelicBalance", "PairedPSCBS", function(fit, tau=0.10, ciRange
 })
 
 
-setMethodS3("callExtremeAllelicImbalance", "PairedPSCBS", function(fit, tau=0.60, ciRange=c(0.05, 0.95), ...) {
+setMethodS3("callExtremeAllelicImbalance", "PairedPSCBS", function(fit, tau=0.60, ciRange=c(0.025, 0.975), ...) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  

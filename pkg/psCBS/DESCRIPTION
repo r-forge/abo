@@ -1,6 +1,6 @@
 Package: psCBS
 Title: Analysis of Parent Specific DNA Copy Numbers
-Version: 0.9.3
+Version: 0.9.4
 Date: 2010-10-25
 Author: Adam Olshen, Venkatraman E. Seshan
 Description: Segments allele specific DNA copy number data to detect regions 

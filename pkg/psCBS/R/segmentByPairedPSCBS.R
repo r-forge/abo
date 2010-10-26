@@ -345,6 +345,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
                                                          verbose=verbose);
   verbose && str(verbose, fit);
   tcnSegments <- fit$output;
+  tcnLociNotPartOfSegment <- fit$lociNotPartOfSegment;
   rm(yT, fit);
 
 
@@ -384,12 +385,14 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   verbose && exit(verbose);
 
 
-
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # 2a. Identification of additional change points using DH
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # For each segment independently, segment decrease of heterozygousity (DH)
   # using CBS. By definition, only heterozygous SNPs are used.
+
+  listOfDhLociNotPartOfSegment <- vector("list", length=nbrOfSegs);
+  names(listOfDhLociNotPartOfSegment) <- seq(length=nbrOfSegs);
 
   # For each TCN segment...
   segs <- vector("list", length=nbrOfSegs);
@@ -403,15 +406,28 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     verbose && enter(verbose, sprintf("Total CN segment #%d (%s) of %d", kk, regionTag, nbrOfSegs));
 
     # Identify subset of loci
-    keep <- (xStart <= x & x <= xEnd);
+    keep <- which(xStart <= x & x <= xEnd);
+
+    # Special case?
+    if (!is.null(tcnLociNotPartOfSegment)) {
+      verbose && enter(verbose, sprintf("Total CN segment #%d (%s) of %d", kk, regionTag, nbrOfSegs));
+      lociToExclude <- tcnLociNotPartOfSegment[[kk]];
+      verbose && cat(verbose, "Excluding loci that belongs to a flanking segment: ", length(lociToExclude));
+      keep <- setdiff(keep, lociToExclude);
+      stop();
+    }
+
+    # Sanity check
+    stopifnot(length(keep) == tcnSegments[kk,"tcn.num.mark"]);
+
     xKK <- x[keep];
     nbrOfLociKK <- length(xKK);
     rhoKK <- rho[keep];
     isSnpKK <- isSnp[keep];
     nbrOfSnpsKK <- sum(isSnpKK);
     isHetKK <- isHet[keep];
-    verbose && cat(verbose, "Number of loci in region: ", nbrOfLociKK);
-    verbose && cat(verbose, "Number of SNPs in region: ", nbrOfSnpsKK);
+    verbose && cat(verbose, "Number of loci in segment: ", nbrOfLociKK);
+    verbose && cat(verbose, "Number of SNPs in segment: ", nbrOfSnpsKK);
     rm(keep);
 
     # Identify heterozygous SNPs
@@ -428,6 +444,10 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
                                            alpha=alphaDH, verbose=verbose);
     verbose && str(verbose, fit);
     dhSegments <- fit$output;
+    dhLociNotPartOfSegment <- fit$lociNotPartOfSegment;
+    if (!is.null(dhLociNotPartOfSegment)) {
+      listOfDhLociNotPartOfSegment[[kk]] <- dhLociNotPartOfSegment;
+    }
     verbose && exit(verbose);
     rm(rhoKKHet, xKKHet, fit);
 
@@ -529,6 +549,14 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     params = params
   );
 
+  if (!is.null(tcnLociNotPartOfSegment)) {
+    fit$tcnLociNotPartOfSegment <- tcnLociNotPartOfSegment;
+  }
+
+  if (any(sapply(listOfDhLociNotPartOfSegment, FUN=length) > 0)) {
+    fit$listOfDhLociNotPartOfSegment <- listOfDhLociNotPartOfSegment;
+  }
+
   class(fit) <- c("PairedPSCBS", "PSCBS");
 
   verbose && print(verbose, head(as.data.frame(fit)));
@@ -543,6 +571,11 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-10-25
+# o Now segmentByPairedPSCBS() returns 
+# o BUG FIX: Now the correct set of loci are extracted from each TCN
+#   segment, in the rare case that two neighboring TCN segments have
+#   the same end points.
 # 2010-10-18
 # o Added arguments 'alphaTCN' and 'alphaDH' to segmentByPairedPSCBS().
 # o Now segmentByPairedPSCBS() can segment multiple chromosomes.

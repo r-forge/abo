@@ -15,7 +15,7 @@ setMethodS3("print", "PairedPSCBS", function(x, ...) {
 })
 
 
-setMethodS3("subsetBySegments", "PairedPSCBS", function(fit, idxs, ..., verbose=FALSE) {
+setMethodS3("subsetByDhSegments", "PairedPSCBS", function(fit, idxs, ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -35,7 +35,7 @@ setMethodS3("subsetBySegments", "PairedPSCBS", function(fit, idxs, ..., verbose=
 
 
 
-  verbose && enter(verbose, "Extracting a subset of the segments");
+  verbose && enter(verbose, "Extracting a subset of the DH segments");
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Extract the data and segmentation results
@@ -43,13 +43,14 @@ setMethodS3("subsetBySegments", "PairedPSCBS", function(fit, idxs, ..., verbose=
   data <- fit$data;
   stopifnot(!is.null(data));
 
+  listOfDhLociNotPartOfSegment <- fit$listOfDhLociNotPartOfSegment;
+
   chromosomes <- getChromosomes(fit);
   nbrOfChromosomes <- length(chromosomes);
   verbose && cat(verbose, "Number of chromosomes: ", nbrOfChromosomes);
   verbose && print(verbose, chromosomes); 
 
   verbose && cat(verbose, "Number of segments: ", nbrOfSegments);
-
 
   chromosome <- data$chromosome;
   x <- data$x;
@@ -66,8 +67,9 @@ setMethodS3("subsetBySegments", "PairedPSCBS", function(fit, idxs, ..., verbose=
   # Subset the locus-level data
   keep <- logical(nbrOfLoci);
   for (kk in seq(length=nbrOfSegments)) {
-    chrKK <- as.numeric(segs[kk,"chromosome"]);
-    xRange <- as.numeric(segs[kk,c("dh.loc.start", "dh.loc.end")]);
+    segKK <- segs[kk,];
+    chrKK <- as.numeric(segKK[,"chromosome"]);
+    xRange <- as.numeric(segKK[,c("dh.loc.start", "dh.loc.end")]);
     # Skip NA divider?
     if (all(is.na(xRange))) {
       next;
@@ -76,8 +78,33 @@ setMethodS3("subsetBySegments", "PairedPSCBS", function(fit, idxs, ..., verbose=
     keepKK <- (xRange[1] <= x & x <= xRange[2]);
     if (!is.na(chrKK)) keepKK <- keepKK & (chromosome == chrKK);
     nKK <- sum(keepKK, na.rm=TRUE);
+
+    # Special case?
+    if (nKK > segKK[,"dh.num.mark"]) {
+      verbose && cat(verbose, "Number of loci in DH segment: ", nKK);
+      verbose && cat(verbose, "Number of loci in DH segment: ", segKK[,"dh.num.mark"]);
+
+      # Sanity check
+      stopifnot(!is.null(listOfDhLociNotPartOfSegment));
+
+      tcnId <- segKK[,"tcn.id"];
+      dhId <- segKK[,"dh.id"];
+      dhLociNotPartOfSegment <- listOfDhLociNotPartOfSegment[[tcnId]];
+      # Sanity check
+      stopifnot(!is.null(dhLociNotPartOfSegment));
+
+      lociToExclude <- dhLociNotPartOfSegment[[dhId]];
+      verbose && cat(verbose, "Excluding loci that belongs to a flanking segment: ", length(lociToExclude));
+      keepKK[lociToExclude] <- FALSE;
+      nKK <- sum(keepKK, na.rm=TRUE);
+    }
+
     verbose && cat(verbose, "Number of units: ", nKK);
-    verbose && cat(verbose, "Number of TCN markers: ", segs[kk,"tcn.num.mark"]);
+    verbose && cat(verbose, "Number of TCN markers: ", segKK[,"tcn.num.mark"]);
+
+    # Sanity check
+    stopifnot(nKK == segKK[,"dh.num.mark"]);
+
     keep <- keep | keepKK;
   } # for (kk ...)
   keep <- whichVector(keep);
@@ -295,6 +322,10 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
 
 ############################################################################
 # HISTORY:
+# 2010-10-25
+# o Now subsetByDhSegments() for PairedPSCBS handles the rare case when
+#   markers with the same positions are split in two different segments.
+# o Renamed subsetBySegments() for PairedPSCBS to subsetByDhSegments().
 # 2010-09-26
 # o Now subsetBySegments() for PairedPSCBS handles multiple chromosomes.
 # o Now postsegmentTCN() PairedPSCBS handles multiple chromosomes.
