@@ -18,9 +18,18 @@ setMethodS3("callAllelicBalance", "PairedPSCBS", function(fit, tau=0.10, ciRange
   # Extract confidence interval
   ciRangeTags <- sprintf("%g%%", 100*ciRange);
   columns <- sprintf("dh.ci.%s", ciRangeTags);
+  # Sanity checks
   stopifnot(all(is.element(columns, colnames(segs))));
 
   ci <- segs[,columns, drop=FALSE];
+
+  # Sanity checks
+  mu <- segs[,"dh.mean",drop=TRUE];
+  idxs <- which(mu < ci[,1] | mu > ci[,2]);
+  if (length(idxs) > 0) {
+    print(segs[idxs,,drop=FALSE]);
+    stop("INTERNAL CONSISTENCY ERROR: Some of the DH confidence intervals estimated using bootstrap does not cover the estimate DH parameter.");
+  }
 
   call <- (ci[,1] < tau);
   segs <- cbind(segs, ab.call=call);
@@ -50,9 +59,18 @@ setMethodS3("callExtremeAllelicImbalance", "PairedPSCBS", function(fit, tau=0.60
   # Extract confidence interval
   ciRangeTags <- sprintf("%g%%", 100*ciRange);
   columns <- sprintf("dh.ci.%s", ciRangeTags);
+  # Sanity checks
   stopifnot(all(is.element(columns, colnames(segs))));
 
   ci <- segs[,columns, drop=FALSE];
+
+  # Sanity checks
+  mu <- segs[,"dh.mean",drop=TRUE];
+  idxs <- which(mu < ci[,1] | mu > ci[,2]);
+  if (length(idxs) > 0) {
+    print(segs[idxs,,drop=FALSE]);
+    stop("INTERNAL CONSISTENCY ERROR: Some of the DH confidence intervals estimated using bootstrap does not cover the estimate DH parameter.");
+  }
 
   call <- (ci[,1] >= tau);
   segs <- cbind(segs, ai.high.call=call);
@@ -63,8 +81,8 @@ setMethodS3("callExtremeAllelicImbalance", "PairedPSCBS", function(fit, tau=0.60
 
 
 setMethodS3("callABandHighAI", "PairedPSCBS", function(fit, tauAB=0.10, tauHighAI=0.60, ...) {
-  fit <- callAllelicBalance(fit, tau=tauAB);
-  fit <- callExtremeAllelicImbalance(fit, tau=tauHighAI);
+  fit <- callAllelicBalance(fit, tau=tauAB, ...);
+  fit <- callExtremeAllelicImbalance(fit, tau=tauHighAI, ...);
   fit;
 })
 
@@ -72,6 +90,8 @@ setMethodS3("callABandHighAI", "PairedPSCBS", function(fit, tauAB=0.10, tauHighA
 ##############################################################################
 # HISTORY
 # 2010-10-25 [HB]
+# o Added sanity checks to the call methods.
+# o Now arguments '...' to callABandHighAI() are passed down.
 # o Now also arguments '...' to callAllelicBalance() and
 #   callExtremeAllelicImbalance() are passed to bootstrapDHByRegion().
 # o Added argument 'ciRange' to callAllelicBalance() and

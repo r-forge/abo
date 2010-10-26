@@ -4,6 +4,12 @@ Package: psCBS
 Version: 0.9.3 [2010-10-25]
 o Added argument 'ciRange' to callAllelicBalance() and
   callExtremeAllelicImbalance().
+o BUG FIX: bootstrapDHByRegion() for PairedPSCBS would bootstrap 
+  from the incorrect set of loci when the DH region contained 
+  only one locus.
+o BUG FIX: bootstrapDHByRegion() for PairedPSCBS would bootstrap 
+  from the incorrect set of loci if more than one chromosome 
+  was available.
 
 
 Version: 0.9.2 [2010-10-24]

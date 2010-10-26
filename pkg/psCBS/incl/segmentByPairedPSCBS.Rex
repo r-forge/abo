@@ -19,8 +19,9 @@ x <- position;
 # Paired PSCBS segmentation
 fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN, chromosome=1, x=x, verbose=-10);
 
-# Call allelic balance and "LOH" (= extreme allelic imbalance)
-cfit <- callABandHighAI(fit, verbose=-10);
+# Call allelic balance and extreme allelic imbalance ("LOH")
+cfit <- callABandHighAI(fit, tauAB=0.10, tauHighAI=0.60, 
+                             ciRange=c(0.025, 0.975), verbose=-10);
 
 # Display segmentation and calls
 print(fit);
