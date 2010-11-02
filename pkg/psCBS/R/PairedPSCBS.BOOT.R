@@ -1,4 +1,4 @@
-setMethodS3("bootstrapDHByRegion", "PairedPSCBS", function(fit, B=100, statsFcn=function(x) quantile(x, probs=c(0.025, 0.975)), by=c("betaTN", "betaT"), ..., verbose=FALSE) {
+setMethodS3("bootstrapDHByRegion", "PairedPSCBS", function(fit, B=100, statsFcn=function(x) quantile(x, probs=c(0.025, 0.050, 0.95, 0.975)), by=c("betaTN", "betaT"), ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -21,15 +21,19 @@ setMethodS3("bootstrapDHByRegion", "PairedPSCBS", function(fit, B=100, statsFcn=
   data <- fit$data;
   segs <- fit$output;
 
-  # Already done?
+  # Find estimates to be done
   stats <- statsFcn(1);
   stopifnot(!is.null(names(stats)));
-  statsNames <- sprintf("dh.ci.%s", names(stats));
-  if (all(is.element(statsNames, names(segs)))) {
+  statsNames <- sprintf("dh.%s", names(stats));
+  isDone <- is.element(statsNames, names(segs));
+
+  # Already done?
+  if (all(isDone)) {
     verbose && cat(verbose, "Already done.");
     verbose && exit(verbose);
     return(fit);
   }
+
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Precalculate signals
@@ -90,13 +94,16 @@ setMethodS3("bootstrapDHByRegion", "PairedPSCBS", function(fit, B=100, statsFcn=
     chr <- segJJ$chromosome[1];
     start <- segJJ$dh.loc.start[1];
     stop <- segJJ$dh.loc.end[1];
+    nbrOfDHs <- segJJ[,"dh.num.mark"];
+    if (is.na(nbrOfDHs)) nbrOfDHs <- 0L;
+
     units <- whichVector(chr == chromosome & start <= x & x <= stop);
     nbrOfUnits <- length(units);
 
     # Special case?
-    if (nbrOfUnits > segJJ[,"dh.num.mark"]) {
+    if (nbrOfUnits > nbrOfDHs) {
       verbose && cat(verbose, "All loci in DH segment: ", nbrOfUnits);
-      verbose && cat(verbose, "Used loci in DH segment: ", segJJ[,"dh.num.mark"]);
+      verbose && cat(verbose, "Used loci in DH segment: ", nbrOfDHs);
 
       # Sanity check
       stopifnot(!is.null(listOfDhLociNotPartOfSegment));
@@ -114,7 +121,7 @@ setMethodS3("bootstrapDHByRegion", "PairedPSCBS", function(fit, B=100, statsFcn=
     }
 
     # Sanity check
-    stopifnot(nbrOfUnits == segJJ[,"dh.num.mark"]);
+    stopifnot(nbrOfUnits == nbrOfDHs);
 
     if (nbrOfUnits >= 1) {
       # Sanity check
@@ -171,16 +178,26 @@ setMethodS3("bootstrapDHByRegion", "PairedPSCBS", function(fit, B=100, statsFcn=
 
   # Flatten statistics, if possible
   stats <- sapply(statsList, FUN=function(x) x);
+  if (!is.matrix(stats)) {
+    stats <- as.matrix(stats);
+  } else {
+    stats <- t(stats);
+  }
 
   # Sanity check
   stopifnot(is.matrix(stats));
 
   # Column matrix
-  stats <- t(stats);
   colnames(stats) <- statsNames;
 
   # Store results
   segs <- cbind(segs, stats);
+
+  # Drop previously estimated values
+  dups <- duplicated(colnames(segs), fromLast=TRUE);
+  if (any(dups)) {
+    stats <- stats[,!dups, drop=FALSE];
+  }
   
   fitB <- fit;
   fitB$output <- segs;
@@ -194,6 +211,13 @@ setMethodS3("bootstrapDHByRegion", "PairedPSCBS", function(fit, B=100, statsFcn=
 
 ##############################################################################
 # HISTORY
+# 2010-11-01 [HB]
+# o Now bootstrapDHByRegion() estimates more quantiles.
+# o BUG FIX: bootstrapDHByRegion() would give an error if only a single
+#   quantile was requested.
+# o BUG FIX: bootstrapDHByRegion() would give "Error in if (nbrOfUnits > 
+#   segJJ[, "dh.num.mark"]) { : missing value where TRUE/FALSE needed" when
+#   'dh.num.mark' was NA.
 # 2010-10-25 [HB]
 # o BUG FIX: Now bootstrapDHByRegion() for PairedPSCBS handles the rare case
 #   when markers with the same positions are split in two different segments.

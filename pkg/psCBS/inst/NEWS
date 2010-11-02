@@ -1,6 +1,15 @@
 Package: psCBS
 ==============
 
+Version: 0.9.5 [2010-11-01]
+o Added arguments 'alphaAB' and 'alphaHighAI' to callABandHighAI().
+o BUG FIX: bootstrapDHByRegion() would give an error if only a single
+  quantile was requested.
+o BUG FIX: bootstrapDHByRegion() would give "Error in if (nbrOfUnits
+  > segJJ[, "dh.num.mark"]) { : missing value where TRUE/FALSE needed"
+  when 'dh.num.mark' was NA.
+
+
 Version: 0.9.4 [2010-10-25]
 o Now the default is a 95% confidence interval for calls.
 o Now segmentByCBS() also returns element 'lociNotPartOfSegment',

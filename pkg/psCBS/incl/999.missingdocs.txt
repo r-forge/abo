@@ -20,3 +20,6 @@
  print.PairedPSCBS subsetByDhSegments subsetByDhSegments.PairedPSCBS
  plotTracksManyChromosomes plotTracksManyChromosomes.PairedPSCBS
  tileChromosomes tileChromosomes.PairedPSCBS
+ callAllelicBalanceByDH callAllelicBalanceByDH.PairedPSCBS
+ callExtremeAllelicImbalanceByDH
+ callExtremeAllelicImbalanceByDH.PairedPSCBS

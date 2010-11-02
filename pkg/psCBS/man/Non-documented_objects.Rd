@@ -73,6 +73,10 @@
 \alias{plotTracksManyChromosomes.PairedPSCBS}
 \alias{tileChromosomes}
 \alias{tileChromosomes.PairedPSCBS}
+\alias{callAllelicBalanceByDH}
+\alias{callAllelicBalanceByDH.PairedPSCBS}
+\alias{callExtremeAllelicImbalanceByDH}
+\alias{callExtremeAllelicImbalanceByDH.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

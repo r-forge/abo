@@ -91,11 +91,12 @@ R.oo::attachLocally(data);
 x <- position;
 
 # Paired PSCBS segmentation
-fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN, chromosome=1, x=x, verbose=-10);
+fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN,
+                                 chromosome=1, x=x, verbose=-10);
 
 # Call allelic balance and extreme allelic imbalance ("LOH")
-cfit <- callABandHighAI(fit, tauAB=0.10, tauHighAI=0.60,
-                             ciRange=c(0.025, 0.975), verbose=-10);
+cfit <- callABandHighAI(fit, tauAB=0.10, alphaAB=0.05,
+                  tauHighAI=0.60, alphaHighAI=0.05, verbose=-10);
 
 # Display segmentation and calls
 print(fit);
