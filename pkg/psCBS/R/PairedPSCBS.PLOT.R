@@ -14,7 +14,7 @@
 # @synopsis
 #
 # \arguments{
-#   \item{x}{A @see "PairedPSCBS" result object.}
+#   \item{x}{A result object returned by @see "segmentByPairedPSCBS".}
 #   \item{tracks}{A @character @vector specifying what types of tracks to plot.}
 #   \item{pch}{The type of points to use.}
 #   \item{Clim}{The range of copy numbers.}

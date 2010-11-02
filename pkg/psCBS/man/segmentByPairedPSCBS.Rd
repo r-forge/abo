@@ -19,7 +19,7 @@
   It is intended to be applied to one sample and one chromosome at the time.
  }
 
- \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), tbn=TRUE, seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), tbn=TRUE, seed=NULL, verbose=FALSE)}
 
  \arguments{
    \item{CT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor total copy numbers to be segmented.}
@@ -35,6 +35,10 @@
    \item{alphaTCN, alphaDH}{The significance levels for segmenting total
         copy numbers (TCNs) and decrease-in-heterozygosity signals (DHs),
         respectively.}
+   \item{undoTCN, undoDH}{Non-negative \code{\link[base]{numeric}}s.  If less than +\code{\link[base:is.finite]{Inf}},
+        then a cleanup of segmentions post segmentation is done.
+        See argument \code{undo} of \code{\link{segmentByCBS}}() for more
+        details.}
    \item{...}{Not used.}
    \item{flavor}{A \code{\link[base]{character}} specifying what type of segmentation and
      calling algorithm to be used.}

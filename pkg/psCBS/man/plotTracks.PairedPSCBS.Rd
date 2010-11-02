@@ -26,7 +26,7 @@
  \usage{\method{plotTracks}{PairedPSCBS}(x, tracks=c("tcn", "rho", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], pch=".", Clim=c(0, 6), Blim=c(0, 1), xScale=1e-06, ..., add=FALSE)}
 
  \arguments{
-   \item{x}{A \code{\link{PairedPSCBS}} result object.}
+   \item{x}{A result object returned by \code{\link{segmentByPairedPSCBS}}().}
    \item{tracks}{A \code{\link[base]{character}} \code{\link[base]{vector}} specifying what types of tracks to plot.}
    \item{pch}{The type of points to use.}
    \item{Clim}{The range of copy numbers.}

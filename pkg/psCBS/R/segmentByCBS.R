@@ -22,6 +22,9 @@
 #   \item{x}{Optional @numeric @vector of J genomic locations.
 #            If @NULL, index locations \code{1:J} are used.}
 #   \item{w}{Optional @numeric @vector in [0,1] of J weights.}
+#   \item{undo}{A non-negative @numeric.  If less than +@Inf, then
+#       arguments \code{undo.splits="sdundo"} and \code{undo.SD=undo}
+#       are passed to \code{DNAcopy::segment()}.}
 #   \item{...}{Additional arguments passed to the segmentation function.}
 #   \item{knownCPs}{Optional @numeric @vector of known 
 #     change point locations.}
@@ -69,7 +72,7 @@
 #
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL, ..., knownCPs=NULL, seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL, undo=Inf, ..., knownCPs=NULL, seed=NULL, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -103,6 +106,9 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
   if (hasWeights) {
     w <- Arguments$getDoubles(w, range=c(0,1), length=length2, disallow=disallow);
   }
+
+  # Argument 'undo':
+  undo <- Arguments$getDouble(undo, range=c(0,Inf));
 
   # Argument 'knownChangePoints':
   if (!is.null(knownCPs)) {
@@ -187,9 +193,15 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
   params <- list();
   if (hasWeights) {
     params$weights <- w;
-    verbose && cat(verbose, "Segmentation parameters:");
-    verbose && str(verbose, params);
   }
+
+  if (undo < Inf) {
+    params$undo.split <- "sdundo";
+    params$undo.SD <- undo;
+  }
+
+  verbose && cat(verbose, "Segmentation parameters:");
+  verbose && str(verbose, params);
 
   userArgs <- list(...);
   if (length(userArgs) > 0) {
@@ -379,6 +391,9 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
 
 ############################################################################
 # HISTORY:
+# 2010-11-02
+# o Added argument 'undo' to segmentByCBS(), which corresponds to
+#   undo.splits="sdundo" and undo.SD=undo, if undo < Inf.
 # 2010-10-25
 # o Now segmentByCBS() also returns element 'lociNotPartOfSegment',
 #   if there are segments that share end points, which can happen if

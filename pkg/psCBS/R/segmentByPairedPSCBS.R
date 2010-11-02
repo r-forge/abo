@@ -26,6 +26,10 @@
 #   \item{alphaTCN, alphaDH}{The significance levels for segmenting total
 #        copy numbers (TCNs) and decrease-in-heterozygosity signals (DHs),
 #        respectively.}
+#   \item{undoTCN, undoDH}{Non-negative @numerics.  If less than +@Inf, 
+#        then a cleanup of segmentions post segmentation is done.
+#        See argument \code{undo} of @see "segmentByCBS" for more
+#        details.}
 #   \item{...}{Not used.}
 #   \item{flavor}{A @character specifying what type of segmentation and 
 #     calling algorithm to be used.}
@@ -76,7 +80,7 @@
 #
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), tbn=TRUE, seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), tbn=TRUE, seed=NULL, verbose=FALSE) {
   require("R.utils") || throw("Package not loaded: R.utils");
   require("aroma.light") || throw("Package not loaded: aroma.light");
   ver <- packageDescription("aroma.light")$Version;
@@ -118,6 +122,13 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
   # Argument 'alphaDH':
   alphaDH <- Arguments$getDouble(alphaDH, range=c(0,1));
+
+  # Argument 'undoTCN':
+  undoTCN <- Arguments$getDouble(undoTCN, range=c(0,Inf));
+
+  # Argument 'undoDH':
+  undoDH <- Arguments$getDouble(undoDH, range=c(0,Inf));
+
 
   # Argument 'flavor':
   flavor <- match.arg(flavor);
@@ -228,7 +239,10 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
       }
       fit <- segmentByPairedPSCBS(CT=CT[units], betaT=betaTN[units], 
                 betaN=betaN[units], muN=muN[units], chromosome=chromosomeKK,
-                                    x=xKK, tbn=FALSE, ..., verbose=verbose);
+                x=xKK, tbn=FALSE, 
+                alphaTCN=alphaTCN, alphaDH=alphaDH,
+                undoTCN=undoTCN, undoDH=undoDH,
+                ..., verbose=verbose);
       verbose && print(verbose, head(as.data.frame(fit)));
       verbose && print(verbose, tail(as.data.frame(fit)));
       
@@ -341,8 +355,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     x <- seq(length=nbrOfLoci);
   }
 
-  fit <- segmentByCBS(yT, chromosome=chromosome, x=x, alpha=alphaTCN, 
-                                                         verbose=verbose);
+  fit <- segmentByCBS(yT, chromosome=chromosome, x=x, 
+                      alpha=alphaTCN, undo=undoTCN, verbose=verbose);
   verbose && str(verbose, fit);
   tcnSegments <- fit$output;
   tcnLociNotPartOfSegment <- fit$lociNotPartOfSegment;
@@ -441,7 +455,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
     verbose && enter(verbose, "Segmenting DH signals");
     fit <- segmentByCBS(rhoKKHet, chromosome=chromosome, x=xKKHet, 
-                                           alpha=alphaDH, verbose=verbose);
+                        alpha=alphaDH, undo=undoDH, verbose=verbose);
     verbose && str(verbose, fit);
     dhSegments <- fit$output;
     dhLociNotPartOfSegment <- fit$lociNotPartOfSegment;
@@ -571,8 +585,11 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-11-02
+# o Added arguments 'undoTCN' and 'undoDH' to segmentByPairedPSCBS().
+# o BUG FIX: Arguments 'alphaTCN' and 'alphaDH' of segmentByPairedPSCBS() 
+#   were not used when more than one chromosome were segmented.
 # 2010-10-25
-# o Now segmentByPairedPSCBS() returns 
 # o BUG FIX: Now the correct set of loci are extracted from each TCN
 #   segment, in the rare case that two neighboring TCN segments have
 #   the same end points.

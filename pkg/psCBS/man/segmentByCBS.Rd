@@ -21,7 +21,7 @@
   see [1,2].
  }
 
- \usage{\method{segmentByCBS}{default}(y, chromosome=0, x=NULL, w=NULL, ..., knownCPs=NULL, seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByCBS}{default}(y, chromosome=0, x=NULL, w=NULL, undo=Inf, ..., knownCPs=NULL, seed=NULL, verbose=FALSE)}
 
  \arguments{
    \item{y}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genomic signals to be segmented.}
@@ -31,6 +31,9 @@
    \item{x}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genomic locations.
             If \code{\link[base]{NULL}}, index locations \code{1:J} are used.}
    \item{w}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} in [0,1] of J weights.}
+   \item{undo}{A non-negative \code{\link[base]{numeric}}.  If less than +\code{\link[base:is.finite]{Inf}}, then
+       arguments \code{undo.splits="sdundo"} and \code{undo.SD=undo}
+       are passed to \code{DNAcopy::segment()}.}
    \item{...}{Additional arguments passed to the segmentation function.}
    \item{knownCPs}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of known
      change point locations.}

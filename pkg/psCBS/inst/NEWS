@@ -1,6 +1,14 @@
 Package: psCBS
 ==============
 
+Version: 0.9.6 [2010-11-02]
+o Added arguments 'undoTCN' and 'undoDH' to segmentByPairedPSCBS().
+o Added argument 'undo' to segmentByCBS(), which corresponds to
+  undo.splits="sdundo" and undo.SD=undo, if undo < +Inf.
+o BUG FIX: Arguments 'alphaTCN' and 'alphaDH' of segmentByPairedPSCBS()
+  were not used when more than one chromosome were segmented.
+
+
 Version: 0.9.5 [2010-11-01]
 o Added arguments 'alphaAB' and 'alphaHighAI' to callABandHighAI().
 o BUG FIX: bootstrapDHByRegion() would give an error if only a single
