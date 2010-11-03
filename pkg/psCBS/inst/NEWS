@@ -1,6 +1,12 @@
 Package: psCBS
 ==============
 
+Version: 0.9.7 [2010-11-03]
+o ROBUSTNESS: Now bootstrapDHByRegion() uses resample() of R.utils.
+o BUG FIX: bootstrapDHByRegion() did not sample from the correct
+  unit(s) when there was only one DH signal.
+
+
 Version: 0.9.6 [2010-11-02]
 o Added arguments 'undoTCN' and 'undoDH' to segmentByPairedPSCBS().
 o Added argument 'undo' to segmentByCBS(), which corresponds to

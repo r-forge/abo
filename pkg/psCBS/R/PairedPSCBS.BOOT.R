@@ -137,7 +137,7 @@ setMethodS3("bootstrapDHByRegion", "PairedPSCBS", function(fit, B=100, statsFcn=
       rhoMean <- rep(naValue, times=B);
       for (bb in seq(length=B)) {
         # Resample indices
-        unitsS <- sample(units, size=nbrOfUnits, replace=TRUE);
+        unitsS <- resample(units, size=nbrOfUnits, replace=TRUE);
   
         # Resample data
         rhoB <- rho[unitsS];
@@ -211,6 +211,8 @@ setMethodS3("bootstrapDHByRegion", "PairedPSCBS", function(fit, B=100, statsFcn=
 
 ##############################################################################
 # HISTORY
+# 2010-11-03 [HB]
+# o ROBUSTNESS: Now bootstrapDHByRegion() uses resample() of R.utils.
 # 2010-11-01 [HB]
 # o Now bootstrapDHByRegion() estimates more quantiles.
 # o BUG FIX: bootstrapDHByRegion() would give an error if only a single
