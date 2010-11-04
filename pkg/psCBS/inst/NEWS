@@ -1,6 +1,13 @@
 Package: psCBS
 ==============
 
+Version: 0.9.8 [2010-11-04]
+o BUG FIX: There was a stray/debug stop() statement left in  
+  segmentByPairedPSCBS() causing an "error" in the rare case 
+  when loci that have the same physical locations are split
+  into two different segments.
+
+
 Version: 0.9.7 [2010-11-03]
 o ROBUSTNESS: Now bootstrapDHByRegion() uses resample() of R.utils.
 o BUG FIX: bootstrapDHByRegion() did not sample from the correct

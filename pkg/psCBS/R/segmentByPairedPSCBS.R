@@ -428,7 +428,6 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
       lociToExclude <- tcnLociNotPartOfSegment[[kk]];
       verbose && cat(verbose, "Excluding loci that belongs to a flanking segment: ", length(lociToExclude));
       keep <- setdiff(keep, lociToExclude);
-      stop();
     }
 
     # Sanity check
@@ -585,6 +584,11 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-11-04
+# o BUG FIX: There was a stray/debug stop() statement left in  
+#   segmentByPairedPSCBS() causing an "error" in the rare case 
+#   when loci that have the same physical locations are split
+#   into two different segments.
 # 2010-11-02
 # o Added arguments 'undoTCN' and 'undoDH' to segmentByPairedPSCBS().
 # o BUG FIX: Arguments 'alphaTCN' and 'alphaDH' of segmentByPairedPSCBS() 
