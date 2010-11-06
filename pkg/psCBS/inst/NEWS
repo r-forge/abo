@@ -1,6 +1,11 @@
 Package: psCBS
 ==============
 
+Version: 0.9.9 [2010-11-05]
+o BUG FIX: segmentByCBS() tried to pass non-existing argument
+  'undo.split' to DNAcopy::segment().  It should be 'undo.splits'.
+
+
 Version: 0.9.8 [2010-11-04]
 o BUG FIX: There was a stray/debug stop() statement left in  
   segmentByPairedPSCBS() causing an "error" in the rare case 

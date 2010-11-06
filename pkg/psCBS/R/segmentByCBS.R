@@ -196,7 +196,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
   }
 
   if (undo < Inf) {
-    params$undo.split <- "sdundo";
+    params$undo.splits <- "sdundo";
     params$undo.SD <- undo;
   }
 
@@ -212,6 +212,9 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
       params[[ff]] <- userArgs[[ff]];
     }
   }
+
+  verbose && cat(verbose, "Segmentation and user parameters:");
+  verbose && str(verbose, params);
 
   # Cleaning out unknown parameters
   keep <- (names(params) %in% names(formals));
