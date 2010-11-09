@@ -205,7 +205,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
 
   userArgs <- list(...);
   if (length(userArgs) > 0) {
-    verbose && cat(verbose, "User and segmentation arguments:");
+    verbose && cat(verbose, "User arguments:");
     verbose && str(verbose, userArgs);
     # Assign/overwrite by user arguments
     for (ff in names(userArgs)) {
