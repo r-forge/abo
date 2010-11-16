@@ -6,7 +6,7 @@ Author: Adam Olshen, Venkatraman E. Seshan
 Description: Segments allele specific DNA copy number data to detect regions 
 	with abnormal copy number within each parental chromosome
 Maintainer: Venkatraman E. Seshan <seshanv@mskcc.org>
-Depends: DNAcopy (>= 1.20.0), R.methodsS3 (>= 1.2.1), R.utils (>= 1.5.6)
+Depends: DNAcopy (>= 1.24.0), R.methodsS3 (>= 1.2.1), R.utils (>= 1.5.6)
 Suggests: aroma.light (>= 1.18.2), matrixStats (>= 0.2.2), R.oo (>= 1.7.4)
 License: GPL (>= 2)
 LazyLoad: yes
