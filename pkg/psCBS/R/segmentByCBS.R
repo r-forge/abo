@@ -173,8 +173,22 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
 
   sampleName <- "Unnamed sample";
 
+  index <- NULL;
   if (is.null(x)) {
     x <- seq(length=nbrOfLoci);
+    x0 <- x;
+  } else {
+    x0 <- x;
+    # Sort the data along the chromosome
+    o <- order(x, decreasing=FALSE, na.last=TRUE);
+    # Any change?
+    if (any(o != seq(length=nbrOfLoci))) {
+      y <- y[o];
+      x <- x[o];
+      # Record the ordering
+      index <- o;
+    }
+    rm(o); # Not needed anymore
   }
 
   cnData <- DNAcopy::CNA(
@@ -182,12 +196,14 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
     chrom     = rep(chromosome, times=nbrOfLoci),
     data.type = "logratio",
     maploc    = x,
-    sampleid  = sampleName
+    sampleid  = sampleName,
+    presorted = TRUE
   );
   verbose && str(verbose, cnData);
   names(cnData)[3] <- sampleName;
   verbose && str(verbose, cnData);
   verbose && exit(verbose);
+  rm(x, y, chromosome, sampleName);  # Not needed anymore
 
 
   params <- list();
@@ -285,6 +301,9 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
     fit$output <- fit$output[-1,,drop=FALSE];
   }
 
+  # Sanity check (does DNAcopy::segment() drop data points?!?)
+  stopifnot(nrow(fit$data) == nbrOfLoci);
+
   verbose && cat(verbose, "Captured output that was sent to stdout:");
   stdout <- paste(stdout, collapse="\n");
   verbose && cat(verbose, stdout);
@@ -297,6 +316,11 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
 
   # Coerce
   fit$output$num.mark <- as.integer(fit$output$num.mark);
+
+  if (!is.null(index)) {
+    fit$data$index <- index;
+  }
+
 
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -327,9 +351,16 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
       segsT <- segs[segIdxs,];
       verbose && print(verbose, segsT);
 
-      y <- fit$data[,3];
-
+      # WARNING: Above we ordered the units along the chromosome.  This means
+      # that the 'data' object used here is ordered that way, which in turn
+      # means that the unit indices identified below match 'data' and not the
+      # input data, e.g. 'x'.  This also why we record the inverse index map.
+      # /HB 2010-11-16
       x <- fit$data$maploc;
+
+      # Sanity check
+      stopifnot(all(x0[index] == x));
+
       lociNotPartOfSegment <- vector("list", length=nbrOfSegs);
       names(lociNotPartOfSegment) <- rownames(segs);
 
@@ -394,6 +425,9 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
 
 ############################################################################
 # HISTORY:
+# 2010-11-16
+# o Now the 'data' object returned by segmentByCBS() contains field
+#   'index' if and only if the loci had to be reorder along the genome.
 # 2010-11-02
 # o Added argument 'undo' to segmentByCBS(), which corresponds to
 #   undo.splits="sdundo" and undo.SD=undo, if undo < Inf.

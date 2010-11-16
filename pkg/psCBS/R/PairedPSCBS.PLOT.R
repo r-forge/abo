@@ -35,7 +35,7 @@
 # @keyword IO
 # @keyword internal
 #*/########################################################################### 
-setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE) {
+setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter=TRUE, pch=".", cex=1, grid=FALSE, Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE) {
   # To please R CMD check
   fit <- x;
  
@@ -44,11 +44,12 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Argument 'fit':
   if (nbrOfChromosomes(fit) > 1) {
-    return(plotTracksManyChromosomes(fit, tracks=tracks, pch=pch, Clim=Clim, Blim=Blim, xScale=xScale, ..., add=add));
+    return(plotTracksManyChromosomes(fit, tracks=tracks, scatter=scatter, pch=pch, Clim=Clim, Blim=Blim, xScale=xScale, ..., add=add));
   }
 
   # Argument 'tracks':
-  tracks <- match.arg(tracks, several.ok=TRUE);
+  knownTracks <- c("tcn", "rho", "tcn,c1,c2", "betaN", "betaT", "betaTN");
+  tracks <- match.arg(tracks, choices=knownTracks, several.ok=TRUE);
   tracks <- unique(tracks);
 
   # Argument 'xScale':
@@ -89,34 +90,46 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn
     par(mar=c(1,4,1,2)+1);
   }
 
+  # Color loci by genotype
+  col <- c("gray", "black")[(muN == 1/2) + 1];
+
   for (track in tracks) {
+    pchT <- if (scatter) { pch } else { NA };
+
     if (track == "tcn") {
-      plot(x, CT, pch=pch, col="gray", ylim=Clim, ylab="TCN");
+      plot(x, CT, pch=pchT, cex=cex, col="black", ylim=Clim, ylab="TCN");
       stext(side=3, pos=1, chrTag);
-      drawLevels(fit, what="tcn", xScale=xScale);
+      if (grid) {
+        abline(h=seq(from=0, to=Clim[2], by=2), lty=3, col="gray");
+        abline(h=0, lty=1, col="black");
+      }
+      drawLevels(fit, what="tcn", col="black", xScale=xScale);
     }
   
     if (track == "tcn,c1,c2") {
-      plot(x, CT, pch=pch, col="gray", ylim=Clim, ylab="C1, C2, TCN");
+      plot(x, CT, pch=pchT, cex=cex, col="black", ylim=Clim, ylab="C1, C2, TCN");
       stext(side=3, pos=1, chrTag);
-      drawLevels(fit, what="tcn", xScale=xScale);
-      drawLevels(fit, what="c2", col="purple", xScale=xScale);
+      if (grid) {
+        abline(h=seq(from=0, to=Clim[2], by=2), lty=3, col="gray");
+        abline(h=0, lty=1, col="black");
+      }
+      drawLevels(fit, what="tcn", col="purple", xScale=xScale);
+      drawLevels(fit, what="c2", col="red", xScale=xScale);
       drawLevels(fit, what="c1", col="blue", xScale=xScale);
     }
   
-    col <- c("gray", "black")[(muN == 1/2) + 1];
     if (track == "betaN") {
-      plot(x, betaN, pch=pch, col=col, ylim=Blim, ylab="BAF_N");
+      plot(x, betaN, pch=pchT, cex=cex, col=col, ylim=Blim, ylab=expression(BAF[N]));
       stext(side=3, pos=1, chrTag);
     }
   
     if (track == "betaT") {
-      plot(x, betaT, pch=pch, col=col, ylim=Blim, ylab="BAF_T");
+      plot(x, betaT, pch=pchT, cex=cex, col=col, ylim=Blim, ylab=expression(BAF[T]));
       stext(side=3, pos=1, chrTag);
     }
   
     if (track == "betaTN") {
-      plot(x, betaTN, pch=pch, col=col, ylim=Blim, ylab="BAF_TN");
+      plot(x, betaTN, pch=pchT, cex=cex, col=col, ylim=Blim, ylab=expression(BAF[T]^"*"));
       stext(side=3, pos=1, chrTag);
     }
   
@@ -126,9 +139,9 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn
       naValue <- as.double(NA);
       rho <- rep(naValue, length=nbrOfLoci);
       rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
-      plot(x, rho, pch=pch, col="gray", ylim=Blim, ylab="DH");
+      plot(x, rho, pch=pchT, cex=cex, col=col[isHet], ylim=Blim, ylab="DH");
       stext(side=3, pos=1, chrTag);
-      drawLevels(fit, what="dh", xScale=xScale);
+      drawLevels(fit, what="dh", col="black", xScale=xScale);
     }
   } # for (track ...)
 
@@ -504,6 +517,9 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
 
 ############################################################################
 # HISTORY:
+# 2010-11-09
+# o Added argument 'cex=1' to plotTracks().
+# o BUG FIX: It was not possible to plot BAF tracks with plotTracks().
 # 2010-10-20
 # o Added arguments 'onBegin' and 'onEnd' to plotTracksManyChromosomes().
 # 2010-10-18

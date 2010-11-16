@@ -1,6 +1,23 @@
 Package: psCBS
 ==============
 
+Version: 0.9.11 [2010-11-16]
+o Now the 'data' object returned by segmentByCBS() contains field
+  'index' if and only if the loci had to be reorder along the genome.
+o DOCUMENTATION: Added more details, references to papers, and cross
+  links to other functions to the help pages.
+o BUG FIX: In the rare cases where two loci at the same positions are
+  split up into two neighboring segments, then segmentByPairedPSCBS()
+  would fail to infer which they were if and only if the loci were not
+  ordered along the genome.  This could happen with for instance
+  Affymetrix GenomeWideSNP_6 data.
+
+
+Version: 0.9.10 [2010-11-09]
+o Added argument 'cex=1' to plotTracks().
+o BUG FIX: It was not possible to plot BAF tracks with plotTracks().
+
+
 Version: 0.9.9 [2010-11-05]
 o BUG FIX: segmentByCBS() tried to pass non-existing argument
   'undo.split' to DNAcopy::segment().  It should be 'undo.splits'.

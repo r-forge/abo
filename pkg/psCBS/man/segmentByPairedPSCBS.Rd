@@ -14,7 +14,7 @@
  \title{Segment copy numbers using the paired PSCBS method}
 
  \description{
-  Segment copy numbers using the paired PSCBS method.
+  Segment copy numbers using the paired PSCBS method [1].
   This is a low-level segmentation method.
   It is intended to be applied to one sample and one chromosome at the time.
  }
@@ -25,8 +25,10 @@
    \item{CT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor total copy numbers to be segmented.}
    \item{betaT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor allele B fractions (BAFs).}
    \item{betaN}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J matched normal BAFs.}
-   \item{muN}{An optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genotype calls.
-       If not given, they are estimated from the normal BAFs.}
+   \item{muN}{An optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genotype calls in
+        \{0,1/2,1\} for AA, AB, and BB, respectively. If not given,
+        they are estimated from the normal BAFs using
+        \code{\link[aroma.light]{callNaiveGenotypes}} as described in [2].}
    \item{chromosome}{(Optional) An \code{\link[base]{integer}} scalar
        (or a \code{\link[base]{vector}} of length J contain a unique value).
        Only used for annotation purposes.}
@@ -43,7 +45,7 @@
    \item{flavor}{A \code{\link[base]{character}} specifying what type of segmentation and
      calling algorithm to be used.}
    \item{tbn}{If \code{\link[base:logical]{TRUE}}, \code{betaT} is normalized before segmentation
-     using the TumorBoost method, otherwise not.}
+     using the TumorBoost method [2], otherwise not.}
    \item{seed}{An (optional) \code{\link[base]{integer}} specifying the random seed to be
      set before calling the segmentation method.  The random seed is
      set to its original state when exiting.  If \code{\link[base]{NULL}}, it is not set.}
@@ -112,11 +114,15 @@ plotTracks(fit, xScale=1e-6);
  \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
 
  \seealso{
-   Internally \code{\link{segmentByCBS}}() is used for segmentation.
+   Internally, \code{\link[aroma.light]{callNaiveGenotypes}} is used to
+   call naive genotypes, \code{\link[aroma.light]{normalizeTumorBoost}} is
+   used for TumorBoost normalization, and \code{\link{segmentByCBS}}() is used
+   to segment TCN and DH separately.
  }
 
  \references{
-   [1] Olshen et al, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, submitted, 2010.\cr
+   [1] A. Olshen, R. Olshen, H. Bengtsson, P. Neuvial, P. Spellman and P. Seshan, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, 2010 (submitted).\cr
+   [2] H. Bengtsson, P. Neuvial and T.P. Speed, \emph{TumorBoost: Normalization of allele-specific tumor copy numbers from a single pair of tumor-normal genotyping microarrays}, BMC Bioinformatics, 2010.
  }
 
 

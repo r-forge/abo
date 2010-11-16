@@ -5,7 +5,7 @@
 # @title "Segment copy numbers using the paired PSCBS method"
 #
 # \description{
-#  @get "title".
+#  @get "title" [1].
 #  This is a low-level segmentation method.
 #  It is intended to be applied to one sample and one chromosome at the time.
 # }
@@ -16,8 +16,10 @@
 #   \item{CT}{A @numeric @vector of J tumor total copy numbers to be segmented.}
 #   \item{betaT}{A @numeric @vector of J tumor allele B fractions (BAFs).}
 #   \item{betaN}{A @numeric @vector of J matched normal BAFs.}
-#   \item{muN}{An optional @numeric @vector of J genotype calls.
-#       If not given, they are estimated from the normal BAFs.}
+#   \item{muN}{An optional @numeric @vector of J genotype calls in 
+#        \{0,1/2,1\} for AA, AB, and BB, respectively. If not given,
+#        they are estimated from the normal BAFs using
+#        @see "aroma.light::callNaiveGenotypes" as described in [2].}
 #   \item{chromosome}{(Optional) An @integer scalar 
 #       (or a @vector of length J contain a unique value).
 #       Only used for annotation purposes.}
@@ -34,7 +36,7 @@
 #   \item{flavor}{A @character specifying what type of segmentation and 
 #     calling algorithm to be used.}
 #   \item{tbn}{If @TRUE, \code{betaT} is normalized before segmentation
-#     using the TumorBoost method, otherwise not.}
+#     using the TumorBoost method [2], otherwise not.}
 #   \item{seed}{An (optional) @integer specifying the random seed to be 
 #     set before calling the segmentation method.  The random seed is
 #     set to its original state when exiting.  If @NULL, it is not set.}
@@ -71,11 +73,15 @@
 # @author
 #
 # \seealso{
-#   Internally @see "segmentByCBS" is used for segmentation.
+#   Internally, @see "aroma.light::callNaiveGenotypes" is used to 
+#   call naive genotypes, @see "aroma.light::normalizeTumorBoost" is 
+#   used for TumorBoost normalization, and @see "segmentByCBS" is used 
+#   to segment TCN and DH separately.
 # }
 #
 # \references{
-#   [1] Olshen et al, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, submitted, 2010.\cr
+#   [1] A. Olshen, R. Olshen, H. Bengtsson, P. Neuvial, P. Spellman and P. Seshan, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, 2010 (submitted).\cr
+#   [2] H. Bengtsson, P. Neuvial and T.P. Speed, \emph{TumorBoost: Normalization of allele-specific tumor copy numbers from a single pair of tumor-normal genotyping microarrays}, BMC Bioinformatics, 2010.
 # }
 #
 # @keyword IO
@@ -358,9 +364,35 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   fit <- segmentByCBS(yT, chromosome=chromosome, x=x, 
                       alpha=alphaTCN, undo=undoTCN, verbose=verbose);
   verbose && str(verbose, fit);
+
+  if (chromosome == 11) {
+    saveObject(fit, file="fooDummy.RData");
+  }
+
   tcnSegments <- fit$output;
+
+  # Extract loci that should be excluded for each segment
   tcnLociNotPartOfSegment <- fit$lociNotPartOfSegment;
+  if (!is.null(tcnLociNotPartOfSegment)) {
+    # The specified loci are indexed according to the fit$data object,
+    # which may or may not have been reordered and therefore does not
+    # necessarily match the ordering of 'x' here.  If reordered,
+    # we need to map the indices in 'tcnLociNotPartOfSegment' back
+    # accordingly.
+    
+    # Was input data reordered? If so, then reorder.
+    index <- fit$data$index;
+    if (!is.null(index)) {
+      tcnLociNotPartOfSegment <- lapply(tcnLociNotPartOfSegment, FUN=function(idxs) {
+        index[idxs];
+      });
+    }
+
+    rm(index); # Not needed anymore
+  }
+
   rm(yT, fit);
+
 
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -419,15 +451,25 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     regionTag <- sprintf("[%d,%d]", xStart, xEnd);
     verbose && enter(verbose, sprintf("Total CN segment #%d (%s) of %d", kk, regionTag, nbrOfSegs));
 
+    verbose && cat(verbose, "Number of TCN loci in segment: ", tcnSegments[kk,"tcn.num.mark"]);
+
     # Identify subset of loci
     keep <- which(xStart <= x & x <= xEnd);
 
     # Special case?
     if (!is.null(tcnLociNotPartOfSegment)) {
-      verbose && enter(verbose, sprintf("Total CN segment #%d (%s) of %d", kk, regionTag, nbrOfSegs));
       lociToExclude <- tcnLociNotPartOfSegment[[kk]];
-      verbose && cat(verbose, "Excluding loci that belongs to a flanking segment: ", length(lociToExclude));
-      keep <- setdiff(keep, lociToExclude);
+      if (length(lociToExclude) > 0) {
+        verbose && cat(verbose, "Identified number of DHs before: ", length(keep));
+        verbose && printf(verbose, "Excluding %d loci that belongs to a flanking segment: units (%s) at positions (%s)\n",
+               length(lociToExclude), paste(lociToExclude, collapse=", "), paste(x[lociToExclude], collapse=", "));
+
+        # Sanity check
+        stopifnot(all(is.element(lociToExclude, keep)));
+
+        keep <- setdiff(keep, lociToExclude);
+        verbose && cat(verbose, "Identified number of DHs afterward: ", length(keep));
+      }
     }
 
     # Sanity check
@@ -584,6 +626,14 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-11-16
+# o BUG FIX: In the rare cases where two loci at the same positions are
+#   split up into two neighboring segments, then segmentByPairedPSCBS()
+#   would fail to infer which they were if and only if the loci were not
+#   ordered along the genome.  This could happen with for instance
+#   Affymetrix GenomeWideSNP_6 data.
+# o DOCUMENTATION: Clarified the form of argument 'muN', and added
+#   references to papers and cross links to more internal methods.
 # 2010-11-04
 # o BUG FIX: There was a stray/debug stop() statement left in  
 #   segmentByPairedPSCBS() causing an "error" in the rare case 
