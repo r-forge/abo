@@ -1,6 +1,11 @@
 Package: psCBS
 ==============
 
+Version: 0.9.13 [2010-11-19]
+o Added argument 'joinSegments' to segmentByCBS() in order to specify
+  if neighboring segments should be joined or not.
+
+
 Version: 0.9.12 [2010-11-19]
 o Added plotTracks() and drawLevels() etc to CBS results.
 o Now segmentByCBS() allows for unknown genomic positions.

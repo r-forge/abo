@@ -62,3 +62,15 @@ fitD <- segmentByCBS(y, x=x, seed=0xbeef);
 # Allow for some missing genomic annotations
 x[495] <- NA;
 fitD <- segmentByCBS(y, x=x, seed=0xbeef, verbose=-10);
+
+
+# Emulate a centromere
+x[650:699] <- NA;
+fit <- segmentByCBS(y, x=x, seed=0xbeef);
+xMb <- x/1e6;
+plot(xMb,y, pch=20, col="#aaaaaa", xlab=xlab, ylim=ylim);
+drawLevels(fit, col="red", lwd=2, xScale=1e-6);
+
+fitC <- segmentByCBS(y, x=x, cpFlavor="centered", seed=0xbeef, verbose=-10);
+drawLevels(fitC, col="blue", lwd=2, xScale=1e-6);
+drawLevels(fit, col="red", lwd=2, xScale=1e-6);

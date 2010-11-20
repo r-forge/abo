@@ -28,6 +28,15 @@
 #   \item{...}{Additional arguments passed to the segmentation function.}
 #   \item{preserveOrder}{If @TRUE, the returned \code{data} field is
 #     ordered as \code{x}, otherwise along the genome.}
+#   \item{joinSegments}{If @TRUE, there are no gaps between neighboring
+#     segments.
+#     If @FALSE, the boundaries of a segment are defined by the support
+#     that the loci in the segments provides, i.e. there exist a locus
+#     at each end point of each segment.  This also means that there
+#     is a gap between any neighboring segments, unless the change point
+#     is in the middle of multiple loci with the same position.
+#     The latter is what \code{DNAcopy::segment()} returns.
+#   }
 #   \item{knownCPs}{Optional @numeric @vector of known 
 #     change point locations.}
 #   \item{seed}{An (optional) @integer specifying the random seed to be 
@@ -75,7 +84,7 @@
 #
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL, undo=Inf, ..., preserveOrder=FALSE, knownCPs=NULL, seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL, undo=Inf, ..., preserveOrder=FALSE, joinSegments=FALSE, knownCPs=NULL, seed=NULL, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -121,6 +130,9 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
 
   # Argument 'preserveOrder':
   preserveOrder <- Arguments$getLogical(preserveOrder);
+
+  # Argument 'cpFlavor':
+  joinSegments <- Arguments$getLogical(joinSegments);
 
   # Argument 'knownChangePoints':
   if (!is.null(knownCPs)) {
@@ -491,7 +503,44 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
 
       fit$lociNotPartOfSegment <- lociNotPartOfSegment;
     } # if (length(cpIdxs) > 0)
-  } # if (nbrOfSegs > 0)
+  } # if (nbrOfSegs > 1)
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Adjust change-point locations?
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  if (joinSegments) {
+    segs <- fit$output;
+    nbrOfSegs <- nrow(segs);
+    if (nbrOfSegs > 1) {
+      verbose && enter(verbose, "Centering change points");
+      x <- fit$data$maploc;
+      prevSeg <- segs[1L,];
+      for (ss in 2:nrow(segs)) {
+        currSeg <- segs[ss,];
+        currStart <- currSeg[,"loc.start"];
+        prevEnd <- prevSeg[,"loc.end"];
+  
+        # Center CP
+        xMid <- (prevEnd + currStart) / 2;
+  
+        # Move previous end and current start to this centered CP
+        segs[ss,"loc.start"] <- xMid;
+        segs[ss-1L,"loc.end"] <- xMid;
+  
+        prevSeg <- currSeg;
+      } # for (ss ...)
+      verbose && exit(verbose);
+      fit$output <- segs;
+    } # if (nbrOfSegs > 1)
+  }
+
+  params <- list(
+    preserveOrder = preserveOrder,
+    joinSegments = joinSegments,
+    knownCPs = knownCPs
+  );
+
+  fit$params <- params;
 
   class(fit) <- c("CBS", class(fit));
 
@@ -511,6 +560,8 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
 ############################################################################
 # HISTORY:
 # 2010-11-19
+# o Added argument 'joinSegments' to segmentByCBS() in order to specify
+#   if neighboring segments should be joined or not.
 # o Now segmentByCBS() returns an object of class CBS.
 # o Now segmentByCBS() allows for unknown genomic positions.
 # o Now segmentByCBS() allows for missing signals.

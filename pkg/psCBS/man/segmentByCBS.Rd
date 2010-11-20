@@ -21,7 +21,7 @@
   see [1,2].
  }
 
- \usage{\method{segmentByCBS}{default}(y, chromosome=0, x=NULL, w=NULL, undo=Inf, ..., preserveOrder=FALSE, knownCPs=NULL, seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByCBS}{default}(y, chromosome=0, x=NULL, w=NULL, undo=Inf, ..., preserveOrder=FALSE, joinSegments=FALSE, knownCPs=NULL, seed=NULL, verbose=FALSE)}
 
  \arguments{
    \item{y}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genomic signals to be segmented.}
@@ -37,6 +37,15 @@
    \item{...}{Additional arguments passed to the segmentation function.}
    \item{preserveOrder}{If \code{\link[base:logical]{TRUE}}, the returned \code{data} field is
      ordered as \code{x}, otherwise along the genome.}
+   \item{joinSegments}{If \code{\link[base:logical]{TRUE}}, there are no gaps between neighboring
+     segments.
+     If \code{\link[base:logical]{FALSE}}, the boundaries of a segment are defined by the support
+     that the loci in the segments provides, i.e. there exist a locus
+     at each end point of each segment.  This also means that there
+     is a gap between any neighboring segments, unless the change point
+     is in the middle of multiple loci with the same position.
+     The latter is what \code{DNAcopy::segment()} returns.
+   }
    \item{knownCPs}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of known
      change point locations.}
    \item{seed}{An (optional) \code{\link[base]{integer}} specifying the random seed to be
@@ -133,6 +142,18 @@ fitD <- segmentByCBS(y, x=x, seed=0xbeef);
 # Allow for some missing genomic annotations
 x[495] <- NA;
 fitD <- segmentByCBS(y, x=x, seed=0xbeef, verbose=-10);
+
+
+# Emulate a centromere
+x[650:699] <- NA;
+fit <- segmentByCBS(y, x=x, seed=0xbeef);
+xMb <- x/1e6;
+plot(xMb,y, pch=20, col="#aaaaaa", xlab=xlab, ylim=ylim);
+drawLevels(fit, col="red", lwd=2, xScale=1e-6);
+
+fitC <- segmentByCBS(y, x=x, cpFlavor="centered", seed=0xbeef, verbose=-10);
+drawLevels(fitC, col="blue", lwd=2, xScale=1e-6);
+drawLevels(fit, col="red", lwd=2, xScale=1e-6);
 }
 
  \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
