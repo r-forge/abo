@@ -23,3 +23,6 @@
  callAllelicBalanceByDH callAllelicBalanceByDH.PairedPSCBS
  callExtremeAllelicImbalanceByDH
  callExtremeAllelicImbalanceByDH.PairedPSCBS
+  as.data.frame.CBS drawLevels.CBS getChromosomes.CBS
+  nbrOfChromosomes.CBS plot.CBS plotTracksManyChromosomes.CBS
+  tileChromosomes.CBS

@@ -1,6 +1,15 @@
 Package: psCBS
 ==============
 
+Version: 0.9.12 [2010-11-19]
+o Added plotTracks() and drawLevels() etc to CBS results.
+o Now segmentByCBS() allows for unknown genomic positions.
+o Now segmentByCBS() allows for missing signals.
+o Added argument 'preserveOrder' to segmentByCBS().  If TRUE, then
+  the loci in the returned 'data' object are ordered as the input
+  data, otherwise it is ordered along the genome.
+
+
 Version: 0.9.11 [2010-11-16]
 o Now the 'data' object returned by segmentByCBS() contains field
   'index' if and only if the loci had to be reorder along the genome.

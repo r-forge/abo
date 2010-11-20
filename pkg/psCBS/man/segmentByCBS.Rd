@@ -21,7 +21,7 @@
   see [1,2].
  }
 
- \usage{\method{segmentByCBS}{default}(y, chromosome=0, x=NULL, w=NULL, undo=Inf, ..., knownCPs=NULL, seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByCBS}{default}(y, chromosome=0, x=NULL, w=NULL, undo=Inf, ..., preserveOrder=FALSE, knownCPs=NULL, seed=NULL, verbose=FALSE)}
 
  \arguments{
    \item{y}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genomic signals to be segmented.}
@@ -35,6 +35,8 @@
        arguments \code{undo.splits="sdundo"} and \code{undo.SD=undo}
        are passed to \code{DNAcopy::segment()}.}
    \item{...}{Additional arguments passed to the segmentation function.}
+   \item{preserveOrder}{If \code{\link[base:logical]{TRUE}}, the returned \code{data} field is
+     ordered as \code{x}, otherwise along the genome.}
    \item{knownCPs}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of known
      change point locations.}
    \item{seed}{An (optional) \code{\link[base]{integer}} specifying the random seed to be
@@ -58,10 +60,11 @@
  }
 
  \section{Missing and non-finite values}{
-   The signals to be segmented as well as any optional positions
-   must not contain missing values, i.e. \code{\link[base]{NA}}s or \code{\link[base:is.finite]{NaN}}s.
-   If there are any, an informative error is thrown.
-   Furthermore, none of the input signals may have infinite values,
+   Signals as well as genomic positions may contain missing
+   values, i.e. \code{\link[base]{NA}}s or \code{\link[base:is.finite]{NaN}}s.  If so, they are silently excluded
+   before performing the segmentation.
+
+   None of the input signals may have infinite values,
    i.e. -\code{\link[base:is.finite]{Inf}} or \code{\link[base:is.finite]{Inf}}. If so, an informative error is thrown.
  }
 
@@ -69,6 +72,8 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Simulating copy-number data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+set.seed(0xbeef);
+
 # Number of loci
 J <- 1000;
 
@@ -87,10 +92,47 @@ ylim <- c(-3,3);
 xMb <- x/1e6;
 plot(xMb,y, pch=20, col="#aaaaaa", xlab=xlab, ylim=ylim);
 
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Segment
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 fit <- segmentByCBS(y, x=x);
 print(fit);
-
 drawLevels(fit, col="red", lwd=2, xScale=1e-6);
+
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# TESTS
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+fit <- segmentByCBS(y, x=x, seed=0xbeef);
+
+# Reverse the ordering and segment
+fitR <- segmentByCBS(rev(y), x=rev(x), seed=0xbeef);
+stopifnot(all.equal(fitR$output, fit$output));
+stopifnot(all.equal(fitR$data[,2], fit$data[,2]));
+
+# Reverse, but preserve ordering of 'data' object
+fitRP <- segmentByCBS(rev(y), x=rev(x), preserveOrder=TRUE);
+stopifnot(all.equal(fitRP$output, fit$output));
+stopifnot(all.equal(fitRP$data[,2], rev(x)));
+
+
+# Change points inbetween data points at the same locus
+x[650:654] <- x[649];
+fitC <- segmentByCBS(rev(y), x=rev(x), preserveOrder=TRUE, seed=0xbeef);
+stopifnot(!is.null(fitC$lociNotPartOfSegment));
+stopifnot(fitC$data$maploc[unlist(fitC$lociNotPartOfSegment)] == x[649]);
+
+
+# Allow for some missing values in signals
+y[450] <- NA;
+fitD <- segmentByCBS(y, x=x, seed=0xbeef);
+
+
+# Allow for some missing genomic annotations
+x[495] <- NA;
+fitD <- segmentByCBS(y, x=x, seed=0xbeef, verbose=-10);
 }
 
  \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}

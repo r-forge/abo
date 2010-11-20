@@ -77,6 +77,13 @@
 \alias{callAllelicBalanceByDH.PairedPSCBS}
 \alias{callExtremeAllelicImbalanceByDH}
 \alias{callExtremeAllelicImbalanceByDH.PairedPSCBS}
+\alias{as.data.frame.CBS}
+\alias{drawLevels.CBS}
+\alias{getChromosomes.CBS}
+\alias{nbrOfChromosomes.CBS}
+\alias{plot.CBS}
+\alias{plotTracksManyChromosomes.CBS}
+\alias{tileChromosomes.CBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

@@ -26,6 +26,8 @@
 #       arguments \code{undo.splits="sdundo"} and \code{undo.SD=undo}
 #       are passed to \code{DNAcopy::segment()}.}
 #   \item{...}{Additional arguments passed to the segmentation function.}
+#   \item{preserveOrder}{If @TRUE, the returned \code{data} field is
+#     ordered as \code{x}, otherwise along the genome.}
 #   \item{knownCPs}{Optional @numeric @vector of known 
 #     change point locations.}
 #   \item{seed}{An (optional) @integer specifying the random seed to be 
@@ -49,10 +51,11 @@
 # }
 #
 # \section{Missing and non-finite values}{
-#   The signals to be segmented as well as any optional positions
-#   must not contain missing values, i.e. @NAs or @NaNs.
-#   If there are any, an informative error is thrown.
-#   Furthermore, none of the input signals may have infinite values,
+#   Signals as well as genomic positions may contain missing
+#   values, i.e. @NAs or @NaNs.  If so, they are silently excluded
+#   before performing the segmentation.
+#
+#   None of the input signals may have infinite values,
 #   i.e. -@Inf or @Inf. If so, an informative error is thrown.
 # }
 #
@@ -72,43 +75,52 @@
 #
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL, undo=Inf, ..., knownCPs=NULL, seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL, undo=Inf, ..., preserveOrder=FALSE, knownCPs=NULL, seed=NULL, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'y':
-  disallow <- c("NA", "NaN", "Inf");
+  disallow <- c("Inf");
   y <- Arguments$getDoubles(y, disallow=disallow);
   nbrOfLoci <- length(y);
 
-  length2 <- rep(nbrOfLoci, 2);
+  length2 <- rep(nbrOfLoci, times=2);
 
   # Argument 'chromosome':
-  chromosome <- Arguments$getInteger(chromosome, range=c(0,Inf), disallow=disallow);
+  disallow <- c("Inf");
+  chromosome <- Arguments$getIntegers(chromosome, range=c(0,Inf), disallow=disallow);
   if (length(chromosome) > 1) {
-    chromosome <- Arguments$getIntegers(chromosomes, length=length2);
+    chromosome <- Arguments$getIntegers(chromosome, length=length2, disallow=disallow);
     # If 'chromosome' is a vector of length J, then it must contain
     # a unique chromosome.
     chromosomes <- sort(unique(chromosome));
     if (length(chromosomes) > 1) {
-      throw("Argument 'chromosome' specifies more than one unique chromosome: ", length(chromosomes));
+      throw("Argument 'chromosome' specifies more than one unique chromosome: ", paste(seqToHumanReadable(chromosomes), collapse=", "));
     }
     chromosome <- chromosomes;
   }
 
+  # For future usage
+  chrom <- rep(chromosome, times=nbrOfLoci);
+
   # Argument 'x':
   if (!is.null(x)) {
+    disallow <- c("Inf");
     x <- Arguments$getDoubles(x, length=length2, disallow=disallow);
   }
 
   # Argument 'w':
   hasWeights <- !is.null(w);
   if (hasWeights) {
+    disallow <- c("NA", "NaN", "Inf");
     w <- Arguments$getDoubles(w, range=c(0,1), length=length2, disallow=disallow);
   }
 
   # Argument 'undo':
   undo <- Arguments$getDouble(undo, range=c(0,Inf));
+
+  # Argument 'preserveOrder':
+  preserveOrder <- Arguments$getLogical(preserveOrder);
 
   # Argument 'knownChangePoints':
   if (!is.null(knownCPs)) {
@@ -164,6 +176,64 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
   verbose && exit(verbose);
  
 
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Reorder data points along the genome, because that is what
+  # DNAcopy::segment() will return.  At the end, we will undo
+  # the sort such that the returned 'data' object is always in
+  # the same order and number of loci as the input data.
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  wasSorted <- FALSE;
+  if (is.null(x)) {
+    x <- seq(length=nbrOfLoci);
+    index <- NULL;
+  } else {
+    x0 <- x;
+    # Sort the data along the chromosome
+    o <- order(x, decreasing=FALSE, na.last=TRUE);
+
+    # Any change?
+    wasSorted <- any(o != seq(length=nbrOfLoci));
+
+    # Then reorder.
+    if (wasSorted) {
+      verbose && enter(verbose, "Ordering loci along genome");
+      chrom <- chrom[o];
+      x <- x[o];
+      y <- y[o];
+      if (hasWeights) {
+        w <- w[o];
+      }
+      # Record the ordering
+      index <- o;
+      verbose && exit(verbose);
+    }
+    rm(o); # Not needed anymore
+  }
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Drop data points without known genomic positions, because that
+  # is what DNAcopy::CNA() will do otherwise.  At the end, we will 
+  # undo this such that the returned 'data' object is complete.
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  nok <- is.na(x);
+  hadMissing <- any(nok);
+  if (hadMissing) {
+    verbose && enter(verbose, "Dropping loci with unknown locations");
+    keep <- which(!nok);
+    verbose && cat(verbose, "Number of loci dropped: ", sum(nok));
+    chrom <- chrom[keep];
+    x <- x[keep];
+    y <- y[keep];
+    if (hasWeights) {
+      w <- w[keep];
+    }
+    rm(keep);
+    verbose && exit(verbose);
+  }
+
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Setting up arguments to pass to segmentation function
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -171,29 +241,11 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
 
   verbose && enter(verbose, "Setting up ", pkgName, " data structure"); 
 
-  sampleName <- "Unnamed sample";
-
-  index <- NULL;
-  if (is.null(x)) {
-    x <- seq(length=nbrOfLoci);
-    x0 <- x;
-  } else {
-    x0 <- x;
-    # Sort the data along the chromosome
-    o <- order(x, decreasing=FALSE, na.last=TRUE);
-    # Any change?
-    if (any(o != seq(length=nbrOfLoci))) {
-      y <- y[o];
-      x <- x[o];
-      # Record the ordering
-      index <- o;
-    }
-    rm(o); # Not needed anymore
-  }
+  sampleName <- "y";  # This is going to be the name of the data field
 
   cnData <- DNAcopy::CNA(
     genomdat  = y,
-    chrom     = rep(chromosome, times=nbrOfLoci),
+    chrom     = chrom,
     data.type = "logratio",
     maploc    = x,
     sampleid  = sampleName,
@@ -301,6 +353,19 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
     fit$output <- fit$output[-1,,drop=FALSE];
   }
 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Undo the dropping of loci with unknown locations
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  if (hadMissing) {
+    verbose && enter(verbose, "Undo dropping of loci with unknown locations");
+    idxs <- rep(as.double(NA), times=nbrOfLoci);
+    keep <- which(!nok);
+    idxs[keep] <- seq(along=keep);
+    fit$data <- fit$data[idxs,];
+    rm(keep);
+    verbose && exit(verbose);
+  }
+
   # Sanity check (does DNAcopy::segment() drop data points?!?)
   stopifnot(nrow(fit$data) == nbrOfLoci);
 
@@ -317,11 +382,32 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
   # Coerce
   fit$output$num.mark <- as.integer(fit$output$num.mark);
 
-  if (!is.null(index)) {
-    fit$data$index <- index;
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Undo the ordering along the genome, or add the index map?
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  if (wasSorted) {
+    if (preserveOrder) {
+      verbose && enter(verbose, "Undoing reordering along genome");
+
+      o <- order(index);
+      fit$data <- fit$data[o,];
+      rm(o);
+      verbose && cat(verbose, "Reordering of data undone:");
+      verbose && str(verbose, fit$data);
+
+      # Sanity check
+      stopifnot(all(fit$data$maploc == x0));
+
+      verbose && exit(verbose);
+    } else {
+      fit$data$index <- index;
+
+      # Sanity check
+      stopifnot(all(fit$data$maploc == x0[fit$data$index], na.rm=TRUE));
+    }
   }
-
-
+  rm(x0); # Not needed anymore
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Special case: Neighboring segments with "overlapping" end points
@@ -354,12 +440,9 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
       # WARNING: Above we ordered the units along the chromosome.  This means
       # that the 'data' object used here is ordered that way, which in turn
       # means that the unit indices identified below match 'data' and not the
-      # input data, e.g. 'x'.  This also why we record the inverse index map.
+      # input data, e.g. 'x'.  This is also why we record the inverse index map.
       # /HB 2010-11-16
       x <- fit$data$maploc;
-
-      # Sanity check
-      stopifnot(all(x0[index] == x));
 
       lociNotPartOfSegment <- vector("list", length=nbrOfSegs);
       names(lociNotPartOfSegment) <- rownames(segs);
@@ -410,6 +493,8 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
     } # if (length(cpIdxs) > 0)
   } # if (nbrOfSegs > 0)
 
+  class(fit) <- c("CBS", class(fit));
+
   verbose && cat(verbose, "Results object:");
   verbose && str(verbose, fit);
 
@@ -425,6 +510,13 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
 
 ############################################################################
 # HISTORY:
+# 2010-11-19
+# o Now segmentByCBS() returns an object of class CBS.
+# o Now segmentByCBS() allows for unknown genomic positions.
+# o Now segmentByCBS() allows for missing signals.
+# o Added argument 'preserveOrder' to segmentByCBS().  If TRUE, then
+#   the loci in the returned 'data' object are ordered as the input
+#   data, otherwise it is ordered along the genome.
 # 2010-11-16
 # o Now the 'data' object returned by segmentByCBS() contains field
 #   'index' if and only if the loci had to be reorder along the genome.
