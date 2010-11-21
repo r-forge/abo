@@ -399,10 +399,6 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
                       alpha=alphaTCN, undo=undoTCN, verbose=verbose);
   verbose && str(verbose, fit);
 
-  if (chromosome == 11) {
-    saveObject(fit, file="fooDummy.RData");
-  }
-
   tcnSegments <- fit$output;
 
   # Extract loci that should be excluded for each segment
@@ -594,6 +590,10 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     );
 
     segs[[kk]] <- tcndhSegments;
+
+    verbose && cat(verbose, "(TCN,DH) segmentation for one total CN segment:");
+    verbose && print(verbose, segs[[kk]]);
+
     verbose && exit(verbose);    
   } # for (kk ...)
 
@@ -620,6 +620,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     alphaDH = alphaDH,
     flavor = flavor,
     tbn = tbn,
+    joinSegments = joinSegments,
+    knownCPs = knownCPs,
     seed = seed
   );
 
@@ -665,6 +667,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-11-21
+# o Forgot to return arguments 'joinSegments' & 'knownCPs' in 'params'.
 # 2010-11-20
 # o Now it is possible to specify the boundaries of the regions to be
 #   segmented as known change points via argument 'knownCPs'.

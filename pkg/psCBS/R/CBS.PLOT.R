@@ -84,7 +84,7 @@ setMethodS3("plotTracks", "CBS", function(x, scatter=TRUE, pch=".", cex=1, grid=
     abline(h=seq(from=0, to=Clim[2], by=2), lty=3, col="gray");
     abline(h=0, lty=1, col="black");
   }
-  drawLevels(fit, col="red", xScale=xScale);
+  drawLevels(fit, col="purple", xScale=xScale);
 
   invisible();  
 }) # plotTracks()

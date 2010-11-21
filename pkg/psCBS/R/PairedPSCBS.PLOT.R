@@ -103,7 +103,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn
         abline(h=seq(from=0, to=Clim[2], by=2), lty=3, col="gray");
         abline(h=0, lty=1, col="black");
       }
-      drawLevels(fit, what="tcn", col="black", xScale=xScale);
+      drawLevels(fit, what="tcn", col="purple", xScale=xScale);
     }
   
     if (track == "tcn,c1,c2") {
@@ -141,7 +141,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn
       rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
       plot(x, rho, pch=pchT, cex=cex, col=col[isHet], ylim=Blim, ylab="DH");
       stext(side=3, pos=1, chrTag);
-      drawLevels(fit, what="dh", col="black", xScale=xScale);
+      drawLevels(fit, what="dh", col="orange", xScale=xScale);
     }
   } # for (track ...)
 

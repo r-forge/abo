@@ -274,8 +274,10 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
   
         # (c) Adjust the start and end of the TCN segment
         xJJ <- x[units];
-        start <- min(xJJ, na.rm=TRUE);
-        end <- max(xJJ, na.rm=TRUE);
+        startSupport <- min(xJJ, na.rm=TRUE);
+        endSupport <- max(xJJ, na.rm=TRUE);
+        start <- min(start, startSupport, na.rm=TRUE);
+        end <- max(end, endSupport, na.rm=TRUE);
   
         # (d) Identify the actual units
         units <- (start <= x & x <= end);
@@ -322,6 +324,11 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
 
 ############################################################################
 # HISTORY:
+# 2010-11-21
+# o Adjusted postsegmentTCN() such that the updated TCN segment boundaries 
+#   are the maximum of the DH segment and the support by the loci.  This
+#   means that postsegmentTCN() will work as expected both when signals
+#   where segmented with 'joinSegments' being TRUE or FALSE.
 # 2010-10-25
 # o Now subsetByDhSegments() for PairedPSCBS handles the rare case when
 #   markers with the same positions are split in two different segments.

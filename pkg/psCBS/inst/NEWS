@@ -1,6 +1,16 @@
 Package: psCBS
 ==============
 
+Version: 0.9.15 [2010-11-21]
+o Adjusted postsegmentTCN() such that the updated TCN segment boundaries
+  are the maximum of the DH segment and the support by the loci.  This
+  means that postsegmentTCN() will work as expected both when signals
+  where segmented with 'joinSegments' being TRUE or FALSE.
+o Updated plotTracks() for PairedPSCBS such that the TCN segmentation
+  is colored 'purple' and the DH segmentation 'orange' for TCH and DH
+  only tracks.
+
+
 Version: 0.9.14 [2010-11-20]
 o Now it is possible to specify the boundaries of the regions to
   be segmented as known change points via argument 'knownCPs'.

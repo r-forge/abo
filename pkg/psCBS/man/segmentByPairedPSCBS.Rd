@@ -121,10 +121,15 @@ print(fit);
 # Plot results
 plotTracks(fit, xScale=1e-6);
 
-x11();
+
+par(ask=TRUE);
+
 fit2 <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN,
           chromosome=1, x=x, joinSegments=TRUE, verbose=-10);
 plotTracks(fit2, xScale=1e-6);
+
+fit3 <- postsegmentTCN(fit2);
+plotTracks(fit3, xScale=1e-6);
 }
 
  \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
