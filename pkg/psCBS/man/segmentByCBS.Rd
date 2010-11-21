@@ -151,7 +151,7 @@ xMb <- x/1e6;
 plot(xMb,y, pch=20, col="#aaaaaa", xlab=xlab, ylim=ylim);
 drawLevels(fit, col="red", lwd=2, xScale=1e-6);
 
-fitC <- segmentByCBS(y, x=x, cpFlavor="centered", seed=0xbeef, verbose=-10);
+fitC <- segmentByCBS(y, x=x, joinSegments=TRUE, seed=0xbeef, verbose=-10);
 drawLevels(fitC, col="blue", lwd=2, xScale=1e-6);
 drawLevels(fit, col="red", lwd=2, xScale=1e-6);
 }

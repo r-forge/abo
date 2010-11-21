@@ -29,3 +29,8 @@ print(fit);
 
 # Plot results
 plotTracks(fit, xScale=1e-6);
+
+x11();
+fit2 <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN,
+          chromosome=1, x=x, joinSegments=TRUE, verbose=-10);
+plotTracks(fit2, xScale=1e-6);

@@ -134,14 +134,20 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
   # Argument 'cpFlavor':
   joinSegments <- Arguments$getLogical(joinSegments);
 
-  # Argument 'knownChangePoints':
+  # Argument 'knownCPs':
   if (!is.null(knownCPs)) {
     if (is.null(x)) {
       knownCPs <- Arguments$getIndices(knownCPs, max=nbrOfLoci);
     } else {
       knownCPs <- Arguments$getDoubles(knownCPs);
     }
-    throw("Support for specifying known change points (argument 'knownCPs') is not yet implemented as of 2010-10-02.");
+    if (length(knownCPs) != 2) {
+      throw("Currently argument 'knownCPs' can be used to specify the boundaries of the region to be segmented: ", length(knownCPs));
+      throw("Support for specifying known change points (argument 'knownCPs') is not yet implemented as of 2010-10-02.");
+    }
+    if (!joinSegments) {
+      throw("Argument 'knownCPs' should only be specified if argument 'joinSegments' is TRUE.");
+    }
   }
 
   # Argument 'seed':
@@ -510,12 +516,13 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (joinSegments) {
     segs <- fit$output;
+
     nbrOfSegs <- nrow(segs);
     if (nbrOfSegs > 1) {
       verbose && enter(verbose, "Centering change points");
       x <- fit$data$maploc;
       prevSeg <- segs[1L,];
-      for (ss in 2:nrow(segs)) {
+      for (ss in 2:nbrOfSegs) {
         currSeg <- segs[ss,];
         currStart <- currSeg[,"loc.start"];
         prevEnd <- prevSeg[,"loc.end"];
@@ -530,8 +537,20 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
         prevSeg <- currSeg;
       } # for (ss ...)
       verbose && exit(verbose);
-      fit$output <- segs;
     } # if (nbrOfSegs > 1)
+
+    if (!is.null(knownCPs)) {
+      if (nbrOfSegs > 0) {
+        # Sanity check
+        stopifnot(knownCPs[1L] <= segs[1L,"loc.start"]);
+        segs[1L,"loc.start"] <- knownCPs[1L];
+        # Sanity check
+        stopifnot(segs[1L,"loc.end"] <= knownCPs[length(knownCPs)]);
+        segs[nbrOfSegs,"loc.end"] <- knownCPs[length(knownCPs)];
+      } # if (nbrOfSegs > 0)
+    } # if (!is.null(knownCPs))
+
+    fit$output <- segs;
   }
 
   params <- list(
@@ -559,6 +578,9 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
 
 ############################################################################
 # HISTORY:
+# 2010-11-20
+# o Now it is possible to specify the boundaries of the regions to be
+#   segmented as known change points via argument 'knownCPs'.
 # 2010-11-19
 # o Added argument 'joinSegments' to segmentByCBS() in order to specify
 #   if neighboring segments should be joined or not.

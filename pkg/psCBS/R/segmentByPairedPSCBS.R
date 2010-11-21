@@ -37,6 +37,17 @@
 #     calling algorithm to be used.}
 #   \item{tbn}{If @TRUE, \code{betaT} is normalized before segmentation
 #     using the TumorBoost method [2], otherwise not.}
+#   \item{joinSegments}{If @TRUE, there are no gaps between neighboring
+#     segments.
+#     If @FALSE, the boundaries of a segment are defined by the support
+#     that the loci in the segments provides, i.e. there exist a locus
+#     at each end point of each segment.  This also means that there
+#     is a gap between any neighboring segments, unless the change point
+#     is in the middle of multiple loci with the same position.
+#     The latter is what \code{DNAcopy::segment()} returns.
+#   } 
+#   \item{knownCPs}{Optional @numeric @vector of known 
+#     change point locations.}
 #   \item{seed}{An (optional) @integer specifying the random seed to be 
 #     set before calling the segmentation method.  The random seed is
 #     set to its original state when exiting.  If @NULL, it is not set.}
@@ -86,7 +97,7 @@
 #
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), tbn=TRUE, seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), tbn=TRUE, joinSegments=FALSE, knownCPs=NULL, seed=NULL, verbose=FALSE) {
   require("R.utils") || throw("Package not loaded: R.utils");
   require("aroma.light") || throw("Package not loaded: aroma.light");
   ver <- packageDescription("aroma.light")$Version;
@@ -96,7 +107,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'CT':
-  disallow <- c("NA", "NaN", "Inf");
+  disallow <- c("Inf");
   CT <- Arguments$getDoubles(CT, disallow=disallow);
   nbrOfLoci <- length(CT);
   length2 <- rep(nbrOfLoci, times=2);
@@ -113,6 +124,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   }
 
   # Argument 'chromosome':
+  disallow <- c("Inf");
   chromosome <- Arguments$getIntegers(chromosome, range=c(0,Inf), disallow=disallow);
   if (length(chromosome) > 1) {
     chromosome <- Arguments$getIntegers(chromosome, length=length2);
@@ -120,6 +132,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
   # Argument 'x':
   if (!is.null(x)) {
+    disallow <- c("Inf");
     x <- Arguments$getDoubles(x, length=length2, disallow=disallow);
   }
 
@@ -144,6 +157,25 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
   # Argument 'tbn':
   tbn <- Arguments$getLogical(tbn);
+
+  # Argument 'cpFlavor':
+  joinSegments <- Arguments$getLogical(joinSegments);
+
+  # Argument 'knownCPs':
+  if (!is.null(knownCPs)) {
+    if (is.null(x)) {
+      knownCPs <- Arguments$getIndices(knownCPs, max=nbrOfLoci);
+    } else {
+      knownCPs <- Arguments$getDoubles(knownCPs);
+    }
+    if (length(knownCPs) != 2) {
+      throw("Currently argument 'knownCPs' can be used to specify the boundaries of the region to be segmented: ", length(knownCPs));
+      throw("Support for specifying known change points (argument 'knownCPs') is not yet implemented as of 2010-10-02.");
+    }
+    if (!joinSegments) {
+      throw("Argument 'knownCPs' should only be specified if argument 'joinSegments' is TRUE.");
+    }
+  }
 
   # Argument 'seed':
   if (!is.null(seed)) {
@@ -222,7 +254,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Multiple chromosomes?
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  chromosomes <- sort(unique(chromosome));
+  # Identify all chromosomes, excluding missing values
+  chromosomes <- sort(unique(chromosome), na.last=NA);
   nbrOfChromosomes <- length(chromosomes);
   if (nbrOfChromosomes > 1) {
     verbose && enter(verbose, "Segmenting multiple chromosomes");
@@ -245,7 +278,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
       }
       fit <- segmentByPairedPSCBS(CT=CT[units], betaT=betaTN[units], 
                 betaN=betaN[units], muN=muN[units], chromosome=chromosomeKK,
-                x=xKK, tbn=FALSE, 
+                x=xKK, tbn=FALSE, joinSegments=joinSegments,
                 alphaTCN=alphaTCN, alphaDH=alphaDH,
                 undoTCN=undoTCN, undoDH=undoDH,
                 ..., verbose=verbose);
@@ -362,6 +395,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   }
 
   fit <- segmentByCBS(yT, chromosome=chromosome, x=x, 
+                      joinSegments=joinSegments, knownCPs=knownCPs,
                       alpha=alphaTCN, undo=undoTCN, verbose=verbose);
   verbose && str(verbose, fit);
 
@@ -448,7 +482,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     xEnd <- tcnSegments[kk,"tcn.loc.end"];
     gammaT <- tcnSegments[kk,"tcn.mean"];
 
-    regionTag <- sprintf("[%d,%d]", xStart, xEnd);
+    regionTag <- sprintf("[%g,%g]", xStart, xEnd);
     verbose && enter(verbose, sprintf("Total CN segment #%d (%s) of %d", kk, regionTag, nbrOfSegs));
 
     verbose && cat(verbose, "Number of TCN loci in segment: ", tcnSegments[kk,"tcn.num.mark"]);
@@ -495,7 +529,13 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     rm(keep);
 
     verbose && enter(verbose, "Segmenting DH signals");
+    if (joinSegments) {
+      knownCPsKK <- c(xStart, xEnd);
+    } else {
+      knownCPsKK <- NULL;
+    }
     fit <- segmentByCBS(rhoKKHet, chromosome=chromosome, x=xKKHet, 
+                        joinSegments=joinSegments, knownCPs=knownCPsKK,
                         alpha=alphaDH, undo=undoDH, verbose=verbose);
     verbose && str(verbose, fit);
     dhSegments <- fit$output;
@@ -554,7 +594,6 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     );
 
     segs[[kk]] <- tcndhSegments;
-
     verbose && exit(verbose);    
   } # for (kk ...)
 
@@ -626,6 +665,13 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-11-20
+# o Now it is possible to specify the boundaries of the regions to be
+#   segmented as known change points via argument 'knownCPs'.
+# o Added argument 'joinSegments' to segmentByPairedPSCBS() in order to 
+#   specify if neighboring segments should be joined or not.
+# o Now segmentByCBS() allows for unknown genomic positions.
+# o Now segmentByCBS() allows also for missing total CN signals.
 # 2010-11-16
 # o BUG FIX: In the rare cases where two loci at the same positions are
 #   split up into two neighboring segments, then segmentByPairedPSCBS()

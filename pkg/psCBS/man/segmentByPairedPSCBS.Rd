@@ -19,7 +19,7 @@
   It is intended to be applied to one sample and one chromosome at the time.
  }
 
- \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), tbn=TRUE, seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), tbn=TRUE, joinSegments=FALSE, knownCPs=NULL, seed=NULL, verbose=FALSE)}
 
  \arguments{
    \item{CT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor total copy numbers to be segmented.}
@@ -46,6 +46,17 @@
      calling algorithm to be used.}
    \item{tbn}{If \code{\link[base:logical]{TRUE}}, \code{betaT} is normalized before segmentation
      using the TumorBoost method [2], otherwise not.}
+   \item{joinSegments}{If \code{\link[base:logical]{TRUE}}, there are no gaps between neighboring
+     segments.
+     If \code{\link[base:logical]{FALSE}}, the boundaries of a segment are defined by the support
+     that the loci in the segments provides, i.e. there exist a locus
+     at each end point of each segment.  This also means that there
+     is a gap between any neighboring segments, unless the change point
+     is in the middle of multiple loci with the same position.
+     The latter is what \code{DNAcopy::segment()} returns.
+   }
+   \item{knownCPs}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of known
+     change point locations.}
    \item{seed}{An (optional) \code{\link[base]{integer}} specifying the random seed to be
      set before calling the segmentation method.  The random seed is
      set to its original state when exiting.  If \code{\link[base]{NULL}}, it is not set.}
@@ -109,6 +120,11 @@ print(fit);
 
 # Plot results
 plotTracks(fit, xScale=1e-6);
+
+x11();
+fit2 <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN,
+          chromosome=1, x=x, joinSegments=TRUE, verbose=-10);
+plotTracks(fit2, xScale=1e-6);
 }
 
  \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
