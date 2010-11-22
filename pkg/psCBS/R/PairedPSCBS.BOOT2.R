@@ -1,4 +1,4 @@
-setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, statsFcn=function(x) quantile(x, probs=c(0.025, 0.050, 0.95, 0.975), na.rm=TRUE), by=c("betaTN", "betaT"), ..., verbose=FALSE) {
+setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, statsFcn=function(x) quantile(x, probs=c(0.025, 0.050, 0.95, 0.975)), by=c("betaTN", "betaT"), ..., seed=NULL, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -8,6 +8,11 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   # Argument 'by':
   by <- match.arg(by);
 
+  # Argument 'seed':
+  if (!is.null(seed)) {
+    seed <- Arguments$getInteger(seed);
+  }
+
   # Argument 'verbose':
   verbose <- Arguments$getVerbose(verbose);
   if (verbose) {
@@ -16,7 +21,30 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   }
 
 
+
   verbose && enter(verbose, "Resample (TCN,DH) signals and re-estimate mean levels");
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Set the random seed
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  if (!is.null(seed)) {
+    verbose && enter(verbose, "Setting (temporary) random seed");
+    oldRandomSeed <- NULL;
+    if (exists(".Random.seed", mode="integer")) {
+      oldRandomSeed <- get(".Random.seed", mode="integer");
+    }
+    on.exit({
+      if (!is.null(oldRandomSeed)) {
+        .Random.seed <<- oldRandomSeed;
+      }
+    }, add=TRUE);
+    verbose && cat(verbose, "The random seed will be reset to its original state afterward.");
+    verbose && cat(verbose, "Seed: ", seed);
+    set.seed(seed);
+    verbose && exit(verbose);
+  }
+
+
   data <- fit$data;
   segs <- fit$output;
   params <- fit$params;
@@ -34,12 +62,14 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   # Find estimates to be done
   stats <- statsFcn(1);
   stopifnot(!is.null(names(stats)));
-  tcnStatsNames <- sprintf("tcn.%s", names(stats));
-  dhStatsNames <- sprintf("dh.%s", names(stats));
-  statsNames <- c(tcnStatsNames, dhStatsNames);
-  isDone <- is.element(statsNames, names(segs));
+  nbrOfStats <- length(stats);
+  statsNames <- names(stats);
 
   # Already done?
+  tcnStatsNames <- sprintf("tcn.%s", names(stats));
+  dhStatsNames <- sprintf("dh.%s", names(stats));
+  allStatsNames <- c(tcnStatsNames, dhStatsNames);
+  isDone <- is.element(allStatsNames, names(segs));
   if (all(isDone)) {
     verbose && cat(verbose, "Already done.");
     verbose && exit(verbose);
@@ -153,10 +183,14 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   # Resample (TCN,DH) within each segments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   nbrOfSegments <- nrow(segs);
-  naValue <- as.double(NA);
 
-  tcnMeanList <- vector("list", nbrOfSegments);
-  dhMeanList <- vector("list", nbrOfSegments);
+  # Allocate JxBx4 matrix M of bootstrap means
+  naValue <- as.double(NA);
+  dim <- c(nbrOfSegments, B, 4);
+  dimnames <- list(NULL, NULL, c("tcn", "dh", "c1", "c2"));
+  M <- array(naValue, dim=dim, dimnames=dimnames);
+  verbose && str(verbose, M);
+
   for (jj in seq(length=nbrOfSegments)) {
     verbose && enter(verbose, sprintf("DH segment #%d of %d", jj, nbrOfSegments));
     segJJ <- segs[jj,,drop=FALSE];
@@ -237,8 +271,6 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
     # Bootstrap while preserving (#hets, #homs, #nonSNPs)
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Bootstrap B times
-    naValue <- as.double(NA);
-    tcnMean <- dhMean <- rep(naValue, times=B);
     for (bb in seq(length=B)) {
       # (1) Bootstrap DHs
       if (nbrOfHetsJJ > 0) {
@@ -249,7 +281,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
         rhoBB <- rho[hetsBB];
 
         # Calculate bootstrap mean
-        dhMean[bb] <- mean(rhoBB, na.rm=TRUE);
+        M[jj,bb,"dh"] <- mean(rhoBB, na.rm=TRUE);
       } else {
         hetsBB <- NULL;
       } # if (nbrOfHets > 0)
@@ -269,72 +301,78 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
         tcnBB <- CT[unitsBB];
 
         # Calculate bootstrap mean
-        tcnMean[bb] <- mean(tcnBB, na.rm=TRUE);
+        M[jj,bb,"tcn"] <- mean(tcnBB, na.rm=TRUE);
       } # if (nbrOfUnitsJJ > 0)
     } # (for bb ...)
-
-    dhMeanList[[jj]] <- dhMean;
-    tcnMeanList[[jj]] <- tcnMean;
 
     verbose && exit(verbose);
   } # for (jj ...)
 
-  verbose && str(verbose, dhMeanList);
-  verbose && str(verbose, tcnMeanList);
+  verbose && cat(verbose, "Bootstrap means");
+  verbose && str(verbose, M);
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Calculate (C1,C2) bootstrap statistics
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  verbose && enter(verbose, "Calculating (C1,C2) from (TCN,DH) bootstraps");
+  C1 <- (1-M[,,"dh"]) * M[,,"tcn"] / 2;
+  C2 <- M[,,"tcn"] - C1;
+  M[,,"c1"] <- C1;
+  M[,,"c2"] <- C2;
+  verbose && str(verbose, M);
+  verbose && exit(verbose);
 
   
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Calculate bootstrap statistics
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   verbose && enter(verbose, "Calculating (TCN,DH) bootstrap statistics");
-  tcnStatsList <- vector("list", nbrOfSegments);
-  dhStatsList <- vector("list", nbrOfSegments);
-  for (jj in seq(length=nbrOfSegments)) {
-    verbose && enter(verbose, sprintf("Segment #%d of %d", jj, nbrOfSegments));
+  # Allocate JxQx4 matrix S
+  naValue <- as.double(NA);
+  dim <- dim(M);
+  dimnames <- dimnames(M);
+  dim[2] <- nbrOfStats;
+  dimnames[[2]] <- statsNames;
+  S <- array(naValue, dim=dim, dimnames=dimnames);
+  verbose && str(verbose, S);
 
-    # (1) Calculate DH bootstrap statistics
-    dhMean <- dhMeanList[[jj]];
-    dhStats <- statsFcn(dhMean);
-    dhStatsList[[jj]] <- dhStats;
+  fields <- dimnames(M)[[3]];
+  for (kk in seq(along=fields)) {
+    field <- fields[kk];
+    verbose && enter(verbose, sprintf("Field #%d ('%s') of %d", kk, field, length(fields)));
 
-    # (2) Calculate TCN bootstrap statistics
-    tcnMean <- tcnMeanList[[jj]];
-    tcnStats <- statsFcn(tcnMean);
-    tcnStatsList[[jj]] <- tcnStats;
+    Mkk <- M[,,kk,drop=TRUE];  # An JxB matrix
+    # Sanity check
+    stopifnot(nrow(Mkk) == nbrOfSegments);
+    stopifnot(ncol(Mkk) == B);
+
+    for (jj in seq(length=nbrOfSegments)) {
+      verbose && enter(verbose, sprintf("Segment #%d of %d", jj, nbrOfSegments));
+
+      Mkkjj <- Mkk[jj,,drop=TRUE]; # A vector of length B
+      S[jj,,kk] <- statsFcn(Mkkjj);
+
+      verbose && exit(verbose);
+    } # for (jj ...)
 
     verbose && exit(verbose);
   } # for (jj ...)
   verbose && exit(verbose);
+  verbose && cat(verbose, "Bootstrap statistics");
+  verbose && str(verbose, S);
 
-  # Flatten statistics, if possible
-  tcnStats <- sapply(tcnStatsList, FUN=function(x) x);
-  if (!is.matrix(tcnStats)) {
-    tcnStats <- as.matrix(tcnStats);
-  } else {
-    tcnStats <- t(tcnStats);
-  }
-  # Sanity check
-  stopifnot(is.matrix(tcnStats));
-  # Column matrix
-  colnames(tcnStats) <- tcnStatsNames;
-
-  dhStats <- sapply(dhStatsList, FUN=function(x) x);
-  if (!is.matrix(dhStats)) {
-    dhStats <- as.matrix(dhStats);
-  } else {
-    dhStats <- t(dhStats);
-  }
-  # Sanity check
-  stopifnot(is.matrix(dhStats));
-  # Column matrix
-  colnames(dhStats) <- dhStatsNames;
 
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Store
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  # Store results
-  segs <- cbind(segs, tcnStats, dhStats);
+  # Reshape JxQx4 array to Jx(4*Q) matrix
+  T <- wrap(S, map=list(1,NA), sep="_");
+  colnames(T) <- gsub("(.*)_(.*)", "\\2_\\1", colnames(T));
+
+  # Append
+  segs <- cbind(segs, T);
 
   # Drop previously estimated values
   dups <- duplicated(colnames(segs), fromLast=TRUE);
@@ -342,20 +380,42 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
     stats <- stats[,!dups, drop=FALSE];
   }
 
-  
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Statistical sanity checks
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   if (B >= 100) {
-    # Sanity check
-    stopifnot(all(tcnStats[,1] <= segs$tcn.mean, na.rm=TRUE));
-    stopifnot(all(segs$tcn.mean <= tcnStats[,ncol(tcnStats)], na.rm=TRUE));
+    verbose && enter(verbose, "Statistical sanity checks (iff B >= 100)");
+    tryCatch({
+      fields <- dimnames(M)[[3]];
+      for (kk in seq(along=fields)) {
+        field <- fields[kk];
+        verbose && enter(verbose, sprintf("Field #%d ('%s') of %d", kk, field, length(fields)));
   
-    # Sanity check
-    stopifnot(all(dhStats[,1] <= segs$dh.mean, na.rm=TRUE));
-    stopifnot(all(segs$dh.mean <= dhStats[,ncol(dhStats)], na.rm=TRUE));
-  }
-
+        # Bootstrap statistics
+        Skk <- S[,,kk, drop=TRUE];
+        range <- Skk[,c(1,ncol(Skk))];
+        verbose && str(verbose, range);
+  
+        # Segmentation means
+        key <- sprintf("%s.mean", field);
+        segMean <- segs[[key]];
+        verbose && str(verbose, segMean);
+  
+        # Sanity check
+        stopifnot(all(range[,1] <= segMean, na.rm=TRUE));
+        stopifnot(all(segMean <= range[,2], na.rm=TRUE));
+  
+        verbose && exit(verbose);
+      } # for (kk ...)
+    }, error = function(ex) {
+      # If an error, display the data, then throw the exception
+      verbose && print(verbose, segs);
+      throw(ex);
+    })
+    verbose && exit(verbose);
+  } # if (B >= 100)
+  
   
   fitB <- fit;
   fitB$output <- segs;
@@ -370,6 +430,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
 ##############################################################################
 # HISTORY
 # 2010-11-21
+# o Added argument 'seed'.
 # o Added bootstrapTCNandDHByRegion() for PairedPSCBS.
 # o Created from PairedPSCBS.BOOT.R.
 ##############################################################################

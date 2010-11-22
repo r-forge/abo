@@ -23,7 +23,7 @@
   Each type of track is plotted in its own panel.
  }
 
- \usage{\method{plotTracks}{PairedPSCBS}(x, tracks=c("tcn", "rho", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter=TRUE, pch=".", cex=1, grid=FALSE, Clim=c(0, 6), Blim=c(0, 1), xScale=1e-06, ..., add=FALSE)}
+ \usage{\method{plotTracks}{PairedPSCBS}(x, tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter=TRUE, pch=".", quantiles=NULL, cex=1, grid=FALSE, Clim=c(0, 6), Blim=c(0, 1), xScale=1e-06, ..., add=FALSE)}
 
  \arguments{
    \item{x}{A result object returned by \code{\link{segmentByPairedPSCBS}}().}

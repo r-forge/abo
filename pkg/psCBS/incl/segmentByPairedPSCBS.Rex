@@ -18,24 +18,21 @@ x <- position;
 
 # Paired PSCBS segmentation
 fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN,
-                                 chromosome=1, x=x, verbose=-10);
-
-# Call allelic balance and extreme allelic imbalance ("LOH")
-cfit <- callABandHighAI(fit, tauAB=0.10, alphaAB=0.05,
-                  tauHighAI=0.60, alphaHighAI=0.05, verbose=-10);
-
-# Display segmentation and calls
-print(fit);
+                   chromosome=1, x=x, joinSegments=TRUE, verbose=-10);
+fit2 <- postsegmentTCN(fit);
+print(fit2);
 
 # Plot results
-plotTracks(fit, xScale=1e-6);
-
-
-par(ask=TRUE);
-
-fit2 <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN,
-          chromosome=1, x=x, joinSegments=TRUE, verbose=-10);
 plotTracks(fit2, xScale=1e-6);
 
-fit3 <- postsegmentTCN(fit2);
-plotTracks(fit3, xScale=1e-6);
+fit3 <- bootstrapTCNandDHByRegion(fit2, verbose=-1);
+print(fit3);
+plotTracks(fit3, quantiles=c(0.025, 0.975), xScale=1e-6);
+
+
+## # Call allelic balance and extreme allelic imbalance ("LOH")
+## cfit <- callABandHighAI(fit, tauAB=0.10, alphaAB=0.05,
+##                   tauHighAI=0.60, alphaHighAI=0.05, verbose=-10);
+## 
+## # Display segmentation and calls
+## print(fit);

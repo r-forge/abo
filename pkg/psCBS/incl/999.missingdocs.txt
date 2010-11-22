@@ -28,3 +28,4 @@
   tileChromosomes.CBS
   bootstrapTCNandDHByRegion bootstrapTCNandDHByRegion.PairedPSCBS
   joinSegments joinSegments.CBS
+drawConfidenceBands drawConfidenceBands.PairedPSCBS

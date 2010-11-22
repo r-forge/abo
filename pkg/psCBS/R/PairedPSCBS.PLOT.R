@@ -35,7 +35,7 @@
 # @keyword IO
 # @keyword internal
 #*/########################################################################### 
-setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter=TRUE, pch=".", cex=1, grid=FALSE, Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE) {
+setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter=TRUE, pch=".", quantiles=NULL, cex=1, grid=FALSE, Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE) {
   # To please R CMD check
   fit <- x;
  
@@ -48,7 +48,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn
   }
 
   # Argument 'tracks':
-  knownTracks <- c("tcn", "rho", "tcn,c1,c2", "betaN", "betaT", "betaTN");
+  knownTracks <- c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN");
   tracks <- match.arg(tracks, choices=knownTracks, several.ok=TRUE);
   tracks <- unique(tracks);
 
@@ -103,6 +103,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn
         abline(h=seq(from=0, to=Clim[2], by=2), lty=3, col="gray");
         abline(h=0, lty=1, col="black");
       }
+      drawConfidenceBands(fit, what="tcn", quantiles=quantiles, col="purple", xScale=xScale);
       drawLevels(fit, what="tcn", col="purple", xScale=xScale);
     }
   
@@ -113,6 +114,9 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn
         abline(h=seq(from=0, to=Clim[2], by=2), lty=3, col="gray");
         abline(h=0, lty=1, col="black");
       }
+      drawConfidenceBands(fit, what="tcn", quantiles=quantiles, col="purple", xScale=xScale);
+      drawConfidenceBands(fit, what="c2", quantiles=quantiles, col="red", xScale=xScale);
+      drawConfidenceBands(fit, what="c1", quantiles=quantiles, col="blue", xScale=xScale);
       drawLevels(fit, what="tcn", col="purple", xScale=xScale);
       drawLevels(fit, what="c2", col="red", xScale=xScale);
       drawLevels(fit, what="c1", col="blue", xScale=xScale);
@@ -133,7 +137,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn
       stext(side=3, pos=1, chrTag);
     }
   
-    if (track == "rho") {
+    if (track == "dh") {
       isSnp <- (!is.na(betaTN) & !is.na(muN));
       isHet <- isSnp & (muN == 1/2);
       naValue <- as.double(NA);
@@ -141,6 +145,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn
       rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
       plot(x, rho, pch=pchT, cex=cex, col=col[isHet], ylim=Blim, ylab="DH");
       stext(side=3, pos=1, chrTag);
+      drawConfidenceBands(fit, what="dh", quantiles=quantiles, col="orange", xScale=xScale);
       drawLevels(fit, what="dh", col="orange", xScale=xScale);
     }
   } # for (track ...)
@@ -155,39 +160,80 @@ setMethodS3("plot", "PairedPSCBS", function(x, ...) {
 
 
 setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "dh", "c1", "c2"), xScale=1e-6, ...) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Argument 'what':
   what <- match.arg(what);
+
+  # Argument 'xScale':
+  xScale <- Arguments$getNumeric(xScale, range=c(0,Inf));
+
 
   # Get segmentation results
   segs <- as.data.frame(fit);
 
-
-  if (is.element(what, c("c1", "c2"))) {
-    c1c2 <- extractC1C2(fit);
-    c1c2 <- c1c2[,1:2,drop=FALSE];
-    # Sanity check
-    stopifnot(nrow(c1c2) == nrow(segs));
-
-    # AD HOC
-    if (what == "c1") {
-      segs[,"dh.mean"] <- c1c2[,1];
-    } else if (what == "c2") {
-      segs[,"dh.mean"] <- c1c2[,2];
-    }
-    what <- "dh";
-  }
-
   # Extract subset of segments
-  fields <- c("loc.start", "loc.end", "mean");
-  fields <- sprintf("%s.%s", what, fields);
-  segs <- segs[,fields, drop=FALSE];
-  segs <- unique(segs);
+  fields <- c("loc.start", "loc.end");
+  fields <- sprintf("%s.%s", ifelse(what == "tcn", what, "dh"), fields);
+  fields <- c(fields, sprintf("%s.mean", what));
+  segsT <- segs[,fields, drop=FALSE];
+  segsT <- unique(segsT);
 
   # Reuse drawLevels() for the DNAcopy class
-  colnames(segs) <- c("loc.start", "loc.end", "seg.mean");
-  dummy <- list(output=segs);
+  colnames(segsT) <- c("loc.start", "loc.end", "seg.mean");
+  dummy <- list(output=segsT);
   class(dummy) <- "DNAcopy";
+
   drawLevels(dummy, xScale=xScale, ...);
+})
+
+
+setMethodS3("drawConfidenceBands", "PairedPSCBS", function(fit, what=c("tcn", "dh", "c1", "c2"), quantiles=NULL, col=col, alpha=0.4, xScale=1e-6, ...) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Argument 'what':
+  what <- match.arg(what);
+
+  # Argument 'quantiles':
+  if (!is.null(quantiles)) {
+    quantiles <- Arguments$getNumerics(quantiles, range=c(0,1), length=c(2,2));
+  }
+
+  # Argument 'xScale':
+  xScale <- Arguments$getNumeric(xScale, range=c(0,Inf));
+
+
+  # Nothing todo?
+  if (is.null(quantiles)) {
+    return();
+  }
+
+
+  # Get segmentation results
+  segs <- as.data.frame(fit);
+
+  # Extract subset of segments
+  fields <- c("loc.start", "loc.end");
+  fields <- sprintf("%s.%s", ifelse(what == "tcn", what, "dh"), fields);
+
+  tags <- sprintf("%g%%", 100*quantiles);
+  fields <- c(fields, sprintf("%s_%s", what, tags));
+
+  segsT <- segs[,fields, drop=FALSE];
+  segsT <- unique(segsT);
+
+  # Rescale x-axis
+  segsT[,1:2] <- xScale * segsT[,1:2];
+
+  colQ <- col2rgb(col, alpha=TRUE);
+  colQ["alpha",] <- alpha*colQ["alpha",];
+  colQ <- rgb(red=colQ["red",], green=colQ["green",], blue=colQ["blue",], alpha=colQ["alpha",], maxColorValue=255);
+
+  for (kk in seq(length=nrow(segsT))) {
+    rect(xleft=segsT[kk,1], xright=segsT[kk,2], ybottom=segsT[kk,3], ytop=segsT[kk,4], col=colQ, border=FALSE);
+  }
 })
 
 
@@ -365,7 +411,7 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
 
 
 
-setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tcn", "rho", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
+setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], quantiles=NULL, pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
   # To please R CMD check
   fit <- x;
  
@@ -418,7 +464,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
   rm(CT, muN, betaT, betaN, betaTN);
   attachLocally(data);
   x <- xScale * x;
-  vs <- xScale * fit$chromosomeStats[,1:2];
+  vs <- xScale * fit$chromosomeStats[,1:2,drop=FALSE];
   mids <- (vs[,1]+vs[,2])/2;
 
   nbrOfLoci <- length(x);
@@ -440,23 +486,27 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
     if (track == "tcn") {
       plot(NA, xlim=xlim, ylim=Clim, xlab=xlab, ylab="TCN", axes=FALSE);
       if (!is.null(onBegin)) onBegin(gh=gh);
-      points(x, CT, pch=pch, col="gray");
+      points(x, CT, pch=pch, col="black");
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
       abline(v=vs, lty=3);
       axis(side=2); box();
-      drawLevels(fit, what="tcn", xScale=xScale);
+      drawConfidenceBands(fit, what="tcn", quantiles=quantiles, col="purple", xScale=xScale);
+      drawLevels(fit, what="tcn", col="purple", xScale=xScale);
       if (!is.null(onEnd)) onEnd(gh=gh);
     }
   
     if (track == "tcn,c1,c2") {
       plot(NA, xlim=xlim, ylim=Clim, xlab=xlab, ylab="C1, C2, TCN", axes=FALSE);
       if (!is.null(onBegin)) onBegin(gh=gh);
-      points(x, CT, pch=pch, col="gray");
+      points(x, CT, pch=pch, col="black");
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
       abline(v=vs, lty=3);
       axis(side=2); box();
-      drawLevels(fit, what="tcn", xScale=xScale);
-      drawLevels(fit, what="c2", col="purple", xScale=xScale);
+      drawConfidenceBands(fit, what="tcn", quantiles=quantiles, col="purple", xScale=xScale);
+      drawConfidenceBands(fit, what="c2", quantiles=quantiles, col="red", xScale=xScale);
+      drawConfidenceBands(fit, what="c1", quantiles=quantiles, col="blue", xScale=xScale);
+      drawLevels(fit, what="tcn", col="purple", xScale=xScale);
+      drawLevels(fit, what="c2", col="red", xScale=xScale);
       drawLevels(fit, what="c1", col="blue", xScale=xScale);
       if (!is.null(onEnd)) onEnd(gh=gh);
     }
@@ -492,7 +542,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
       if (!is.null(onEnd)) onEnd(gh=gh);
     }
   
-    if (track == "rho") {
+    if (track == "dh") {
       isSnp <- (!is.na(betaTN) & !is.na(muN));
       isHet <- isSnp & (muN == 1/2);
       naValue <- as.double(NA);
@@ -500,11 +550,12 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
       rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
       plot(NA, xlim=xlim, ylim=Blim, xlab=xlab, ylab="DH", axes=FALSE);
       if (!is.null(onBegin)) onBegin(gh=gh);
-      points(x, rho, pch=pch, col="gray");
+      points(x, rho, pch=pch, col="black");
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
       abline(v=vs, lty=3);
       axis(side=2); box();
-      drawLevels(fit, what="dh", xScale=xScale);
+      drawConfidenceBands(fit, what="dh", quantiles=quantiles, col="orange", xScale=xScale);
+      drawLevels(fit, what="dh", col="orange", xScale=xScale);
       if (!is.null(onEnd)) onEnd(gh=gh);
     }
   } # for (track ...)
@@ -517,6 +568,10 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
 
 ############################################################################
 # HISTORY:
+# 2010-11-21
+# o Now plotTracks() and plotTracksManyChromosomes() draws confidence
+#   bands, iff argument quantiles is given.
+# o Added drawConfidenceBands() for PairedPSCBS.
 # 2010-11-09
 # o Added argument 'cex=1' to plotTracks().
 # o BUG FIX: It was not possible to plot BAF tracks with plotTracks().

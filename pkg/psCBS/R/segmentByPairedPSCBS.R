@@ -606,6 +606,15 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   segs <- segs[,idxs,drop=FALSE];
   verbose && print(verbose, segs);
 
+  verbose && enter(verbose, "Calculating (C1,C2) per segment");
+  # Append (C1,C2) estimates
+  tcn <- segs$tcn.mean;
+  dh <- segs$dh.mean;
+  C1 <- 1/2*(1-dh)*tcn;
+  C2 <- tcn - C1;
+  segs <- cbind(segs, c1.mean=C1, c2.mean=C2);
+  verbose && exit(verbose);
+ 
   nbrOfSegs <- nrow(segs);
   verbose && cat(verbose, "Number of segments: ", nbrOfSegs);
 
@@ -668,6 +677,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 ############################################################################
 # HISTORY:
 # 2010-11-21
+# o Now segmentByPairedPSCBS() also returns minor and major copy numbers
+#   for each segment.
 # o Forgot to return arguments 'joinSegments' & 'knownCPs' in 'params'.
 # 2010-11-20
 # o Now it is possible to specify the boundaries of the regions to be

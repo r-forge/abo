@@ -88,6 +88,8 @@
 \alias{bootstrapTCNandDHByRegion.PairedPSCBS}
 \alias{joinSegments}
 \alias{joinSegments.CBS}
+\alias{drawConfidenceBands}
+\alias{drawConfidenceBands.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

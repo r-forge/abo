@@ -310,6 +310,17 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
     verbose && exit(verbose);
   } # for (cc ...)
 
+  verbose && enter(verbose, "Update (C1,C2) per segment");
+  # Append (C1,C2) estimates
+  tcn <- segs$tcn.mean;
+  dh <- segs$dh.mean;
+  C1 <- 1/2*(1-dh)*tcn;
+  C2 <- tcn - C1;
+  segs$c1.mean <- C1;
+  segs$c2.mean <- C2;
+  verbose && exit(verbose);
+
+
   # Return results
   fitS <- fit;
   fitS$data <- data;
