@@ -113,11 +113,11 @@ fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN,
 print(fit);
 
 # Plot results
-plotTracks(fit2);
+plotTracks(fit);
 
-fit3 <- bootstrapTCNandDHByRegion(fit2, verbose=-1);
-print(fit3);
-plotTracks(fit3, quantiles=c(0.025, 0.975));
+fit2 <- bootstrapTCNandDHByRegion(fit, verbose=-1);
+print(fit2);
+plotTracks(fit2, quantiles=c(0.025, 0.975));
 
 
 ## # Call allelic balance and extreme allelic imbalance ("LOH")
