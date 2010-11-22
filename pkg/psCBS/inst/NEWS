@@ -1,6 +1,11 @@
 Package: psCBS
 ==============
 
+Version: 0.9.16 [2010-11-21]
+o Added bootstrapTCNandDHByRegion() for PairedPSCBS.
+o Added standalone joinSegments() for CBS results.
+
+
 Version: 0.9.15 [2010-11-21]
 o Adjusted postsegmentTCN() such that the updated TCN segment boundaries
   are the maximum of the DH segment and the support by the loci.  This

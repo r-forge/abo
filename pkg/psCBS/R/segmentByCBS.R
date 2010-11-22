@@ -511,48 +511,6 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
     } # if (length(cpIdxs) > 0)
   } # if (nbrOfSegs > 1)
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Adjust change-point locations?
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  if (joinSegments) {
-    segs <- fit$output;
-
-    nbrOfSegs <- nrow(segs);
-    if (nbrOfSegs > 1) {
-      verbose && enter(verbose, "Centering change points");
-      x <- fit$data$maploc;
-      prevSeg <- segs[1L,];
-      for (ss in 2:nbrOfSegs) {
-        currSeg <- segs[ss,];
-        currStart <- currSeg[,"loc.start"];
-        prevEnd <- prevSeg[,"loc.end"];
-  
-        # Center CP
-        xMid <- (prevEnd + currStart) / 2;
-  
-        # Move previous end and current start to this centered CP
-        segs[ss,"loc.start"] <- xMid;
-        segs[ss-1L,"loc.end"] <- xMid;
-  
-        prevSeg <- currSeg;
-      } # for (ss ...)
-      verbose && exit(verbose);
-    } # if (nbrOfSegs > 1)
-
-    if (!is.null(knownCPs)) {
-      if (nbrOfSegs > 0) {
-        # Sanity check
-        stopifnot(knownCPs[1L] <= segs[1L,"loc.start"]);
-        segs[1L,"loc.start"] <- knownCPs[1L];
-        # Sanity check
-        stopifnot(segs[1L,"loc.end"] <= knownCPs[length(knownCPs)]);
-        segs[nbrOfSegs,"loc.end"] <- knownCPs[length(knownCPs)];
-      } # if (nbrOfSegs > 0)
-    } # if (!is.null(knownCPs))
-
-    fit$output <- segs;
-  }
-
   params <- list(
     preserveOrder = preserveOrder,
     joinSegments = joinSegments,
@@ -562,6 +520,11 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
   fit$params <- params;
 
   class(fit) <- c("CBS", class(fit));
+
+  # Join segments?
+  if (joinSegments) {
+    fit <- joinSegments(fit, range=knownCPs, verbose=verbose);
+  }
 
   verbose && cat(verbose, "Results object:");
   verbose && str(verbose, fit);
@@ -578,6 +541,8 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
 
 ############################################################################
 # HISTORY:
+# 2010-11-21
+# o Now segmentByCBS(..., joinSegments=TRUE) utilizes joinSegments().
 # 2010-11-20
 # o Now it is possible to specify the boundaries of the regions to be
 #   segmented as known change points via argument 'knownCPs'.

@@ -26,3 +26,5 @@
   as.data.frame.CBS drawLevels.CBS getChromosomes.CBS
   nbrOfChromosomes.CBS plot.CBS plotTracksManyChromosomes.CBS
   tileChromosomes.CBS
+  bootstrapTCNandDHByRegion bootstrapTCNandDHByRegion.PairedPSCBS
+  joinSegments joinSegments.CBS

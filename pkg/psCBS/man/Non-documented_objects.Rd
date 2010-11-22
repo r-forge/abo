@@ -84,6 +84,10 @@
 \alias{plot.CBS}
 \alias{plotTracksManyChromosomes.CBS}
 \alias{tileChromosomes.CBS}
+\alias{bootstrapTCNandDHByRegion}
+\alias{bootstrapTCNandDHByRegion.PairedPSCBS}
+\alias{joinSegments}
+\alias{joinSegments.CBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that
