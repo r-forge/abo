@@ -18,9 +18,8 @@ x <- position;
 
 # Paired PSCBS segmentation
 fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN,
-                   chromosome=1, x=x, joinSegments=TRUE, verbose=-10);
-fit2 <- postsegmentTCN(fit);
-print(fit2);
+                            chromosome=1, x=x, verbose=-10);
+print(fit);
 
 # Plot results
 plotTracks(fit2);

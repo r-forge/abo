@@ -97,7 +97,7 @@
 #
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn,dh", "dh,tcn", "tcn&dh", "sqrt(tcn),dh"), tbn=TRUE, joinSegments=TRUE, knownCPs=NULL, seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh"), tbn=TRUE, joinSegments=TRUE, knownCPs=NULL, seed=NULL, verbose=FALSE) {
   require("R.utils") || throw("Package not loaded: R.utils");
   require("aroma.light") || throw("Package not loaded: aroma.light");
   ver <- packageDescription("aroma.light")$Version;
@@ -151,8 +151,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
   # Argument 'flavor':
   flavor <- match.arg(flavor);
-  if (!is.element(flavor, c("tcn,dh", "sqrt(tcn),dh"))) {
-    throw("Segmentation flavor not supported. Currently only \"dh|tcn\" is implemented: ", flavor);
+  knownFlavors <- c("tcn,dh", "tcn&dh", "sqrt(tcn),dh", "sqrt(tcn)&dh");
+  if (!is.element(flavor, knownFlavors)) {
+    throw("Segmentation flavor is not among the supported ones (", paste(sprintf("\"%s\"", knownFlavors), collapse=", "), "): ", flavor);
   }
 
   # Argument 'tbn':
@@ -344,12 +345,12 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # 1a. Transform total copy-number signals
+  # 1a. Transform total copy-number signals?
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # The default is not to transform signals
   h <- hinv <- NULL;
 
-  if (flavor == "sqrt(tcn),dh") {
+  if (is.element(flavor, c("sqrt(tcn),dh", "sqrt(tcn)&dh"))) {
     # TO DO: Deal with negative values
     h <- function(x) { 
       y <- x;
@@ -664,6 +665,11 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
   class(fit) <- c("PairedPSCBS", "PSCBS");
 
+  # Update 
+  if (is.element(flavor, c("tcn&dh", "sqrt(tcn)&dh"))) {
+    fit <- postsegmentTCN(fit, verbose=verbose);
+  }
+
   verbose && print(verbose, head(as.data.frame(fit)));
   verbose && print(verbose, tail(as.data.frame(fit)));
 
@@ -677,6 +683,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 ############################################################################
 # HISTORY:
 # 2010-11-21
+# o Changed the default to flavor="tch&dh".
+# o Added support for flavors "tcn&dh", which, contrary to "tcn,dh",
+#   enforces TCN and DH to have the same change points.
 # o Now segmentByPairedPSCBS() also returns minor and major copy numbers
 #   for each segment.
 # o Forgot to return arguments 'joinSegments' & 'knownCPs' in 'params'.

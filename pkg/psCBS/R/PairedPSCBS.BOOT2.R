@@ -192,7 +192,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   verbose && str(verbose, M);
 
   for (jj in seq(length=nbrOfSegments)) {
-    verbose && enter(verbose, sprintf("DH segment #%d of %d", jj, nbrOfSegments));
+    verbose && enter(verbose, sprintf("Segment #%d of %d", jj, nbrOfSegments));
     segJJ <- segs[jj,,drop=FALSE];
 
     tcnId <- segJJ[,"tcn.id"];
