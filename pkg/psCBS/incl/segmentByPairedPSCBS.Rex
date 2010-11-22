@@ -23,11 +23,11 @@ fit2 <- postsegmentTCN(fit);
 print(fit2);
 
 # Plot results
-plotTracks(fit2, xScale=1e-6);
+plotTracks(fit2);
 
 fit3 <- bootstrapTCNandDHByRegion(fit2, verbose=-1);
 print(fit3);
-plotTracks(fit3, quantiles=c(0.025, 0.975), xScale=1e-6);
+plotTracks(fit3, quantiles=c(0.025, 0.975));
 
 
 ## # Call allelic balance and extreme allelic imbalance ("LOH")

@@ -21,7 +21,7 @@
   see [1,2].
  }
 
- \usage{\method{segmentByCBS}{default}(y, chromosome=0, x=NULL, w=NULL, undo=Inf, ..., preserveOrder=FALSE, joinSegments=FALSE, knownCPs=NULL, seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByCBS}{default}(y, chromosome=0, x=NULL, w=NULL, undo=Inf, ..., preserveOrder=FALSE, joinSegments=TRUE, knownCPs=NULL, seed=NULL, verbose=FALSE)}
 
  \arguments{
    \item{y}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genomic signals to be segmented.}
