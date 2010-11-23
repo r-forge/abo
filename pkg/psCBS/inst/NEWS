@@ -1,6 +1,17 @@
 Package: psCBS
 ==============
 
+Version: 0.9.19 [2010-11-23]
+o ROBUSTNESS: Added more sanity checks to bootstrapTCNandDHByRegion().
+o WORKAROUND: The precision of the mean levels of DNAcopy::segment()
+  is not great enough to always compare it to that of R's estimates.
+o BUG FIX: bootstrapTCNandDHByRegion() would give an error if there was
+  only one segment.
+o BUG FIX: segmentByPairedPSCBS() and bootstrapTCNandDHByRegion() 
+  would not subset the correct set of DH signals if there were some
+  missing values in TCN.
+
+
 Version: 0.9.18 [2010-11-22]
 o Added argument 'calls' to plotTracks() for highlighing called regions.
 o Updated callAllelicBalanceByDH() and callExtremeAllelicImbalanceByDH()

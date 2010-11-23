@@ -1,4 +1,4 @@
-setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, statsFcn=function(x) quantile(x, probs=c(0.025, 0.050, 0.95, 0.975)), by=c("betaTN", "betaT"), ..., seed=NULL, verbose=FALSE) {
+setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, statsFcn=function(x) quantile(x, probs=c(0.025, 0.050, 0.95, 0.975), na.rm=TRUE), by=c("betaTN", "betaT"), ..., seed=NULL, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -55,8 +55,8 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
     throw("Cannot bootstrap TCN and DH by regions unless PSCNs are segmented using joinSegments=TRUE.");
   }
   # Sanity check (same as above, but just in case)
-  stopifnot(segs$tcn.loc.start == segs$dh.loc.start);
-  stopifnot(segs$tcn.loc.end == segs$dh.loc.end);
+  stopifnot(all(segs$tcn.loc.start == segs$dh.loc.start, na.rm=TRUE));
+  stopifnot(all(segs$tcn.loc.end == segs$dh.loc.end, na.rm=TRUE));
 
 
   # Find estimates to be done
@@ -128,9 +128,9 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   betaT <- data[[by]];
   muN <- data$muN;
 
-  # Sanity checks
-  stopifnot(all(is.finite(chromosome)));
-  stopifnot(all(is.finite(x)));
+#  # Sanity checks
+#  stopifnot(all(is.finite(chromosome)));
+#  stopifnot(all(is.finite(x)));
 
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -146,7 +146,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   snps <- which(isSNP);
   nonSNPs <- which(!isSNP);
   nbrOfSNPs <- sum(isSNP);
-  nbrOfNonSNPs <- sum(isSNP);
+  nbrOfNonSNPs <- sum(!isSNP);
   verbose && cat(verbose, "Number of SNPs: ", nbrOfSNPs);
   verbose && cat(verbose, "Number of non-SNPs: ", nbrOfNonSNPs);
   stopifnot(length(intersect(snps, nonSNPs)) == 0);
@@ -197,12 +197,24 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   M <- array(naValue, dim=dim, dimnames=dimnames);
   verbose && str(verbose, M);
 
-  for (jj in seq(length=nbrOfSegments)) {
-    verbose && enter(verbose, sprintf("Segment #%d of %d", jj, nbrOfSegments));
-    segJJ <- segs[jj,,drop=FALSE];
+  # Identify all loci with non-missing signals and locations
+  rhoDummy <- rho;
+  rhoDummy[!isHet] <- 0;
+  ok <- (!is.na(CT) & !is.na(rhoDummy) & !is.na(chromosome) & !is.na(x));
+  rm(rhoDummy);
 
+  for (jj in seq(length=nbrOfSegments)) {
+    segJJ <- segs[jj,,drop=FALSE];
     tcnId <- segJJ[,"tcn.id"];
     dhId <- segJJ[,"dh.id"];
+
+    verbose && enter(verbose, sprintf("Segment #%d (%d,%d) of %d", jj, tcnId, dhId, nbrOfSegments));
+
+    # Nothing todo?
+    if (is.na(tcnId) && is.na(dhId)) {
+      verbose && exit(verbose);
+      next;
+    }
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Identify loci in segment
@@ -216,7 +228,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
     if (is.na(nbrOfTCNs)) nbrOfTCNs <- 0L;
     if (is.na(nbrOfDHs)) nbrOfDHs <- 0L;
 
-    unitsJJ <- whichVector(chr == chromosome & start <= x & x <= stop);
+    unitsJJ <- whichVector(ok & chr == chromosome & start <= x & x <= stop);
     lociToExclude <- listOfDhLociNotPartOfSegment[[tcnId]][[dhId]];
     verbose && cat(verbose, "Excluding loci that belongs to a flanking segment: ", length(lociToExclude));
     unitsJJ <- setdiff(unitsJJ, lociToExclude);
@@ -239,9 +251,15 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
     # Sanity check
     stopifnot(length(intersect(hetsJJ, homsJJ)) == 0);
 
+    snpsJJ <- sort(c(hetsJJ, homsJJ));
+    nbrOfSNPsJJ <- length(snpsJJ);
+    verbose && cat(verbose, "Number of SNPs in segment: ", nbrOfSNPsJJ);
+
     nonSNPsJJ <- intersect(nonSNPs, unitsJJ);
     nbrOfNonSNPsJJ <- length(nonSNPsJJ);
-    snpsJJ <- sort(c(hetsJJ, homsJJ));
+    verbose && cat(verbose, "Number of non-SNPs in segment: ", nbrOfNonSNPsJJ);
+
+    # # Sanity check
     stopifnot(length(intersect(snpsJJ, nonSNPsJJ)) == 0);
 
     # Sanity check
@@ -254,22 +272,29 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
                       nbrOfHetsJJ, nbrOfHomsJJ, nbrOfNonSNPsJJ);
                                               
 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Sanity checks
-    tol <- 0.0005;
-    ys <- rho[hetsJJ];
-    mu <- mean(ys, na.rm=TRUE);
-    dMu <- (mu - segJJ$dh.mean);
-    if (abs(dMu) > tol) {
-      str(list(nbrOfUnits=nbrOfUnitsJJ, dh.num.mark=segJJ$dh.num.mark, mu=mu, dh.mean=segJJ$dh.mean, dMu=dMu, "abs(dMu)"=abs(dMu), "min(x[units])"=min(x[unitsJJ])));
-      stop("INTERNAL ERROR: Incorrect DH mean!");
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Sanity checks
+    if (nbrOfSNPsJJ > 0) {
+      tol <- 0.0005;
+      ys <- rho[hetsJJ];
+      mu <- mean(ys, na.rm=TRUE);
+      dMu <- (mu - segJJ$dh.mean);
+      if (abs(dMu) > tol) {
+        str(list(nbrOfUnits=nbrOfUnitsJJ, dh.num.mark=segJJ$dh.num.mark, mu=mu, dh.mean=segJJ$dh.mean, dMu=dMu, "abs(dMu)"=abs(dMu), "min(x[units])"=min(x[unitsJJ])));
+        stop("INTERNAL ERROR: Incorrect DH mean!");
+      }
     }
 
-    ys <- CT[unitsJJ];
-    mu <- mean(ys, na.rm=TRUE);
-    dMu <- (mu - segJJ$tcn.mean);
-    if (abs(dMu) > tol) {
-      str(list(nbrOfUnits=nbrOfUnitsJJ, dh.num.mark=segJJ$tcn.num.mark, mu=mu, tcn.mean=segJJ$tcn.mean, dMu=dMu, "abs(dMu)"=abs(dMu), "min(x[units])"=min(x[unitsJJ])));
-      stop("INTERNAL ERROR: Incorrect TCN mean!");
+    if (nbrOfUnitsJJ > 0) {
+      ys <- CT[unitsJJ];
+      mu <- mean(ys, na.rm=TRUE);
+      dMu <- (mu - segJJ$tcn.mean);
+      if (abs(dMu) > tol) {
+        str(list(nbrOfUnits=nbrOfUnitsJJ, dh.num.mark=segJJ$tcn.num.mark, mu=mu, tcn.mean=segJJ$tcn.mean, dMu=dMu, "abs(dMu)"=abs(dMu), "min(x[units])"=min(x[unitsJJ])));
+        stop("INTERNAL ERROR: Incorrect TCN mean!");
+      }
     }
 
 
@@ -317,6 +342,8 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   verbose && cat(verbose, "Bootstrap means");
   verbose && str(verbose, M);
 
+  # Sanity check
+  stopifnot(all(!is.nan(M)));
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Calculate (C1,C2) bootstrap statistics
@@ -327,6 +354,9 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   M[,,"c1"] <- C1;
   M[,,"c2"] <- C2;
   verbose && str(verbose, M);
+
+  # Sanity check
+  stopifnot(all(!is.nan(M)));
   verbose && exit(verbose);
 
   
@@ -348,8 +378,10 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
     field <- fields[kk];
     verbose && enter(verbose, sprintf("Field #%d ('%s') of %d", kk, field, length(fields)));
 
-    Mkk <- M[,,kk,drop=TRUE];  # An JxB matrix
+    Mkk <- M[,,kk,drop=FALSE];  # An JxB matrix
+    dim(Mkk) <- dim(Mkk)[-3];
     # Sanity check
+    stopifnot(is.matrix(Mkk));
     stopifnot(nrow(Mkk) == nbrOfSegments);
     stopifnot(ncol(Mkk) == B);
 
@@ -357,6 +389,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
       verbose && enter(verbose, sprintf("Segment #%d of %d", jj, nbrOfSegments));
 
       Mkkjj <- Mkk[jj,,drop=TRUE]; # A vector of length B
+
       S[jj,,kk] <- statsFcn(Mkkjj);
 
       verbose && exit(verbose);
@@ -390,24 +423,38 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Statistical sanity checks
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  if (B >= 100) {
+  if (B >= 10) {
     verbose && enter(verbose, "Statistical sanity checks (iff B >= 100)");
     tryCatch({
       fields <- dimnames(M)[[3]];
       for (kk in seq(along=fields)) {
         field <- fields[kk];
         verbose && enter(verbose, sprintf("Field #%d ('%s') of %d", kk, field, length(fields)));
-  
+        
         # Bootstrap statistics
-        Skk <- S[,,kk, drop=TRUE];
-        range <- Skk[,c(1,ncol(Skk))];
+        Skk <- S[,,kk, drop=FALSE];
+        dim(Skk) <- dim(Skk)[-3];
+
+        # Sanity checks
+        stopifnot(is.matrix(Skk));
+
+        range <- Skk[,c(1,ncol(Skk)),drop=FALSE];
         verbose && str(verbose, range);
   
         # Segmentation means
         key <- sprintf("%s.mean", field);
         segMean <- segs[[key]];
         verbose && str(verbose, segMean);
-  
+
+        # Segmentation counts
+        cfield <- sprintf("%s.num.mark", ifelse(field == "tcn", "tcn", "dh"));
+        counts <- segs[,cfield,drop=TRUE];
+
+        # Compare only segments with enough data points
+        keep <- (counts > 1);
+        range <- range[keep,,drop=FALSE];
+        segMean <- segMean[keep];
+
         # Sanity check
         stopifnot(all(range[,1] <= segMean, na.rm=TRUE));
         stopifnot(all(segMean <= range[,2], na.rm=TRUE));
@@ -435,7 +482,16 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
 
 ##############################################################################
 # HISTORY
+# 2010-11-23
+# o ROBUSTNESS: Added more sanity checks to bootstrapTCNandDHByRegion().
+# o WORKAROUND: The precision of the mean levels of DNAcopy::segment()
+#   is not great enough to always compare it to that of R's estimates.
+# o BUG FIX: bootstrapTCNandDHByRegion() would give an error if there was
+#   only one segment.
 # 2010-11-22
+# o BUG FIX: The DH segmentation and bootstrap incorrectly included
+#   missing values, when subseting.
+# o BUG FIX: Some sanity checks were incorrect.
 # o BUG FIX: bootstrapTCNandDHByRegion() for PairedPSCBS would not correctly
 #   detect if bootstrap results are already available.
 # 2010-11-21

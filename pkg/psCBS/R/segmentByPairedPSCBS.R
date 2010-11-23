@@ -422,7 +422,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     rm(index); # Not needed anymore
   }
 
-  rm(yT, fit);
+  rm(fit);
 
 
 
@@ -471,6 +471,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   listOfDhLociNotPartOfSegment <- vector("list", length=nbrOfSegs);
   names(listOfDhLociNotPartOfSegment) <- seq(length=nbrOfSegs);
 
+  # Identify all loci with non-missing signals and locations
+  ok <- (!is.na(yT) & !is.na(x));
+
   # For each TCN segment...
   segs <- vector("list", length=nbrOfSegs);
   for (kk in seq(length=nbrOfSegs)) {
@@ -484,9 +487,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
     verbose && cat(verbose, "Number of TCN loci in segment: ", tcnSegments[kk,"tcn.num.mark"]);
 
-    # Identify subset of loci
-    keep <- which(xStart <= x & x <= xEnd);
-
+    # Identify subset of finite loci
+    keep <- which(ok & xStart <= x & x <= xEnd);
+    
     # Special case?
     if (!is.null(tcnLociNotPartOfSegment)) {
       lociToExclude <- tcnLociNotPartOfSegment[[kk]];
@@ -682,6 +685,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-11-22
+# o BUG FIX: segmentByPairedPSCBS() would not subset the correct set of
+#   DH signals if there were some missing values in TCN.
 # 2010-11-21
 # o Changed the default to flavor="tch&dh".
 # o Added support for flavors "tcn&dh", which, contrary to "tcn,dh",
