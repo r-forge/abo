@@ -298,7 +298,14 @@ setMethodS3("drawConfidenceBands", "PairedPSCBS", function(fit, what=c("tcn", "d
   fields <- sprintf("%s.%s", ifelse(what == "tcn", what, "dh"), fields);
 
   tags <- sprintf("%g%%", 100*quantiles);
-  fields <- c(fields, sprintf("%s_%s", what, tags));
+  qFields <- sprintf("%s_%s", what, tags);
+
+  # Nothing todo?
+  if (!all(is.element(qFields, colnames(segs)))) {
+    return();
+  }
+
+  fields <- c(fields, qFields);
 
   segsT <- segs[,fields, drop=FALSE];
   segsT <- unique(segsT);
@@ -705,6 +712,8 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
 ############################################################################
 # HISTORY:
 # 2010-11-22
+# o ROBUSTNESS: Now drawConfidenceBands() of PairedPSCBS silently does
+#   nothing if the requested bootstrap quantiles are available.
 # o Added argument 'calls' to plotTracks() and plotTracksManyChromosomes()
 #   for highlighing called regions.
 # 2010-11-21

@@ -5,6 +5,8 @@ Version: 0.9.18 [2010-11-22]
 o Added argument 'calls' to plotTracks() for highlighing called regions.
 o Updated callAllelicBalanceByDH() and callExtremeAllelicImbalanceByDH()
   to utilize bootstrapTCNandDHByRegion().
+o ROBUSTNESS: Now drawConfidenceBands() of PairedPSCBS silently does
+  nothing if the requested bootstrap quantiles are available.
 o BUG FIX: bootstrapTCNandDHByRegion() for PairedPSCBS would not
   correctly detect if bootstrap results are already available.
 
