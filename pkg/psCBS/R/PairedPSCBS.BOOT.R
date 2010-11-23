@@ -205,12 +205,14 @@ setMethodS3("bootstrapDHByRegion", "PairedPSCBS", function(fit, B=100, statsFcn=
   verbose && exit(verbose);
 
   fitB;
-}) # bootstrapDHByRegion()
+}, deprecated=TRUE) # bootstrapDHByRegion()
 
 
 
 ##############################################################################
 # HISTORY
+# 2010-11-22
+# o DEPRECATED: bootstrapDHByRegion() should no longer be used.
 # 2010-11-03 [HB]
 # o ROBUSTNESS: Now bootstrapDHByRegion() uses resample() of R.utils.
 # 2010-11-01 [HB]

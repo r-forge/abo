@@ -66,10 +66,16 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   statsNames <- names(stats);
 
   # Already done?
-  tcnStatsNames <- sprintf("tcn.%s", names(stats));
-  dhStatsNames <- sprintf("dh.%s", names(stats));
-  allStatsNames <- c(tcnStatsNames, dhStatsNames);
+  tcnStatsNames <- sprintf("tcn_%s", names(stats));
+  dhStatsNames <- sprintf("dh_%s", names(stats));
+  c1StatsNames <- sprintf("c1_%s", names(stats));
+  c2StatsNames <- sprintf("c2_%s", names(stats));
+  allStatsNames <- c(tcnStatsNames, dhStatsNames, c1StatsNames, c2StatsNames);
   isDone <- is.element(allStatsNames, names(segs));
+  names(isDone) <- allStatsNames;
+  verbose && cat(verbose, "Already done?");
+  verbose && print(verbose, isDone);
+
   if (all(isDone)) {
     verbose && cat(verbose, "Already done.");
     verbose && exit(verbose);
@@ -423,12 +429,15 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   verbose && exit(verbose);
 
   fitB;
-}) # bootstrapDHByRegion()
+}) # bootstrapTCNandDHByRegion()
 
 
 
 ##############################################################################
 # HISTORY
+# 2010-11-22
+# o BUG FIX: bootstrapTCNandDHByRegion() for PairedPSCBS would not correctly
+#   detect if bootstrap results are already available.
 # 2010-11-21
 # o Added argument 'seed'.
 # o Added bootstrapTCNandDHByRegion() for PairedPSCBS.

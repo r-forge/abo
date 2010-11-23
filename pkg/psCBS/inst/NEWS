@@ -1,6 +1,14 @@
 Package: psCBS
 ==============
 
+Version: 0.9.18 [2010-11-22]
+o Added argument 'calls' to plotTracks() for highlighing called regions.
+o Updated callAllelicBalanceByDH() and callExtremeAllelicImbalanceByDH()
+  to utilize bootstrapTCNandDHByRegion().
+o BUG FIX: bootstrapTCNandDHByRegion() for PairedPSCBS would not
+  correctly detect if bootstrap results are already available.
+
+
 Version: 0.9.17 [2010-11-21]
 o Now plotTracks() supports tracks "tcn,c1", "tcn,c2" and "c1,c2" too.
 o Added support for flavor "tcn&dh" in segmentByPairedPSCBS(), which

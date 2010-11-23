@@ -16,6 +16,8 @@
 # \arguments{
 #   \item{x}{A result object returned by @see "segmentByPairedPSCBS".}
 #   \item{tracks}{A @character @vector specifying what types of tracks to plot.}
+#   \item{calls}{A @character @vector of regular expression identifying
+#     call labels to be highlighted in the panels.}
 #   \item{pch}{The type of points to use.}
 #   \item{xlim}{(Optional) The genomic range to plot.}
 #   \item{Clim}{The range of copy numbers.}
@@ -36,7 +38,7 @@
 # @keyword IO
 # @keyword internal
 #*/########################################################################### 
-setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter=TRUE, pch=".", quantiles=NULL, cex=1, grid=FALSE, xlim=NULL, Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE) {
+setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", scatter=TRUE, pch=".", quantiles=c(0.025,0.975), cex=1, grid=FALSE, xlim=NULL, Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE) {
   # To please R CMD check
   fit <- x;
  
@@ -52,6 +54,11 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
   knownTracks <- c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN");
   tracks <- match.arg(tracks, choices=knownTracks, several.ok=TRUE);
   tracks <- unique(tracks);
+
+  # Argument 'calls':
+  if (!is.null(calls)) {
+    calls <- sapply(calls, FUN=Arguments$getRegularExpression);
+  }
 
   # Argument 'xlim':
   if (!is.null(xlim)) {
@@ -78,8 +85,32 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
   nbrOfLoci <- length(x);
 
   # Extract the segmentation
-  segs <- fit$output;
+  segs <- as.data.frame(fit);
 
+  # Identify available calls
+  if (!is.null(calls)) {
+    verbose && enter(verbose, "Identifying calls");
+
+    pattern <- "[.]call$";
+    callColumns <- grep(pattern, colnames(segs), value=TRUE);
+    if (length(callColumns) > 0) {
+      keep <- sapply(calls, FUN=function(pattern) {
+        (regexpr(pattern, callColumns) != -1);
+      });
+      if (is.matrix(keep)) {
+        keep <- apply(keep, MARGIN=1, FUN=any);
+      }
+      callColumns <- callColumns[keep];
+      callLabels <- gsub(pattern, "", callColumns);
+      callLabels <- toupper(callLabels);
+    }
+    verbose && cat(verbose, "Call columns:");
+    verbose && print(verbose, callColumns);
+
+    verbose && exit(verbose);
+  } else {
+    callColumns <- NULL;
+  }
 
   if (chromosome != 0) {
     chrTag <- sprintf("Chr%02d", chromosome);
@@ -171,6 +202,31 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
       drawConfidenceBands(fit, what="dh", quantiles=quantiles, col="orange", xScale=xScale);
       drawLevels(fit, what="dh", col="orange", xScale=xScale);
     }
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # For each panel of tracks, annotate will calls?
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    if (length(callColumns) > 0) {
+      for (cc in seq(along=callColumns)) {
+        callColumn <- callColumns[cc];
+        callLabel <- callLabels[cc];
+
+        segsT <- segs[,c("dh.loc.start", "dh.loc.end", callColumn)];
+        segsT <- segsT[segsT[,callColumn],1:2,drop=FALSE];
+        segsT <- xScale * segsT;
+
+        side <- 2*((cc+1) %% 2) + 1;
+        # For each segment called...
+        for (ss in seq(length=nrow(segsT))) {
+          x0 <- segsT[ss,1,drop=TRUE];
+          x1 <- segsT[ss,2,drop=TRUE];
+          abline(v=c(x0,x1), lty=3, col="gray");
+          xMid <- (x0+x1)/2;
+          mtext(side=side, at=xMid, line=-1, cex=0.7, col="#666666", callLabel);
+        } # for (ss in ...)
+      } # for (cc in ...)
+    } # if (length(callColumns) > 0)
+
   } # for (track ...)
 
   invisible();  
@@ -212,7 +268,7 @@ setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "dh", "c1",
 })
 
 
-setMethodS3("drawConfidenceBands", "PairedPSCBS", function(fit, what=c("tcn", "dh", "c1", "c2"), quantiles=NULL, col=col, alpha=0.4, xScale=1e-6, ...) {
+setMethodS3("drawConfidenceBands", "PairedPSCBS", function(fit, what=c("tcn", "dh", "c1", "c2"), quantiles=c(0.025,0.975), col=col, alpha=0.4, xScale=1e-6, ...) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -434,7 +490,7 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
 
 
 
-setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], quantiles=NULL, pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
+setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", quantiles=c(0.025,0.975), pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
   # To please R CMD check
   fit <- x;
  
@@ -446,6 +502,11 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
   # Argument 'tracks':
   tracks <- match.arg(tracks, several.ok=TRUE);
   tracks <- unique(tracks);
+
+  # Argument 'calls':
+  if (!is.null(calls)) {
+    calls <- sapply(calls, FUN=Arguments$getRegularExpression);
+  }
 
   # Argument 'xScale':
   xScale <- Arguments$getNumeric(xScale, range=c(0,Inf));
@@ -473,6 +534,34 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
   data <- fit$data;
   if (is.null(data)) {
     throw("Cannot plot segmentation results. No input data available.");
+  }
+
+  # Extract the segmentation
+  segs <- as.data.frame(fit);
+
+  # Identify available calls
+  if (!is.null(calls)) {
+    verbose && enter(verbose, "Identifying calls");
+
+    pattern <- "[.]call$";
+    callColumns <- grep(pattern, colnames(segs), value=TRUE);
+    if (length(callColumns) > 0) {
+      keep <- sapply(calls, FUN=function(pattern) {
+        (regexpr(pattern, callColumns) != -1);
+      });
+      if (is.matrix(keep)) {
+        keep <- apply(keep, MARGIN=1, FUN=any);
+      }
+      callColumns <- callColumns[keep];
+      callLabels <- gsub(pattern, "", callColumns);
+      callLabels <- toupper(callLabels);
+    }
+    verbose && cat(verbose, "Call columns:");
+    verbose && print(verbose, callColumns);
+
+    verbose && exit(verbose);
+  } else {
+    callColumns <- NULL;
   }
 
   # Subset of the loci?
@@ -511,7 +600,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
       if (!is.null(onBegin)) onBegin(gh=gh);
       points(x, CT, pch=pch, col="black");
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
-      abline(v=vs, lty=3);
+      abline(v=vs, lty=1, lwd=2);
       axis(side=2); box();
       drawConfidenceBands(fit, what="tcn", quantiles=quantiles, col="purple", xScale=xScale);
       drawLevels(fit, what="tcn", col="purple", xScale=xScale);
@@ -523,7 +612,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
       if (!is.null(onBegin)) onBegin(gh=gh);
       points(x, CT, pch=pch, col="black");
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
-      abline(v=vs, lty=3);
+      abline(v=vs, lty=1, lwd=2);
       axis(side=2); box();
       drawConfidenceBands(fit, what="tcn", quantiles=quantiles, col="purple", xScale=xScale);
       drawConfidenceBands(fit, what="c2", quantiles=quantiles, col="red", xScale=xScale);
@@ -540,7 +629,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
       if (!is.null(onBegin)) onBegin(gh=gh);
       points(x, betaN, pch=pch, col=col);
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
-      abline(v=vs, lty=3);
+      abline(v=vs, lty=1, lwd=2);
       axis(side=2); box();
       if (!is.null(onEnd)) onEnd(gh=gh);
     }
@@ -550,7 +639,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
       if (!is.null(onBegin)) onBegin(gh=gh);
       points(x, betaT, pch=pch, col=col);
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
-      abline(v=vs, lty=3);
+      abline(v=vs, lty=1, lwd=2);
       axis(side=2); box();
       if (!is.null(onEnd)) onEnd(gh=gh);
     }
@@ -560,7 +649,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
       if (!is.null(onBegin)) onBegin(gh=gh);
       points(x, betaTN, pch=pch, col=col);
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
-      abline(v=vs, lty=3);
+      abline(v=vs, lty=1, lwd=2);
       axis(side=2); box();
       if (!is.null(onEnd)) onEnd(gh=gh);
     }
@@ -575,12 +664,36 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
       if (!is.null(onBegin)) onBegin(gh=gh);
       points(x, rho, pch=pch, col="black");
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
-      abline(v=vs, lty=3);
+      abline(v=vs, lty=1, lwd=2);
       axis(side=2); box();
       drawConfidenceBands(fit, what="dh", quantiles=quantiles, col="orange", xScale=xScale);
       drawLevels(fit, what="dh", col="orange", xScale=xScale);
       if (!is.null(onEnd)) onEnd(gh=gh);
     }
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # For each panel of tracks, annotate will calls?
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    if (length(callColumns) > 0) {
+      for (cc in seq(along=callColumns)) {
+        callColumn <- callColumns[cc];
+        callLabel <- callLabels[cc];
+
+        segsT <- segs[,c("dh.loc.start", "dh.loc.end", callColumn)];
+        segsT <- segsT[segsT[,callColumn],1:2,drop=FALSE];
+        segsT <- xScale * segsT;
+
+        side <- 2*((cc+1) %% 2) + 1;
+        # For each segment called...
+        for (ss in seq(length=nrow(segsT))) {
+          x0 <- segsT[ss,1,drop=TRUE];
+          x1 <- segsT[ss,2,drop=TRUE];
+          abline(v=c(x0,x1), lty=3, col="gray");
+          xMid <- (x0+x1)/2;
+          mtext(side=side, at=xMid, line=-1, cex=0.7, col="#666666", callLabel);
+        } # for (ss in ...)
+      } # for (cc in ...)
+    } # if (length(callColumns) > 0)
   } # for (track ...)
 
   invisible(gh);
@@ -591,6 +704,9 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
 
 ############################################################################
 # HISTORY:
+# 2010-11-22
+# o Added argument 'calls' to plotTracks() and plotTracksManyChromosomes()
+#   for highlighing called regions.
 # 2010-11-21
 # o Now plotTracks() supports tracks "tcn,c1", "tcn,c2" and "c1,c2" too.
 # o Added argument 'xlim' to plotTracks() making it possible to zoom in.

@@ -26,7 +26,11 @@ plotTracks(fit);
 
 fit2 <- bootstrapTCNandDHByRegion(fit, verbose=-1);
 print(fit2);
-plotTracks(fit2, quantiles=c(0.025, 0.975));
+plotTracks(fit2);
+
+fit3 <- callABandHighAI(fit2, verbose=-1);
+print(fit3);
+plotTracks(fit3);
 
 
 ## # Call allelic balance and extreme allelic imbalance ("LOH")
