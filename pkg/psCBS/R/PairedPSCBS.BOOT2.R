@@ -205,13 +205,14 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
 
   for (jj in seq(length=nbrOfSegments)) {
     segJJ <- segs[jj,,drop=FALSE];
+    chr <- segJJ[,"chromosome"];
     tcnId <- segJJ[,"tcn.id"];
     dhId <- segJJ[,"dh.id"];
 
-    verbose && enter(verbose, sprintf("Segment #%d (%d,%d) of %d", jj, tcnId, dhId, nbrOfSegments));
+    verbose && enter(verbose, sprintf("Segment #%d (chr %d, tcn.id=%d, dh.id=%d) of %d", jj, chr, tcnId, dhId, nbrOfSegments));
 
     # Nothing todo?
-    if (is.na(tcnId) && is.na(dhId)) {
+    if (is.na(chr) && is.na(tcnId) && is.na(dhId)) {
       verbose && exit(verbose);
       next;
     }
@@ -423,49 +424,62 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Statistical sanity checks
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  if (B >= 10) {
+  if (B >= 100) {
     verbose && enter(verbose, "Statistical sanity checks (iff B >= 100)");
-    tryCatch({
-      fields <- dimnames(M)[[3]];
-      for (kk in seq(along=fields)) {
-        field <- fields[kk];
-        verbose && enter(verbose, sprintf("Field #%d ('%s') of %d", kk, field, length(fields)));
-        
-        # Bootstrap statistics
-        Skk <- S[,,kk, drop=FALSE];
-        dim(Skk) <- dim(Skk)[-3];
 
-        # Sanity checks
-        stopifnot(is.matrix(Skk));
+    # Find extreme quantiles
+    probs <- dimnames(S)[[2]];
+    probs <- gsub("%", "", probs, fixed=TRUE);
+    probs <- as.double(probs) / 100;
 
-        range <- Skk[,c(1,ncol(Skk)),drop=FALSE];
-        verbose && str(verbose, range);
+    # Is it possible to check?
+    if (any(probs < 0.10) && any(probs > 0.90)) {
+      tryCatch({
+        fields <- dimnames(M)[[3]];
+        for (kk in seq(along=fields)) {
+          field <- fields[kk];
+          verbose && enter(verbose, sprintf("Field #%d ('%s') of %d", kk, field, length(fields)));
+          
+          # Bootstrap statistics
+          Skk <- S[,,kk, drop=FALSE];
+          dim(Skk) <- dim(Skk)[-3];
   
-        # Segmentation means
-        key <- sprintf("%s.mean", field);
-        segMean <- segs[[key]];
-        verbose && str(verbose, segMean);
-
-        # Segmentation counts
-        cfield <- sprintf("%s.num.mark", ifelse(field == "tcn", "tcn", "dh"));
-        counts <- segs[,cfield,drop=TRUE];
-
-        # Compare only segments with enough data points
-        keep <- (counts > 1);
-        range <- range[keep,,drop=FALSE];
-        segMean <- segMean[keep];
-
-        # Sanity check
-        stopifnot(all(range[,1] <= segMean, na.rm=TRUE));
-        stopifnot(all(segMean <= range[,2], na.rm=TRUE));
+          # Sanity checks
+          stopifnot(is.matrix(Skk));
   
-        verbose && exit(verbose);
-      } # for (kk ...)
-    }, error = function(ex) {
-      # If an error, display the data, then throw the exception
-      verbose && print(verbose, segs);
-      throw(ex);
-    })
+          range <- Skk[,c(1,ncol(Skk)),drop=FALSE];
+          verbose && str(verbose, range);
+    
+          # Segmentation means
+          key <- sprintf("%s.mean", field);
+          segMean <- segs[[key]];
+          verbose && str(verbose, segMean);
+  
+          # Segmentation counts
+          cfield <- sprintf("%s.num.mark", ifelse(field == "tcn", "tcn", "dh"));
+          counts <- segs[,cfield,drop=TRUE];
+  
+          # Compare only segments with enough data points
+          keep <- (counts > 1);
+          range <- range[keep,,drop=FALSE];
+          segMean <- segMean[keep];
+  
+          # Sanity check
+          stopifnot(all(range[,1] <= segMean, na.rm=TRUE));
+          stopifnot(all(segMean <= range[,2], na.rm=TRUE));
+    
+          verbose && exit(verbose);
+        } # for (kk ...)
+      }, error = function(ex) {
+        # If an error, display the data, then throw the exception
+        verbose && print(verbose, segs);
+        throw(ex);
+      })
+    } else {
+      verbose && cat(verbose, "Skipping. Not enough quantiles: ",
+                               paste(dimnames(S)[[2]], collapse=", "));
+    }
+
     verbose && exit(verbose);
   } # if (B >= 100)
   
@@ -482,6 +496,10 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
 
 ##############################################################################
 # HISTORY
+# 2010-11-26
+# o BUG FIX: The statistical sanity checks of the bootstrap estimates would
+#   give an error when only single-sided bootstrap confidence interval was
+#   calculated.
 # 2010-11-23
 # o ROBUSTNESS: Added more sanity checks to bootstrapTCNandDHByRegion().
 # o WORKAROUND: The precision of the mean levels of DNAcopy::segment()

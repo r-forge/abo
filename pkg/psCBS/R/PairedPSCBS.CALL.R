@@ -20,7 +20,7 @@ setMethodS3("callAllelicBalanceByDH", "PairedPSCBS", function(fit, tau=0.10, alp
   verbose && cat(verbose, "alpha (CI quantile; significance level): ", alpha);
 
   # Calculate DH confidence intervals, if not already done
-  statsFcn <- function(x) quantile(x, probs=alpha);
+  statsFcn <- function(x) quantile(x, probs=alpha, na.rm=TRUE);
   fit <- bootstrapTCNandDHByRegion(fit, statsFcn=statsFcn, ..., verbose=less(verbose, 2));
 
   segs <- as.data.frame(fit);
@@ -71,7 +71,7 @@ setMethodS3("callExtremeAllelicImbalanceByDH", "PairedPSCBS", function(fit, tau=
 
 
   # Calculate DH confidence intervalls, if not already done
-  statsFcn <- function(x) quantile(x, probs=alpha);
+  statsFcn <- function(x) quantile(x, probs=alpha, na.rm=TRUE);
   fit <- bootstrapTCNandDHByRegion(fit, statsFcn=statsFcn, ..., verbose=less(verbose, 2));
 
   segs <- as.data.frame(fit);
@@ -111,8 +111,8 @@ setMethodS3("callABandHighAI", "PairedPSCBS", function(fit, tauAB=0.10, alphaAB=
 
   # Calculate DH confidence intervals, if not already done
   probs <- sort(unique(c(alphaAB, alphaHighAI)));
-  statsFcn <- function(x) quantile(x, probs=probs);
-  fit <- bootstrapDHByRegion(fit, statsFcn=statsFcn, ..., verbose=less(verbose, 1));
+  statsFcn <- function(x) quantile(x, probs=probs, na.rm=TRUE);
+  fit <- bootstrapTCNandDHByRegion(fit, statsFcn=statsFcn, ..., verbose=less(verbose, 1));
 
   # Call allelic balance
   fit <- callAllelicBalanceByDH(fit, tau=tauAB, alpha=alphaAB, ..., verbose=less(verbose, 1));
@@ -128,6 +128,13 @@ setMethodS3("callABandHighAI", "PairedPSCBS", function(fit, tauAB=0.10, alphaAB=
 
 ##############################################################################
 # HISTORY
+# 2010-11-26 [HB]
+# o BUG FIX: callABandHighAI() for PairedPSCBS used the old DH-only
+#   bootstrap method.
+# o BUG FIX: The call functions, for instance callABandHighAI(), would throw
+#   'Error in quantile.default(x, probs = alpha) : missing values and NaN's
+#   not allowed if 'na.rm' is FALSE' unless bootstrapTCNandDHByRegion() was
+#   run before.
 # 2010-11-22 [HB]
 # o Added more verbose output to callABandHighAI().
 # o Updated callAllelicBalanceByDH() and callExtremeAllelicImbalanceByDH()

@@ -1,6 +1,18 @@
 Package: psCBS
 ==============
 
+Version: 0.9.20 [2010-11-26]
+o BUG FIX: callABandHighAI() for PairedPSCBS used the old DH-only
+  bootstrap method.
+o BUG FIX: The statistical sanity checks of the bootstrap estimates
+  would give an error when only single-sided bootstrap confidence
+  interval was calculated.
+o BUG FIX: The call functions, for instance callABandHighAI(), would throw
+  'Error in quantile.default(x, probs = alpha) : missing values and NaN's
+  not allowed if 'na.rm' is FALSE' unless bootstrapTCNandDHByRegion() was
+  run before.
+
+
 Version: 0.9.19 [2010-11-23]
 o ROBUSTNESS: Added more sanity checks to bootstrapTCNandDHByRegion().
 o WORKAROUND: The precision of the mean levels of DNAcopy::segment()
