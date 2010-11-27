@@ -2,6 +2,9 @@ Package: psCBS
 ==============
 
 Version: 0.9.20 [2010-11-26]
+o Added optional argument 'chromosomes' to plotTracks() to plot a
+  subset of all chromosomes.
+o Added extractByChromosomes() for PSCBS.
 o Now the default confidence intervals for plotTracks() is (0.05,0.95),
   if existing.
 o Now all call functions estimate symmetric bootstrap quantiles for

@@ -90,6 +90,8 @@
 \alias{joinSegments.CBS}
 \alias{drawConfidenceBands}
 \alias{drawConfidenceBands.PairedPSCBS}
+\alias{extractByChromosomes}
+\alias{extractByChromosomes.PSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

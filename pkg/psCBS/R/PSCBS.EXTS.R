@@ -29,22 +29,35 @@ setMethodS3("extractByChromosome", "PSCBS", function(x, chromosome, ...) {
   # Argument 'chromosome':
   chromosome <- Arguments$getInteger(chromosome, disallow=c("NaN", "Inf"));
 
-  
-  chromosomes <- getChromosomes(this);
+  extractByChromosome(this, chromosomes=chromosome, ...);
+})
 
+
+
+setMethodS3("extractByChromosomes", "PSCBS", function(x, chromosomes, ...) {
+  # To please R CMD check
+  this <- x;
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Argument 'chromosomes':
+  chromosomes <- Arguments$getIntegers(chromosomes, disallow=c("NaN", "Inf"));
+  
   res <- this;
 
   fields <- c("data", "output");
   for (ff in seq(along=fields)) {
     field <- fields[[ff]];
     thisFF <- this[[field]];
-    keep <- is.element(thisFF$chromosome, chromosome);
+    keep <- is.element(thisFF$chromosome, chromosomes);
     thisFF <- thisFF[keep,,drop=FALSE];
     res[[field]] <- thisFF;
   } # for (ff ...)
 
   res;
 })
+
 
 
 setMethodS3("append", "PSCBS", function(x, other, addSplit=TRUE, ...) {
@@ -91,6 +104,8 @@ setMethodS3("append", "PSCBS", function(x, other, addSplit=TRUE, ...) {
 
 ############################################################################
 # HISTORY:
+# 2010-11-26
+# o Added extractByChromosomes() for PSCBS.
 # 2010-09-26
 # o getChromosomes() no longer returns NA divers.
 # 2010-09-24

@@ -29,3 +29,4 @@
   bootstrapTCNandDHByRegion bootstrapTCNandDHByRegion.PairedPSCBS
   joinSegments joinSegments.CBS
 drawConfidenceBands drawConfidenceBands.PairedPSCBS
+ extractByChromosomes extractByChromosomes.PSCBS

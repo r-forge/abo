@@ -496,8 +496,9 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
 }) # tileChromosomes()
 
 
-
-setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", quantiles=c(0.05,0.95), pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
+#   \item{chromosomes}{An optional @numeric @vector specifying which 
+#     chromosomes to plot.}
+setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosomes=getChromosomes(fit), tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", quantiles=c(0.05,0.95), pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
   # To please R CMD check
   fit <- x;
  
@@ -505,6 +506,12 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Argument 'fit':
+
+  # Argument 'chromosomes':
+  if (!is.null(chromosomes)) {
+    chromosomes <- Arguments$getIntegers(chromosomes);
+    stopifnot(is.element(chromosomes, getChromosomes(fit)));
+  }
 
   # Argument 'tracks':
   tracks <- match.arg(tracks, several.ok=TRUE);
@@ -530,6 +537,15 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
     on.exit(popState(verbose));
   }
 
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Subset by chromosomes
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  if (!is.null(chromosomes)) {
+    verbose && enter(verbose, "Plotting a subset of the chromosomes");
+    fit <- extractByChromosomes(fit, chromosomes=chromosomes, verbose=verbose);
+    verbose && exit(verbose);
+  }
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Tile chromosomes
@@ -587,7 +603,6 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
   mids <- (vs[,1]+vs[,2])/2;
 
   nbrOfLoci <- length(x);
-  chromosomes <- getChromosomes(fit);
   chrTags <- sprintf("Chr%02d", chromosomes);
 
   if (!add) {
@@ -712,6 +727,8 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, tracks=c("tc
 ############################################################################
 # HISTORY:
 # 2010-11-26
+# o Added optional argument 'chromosomes' to plotTracks() to plot a
+#   subset of all chromosomes.
 # o Now the default confidence intervals for plotTracks() is (0.05,0.95),
 #   if existing.
 # 2010-11-22
