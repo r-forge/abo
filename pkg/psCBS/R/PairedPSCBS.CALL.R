@@ -20,7 +20,8 @@ setMethodS3("callAllelicBalanceByDH", "PairedPSCBS", function(fit, tau=0.10, alp
   verbose && cat(verbose, "alpha (CI quantile; significance level): ", alpha);
 
   # Calculate DH confidence intervals, if not already done
-  statsFcn <- function(x) quantile(x, probs=alpha, na.rm=TRUE);
+  probs <- c(alpha, 1-alpha);
+  statsFcn <- function(x) quantile(x, probs=probs, na.rm=TRUE);
   fit <- bootstrapTCNandDHByRegion(fit, statsFcn=statsFcn, ..., verbose=less(verbose, 2));
 
   segs <- as.data.frame(fit);
@@ -71,7 +72,8 @@ setMethodS3("callExtremeAllelicImbalanceByDH", "PairedPSCBS", function(fit, tau=
 
 
   # Calculate DH confidence intervalls, if not already done
-  statsFcn <- function(x) quantile(x, probs=alpha, na.rm=TRUE);
+  probs <- c(alpha, 1-alpha);
+  statsFcn <- function(x) quantile(x, probs=probs, na.rm=TRUE);
   fit <- bootstrapTCNandDHByRegion(fit, statsFcn=statsFcn, ..., verbose=less(verbose, 2));
 
   segs <- as.data.frame(fit);
@@ -111,6 +113,7 @@ setMethodS3("callABandHighAI", "PairedPSCBS", function(fit, tauAB=0.10, alphaAB=
 
   # Calculate DH confidence intervals, if not already done
   probs <- sort(unique(c(alphaAB, alphaHighAI)));
+  probs <- sort(unique(c(probs, 1-probs)));
   statsFcn <- function(x) quantile(x, probs=probs, na.rm=TRUE);
   fit <- bootstrapTCNandDHByRegion(fit, statsFcn=statsFcn, ..., verbose=less(verbose, 1));
 
@@ -129,6 +132,8 @@ setMethodS3("callABandHighAI", "PairedPSCBS", function(fit, tauAB=0.10, alphaAB=
 ##############################################################################
 # HISTORY
 # 2010-11-26 [HB]
+# o Now all call functions estimate symmetric bootstrap quantiles for
+#   convenince of plotting confidence intervals.
 # o BUG FIX: callABandHighAI() for PairedPSCBS used the old DH-only
 #   bootstrap method.
 # o BUG FIX: The call functions, for instance callABandHighAI(), would throw

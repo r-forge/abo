@@ -2,6 +2,10 @@ Package: psCBS
 ==============
 
 Version: 0.9.20 [2010-11-26]
+o Now the default confidence intervals for plotTracks() is (0.05,0.95),
+  if existing.
+o Now all call functions estimate symmetric bootstrap quantiles for
+  convenince of plotting confidence intervals.
 o BUG FIX: callABandHighAI() for PairedPSCBS used the old DH-only
   bootstrap method.
 o BUG FIX: The statistical sanity checks of the bootstrap estimates
