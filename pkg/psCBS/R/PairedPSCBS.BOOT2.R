@@ -153,8 +153,8 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
 
   # Heterozygous SNPs
   isHet <- isSNP & (muN == 1/2);
-  hets <- which(isHet);
-  homs <- which(!isHet);
+  hets <- which(isSNP & isHet);
+  homs <- which(isSNP & !isHet);
   nbrOfHets <- length(hets);
   nbrOfHoms <- length(homs);
   verbose && printf(verbose, "Number of heterozygous SNPs: %d (%.2f%%)\n",
@@ -162,6 +162,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   verbose && printf(verbose, "Number of homozygous SNPs: %d (%.2f%%)\n",
                                       nbrOfHoms, 100*nbrOfHoms/nbrOfSNPs);
   stopifnot(length(intersect(hets, homs)) == 0);
+  stopifnot(nbrOfHets + nbrOfHoms == nbrOfSNPs);
 
   stopifnot(length(isSNP) == nbrOfLoci);
   stopifnot(length(isHet) == nbrOfLoci);
@@ -496,6 +497,9 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
 
 ##############################################################################
 # HISTORY
+# 2010-11-27
+# o BUG FIX: bootstrapTCNandDHByRegion() would incorrectly include
+#   non-polymorphic loci in the set of homozygous SNPs during resampling.
 # 2010-11-26
 # o BUG FIX: The statistical sanity checks of the bootstrap estimates would
 #   give an error when only single-sided bootstrap confidence interval was

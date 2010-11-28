@@ -68,6 +68,10 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
   # Argument 'xScale':
   xScale <- Arguments$getNumeric(xScale, range=c(0,Inf));
 
+  # Argument 'add':
+  add <- Arguments$getLogical(add);
+
+
   # Extract the input data
   data <- fit$data;
   if (is.null(data)) {
@@ -498,7 +502,12 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
 
 #   \item{chromosomes}{An optional @numeric @vector specifying which 
 #     chromosomes to plot.}
-setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosomes=getChromosomes(fit), tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", quantiles=c(0.05,0.95), pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
+#
+#   \item{seed}{An (optional) @integer specifying the random seed to be 
+#     set before subsampling.  The random seed is
+#     set to its original state when exiting.  If @NULL, it is not set.}
+
+setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosomes=getChromosomes(fit), tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", quantiles=c(0.05,0.95), scatter=TRUE, seed=NULL, pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
   # To please R CMD check
   fit <- x;
  
@@ -587,8 +596,34 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
     callColumns <- NULL;
   }
 
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Subset of the loci?
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (!is.null(subset)) {
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Set and unset the random seed
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    if (!is.null(seed)) {
+      verbose && enter(verbose, "Setting (temporary) random seed");
+      oldRandomSeed <- NULL;
+      if (exists(".Random.seed", mode="integer")) {
+        oldRandomSeed <- get(".Random.seed", mode="integer");
+      }
+      on.exit({
+        if (!is.null(oldRandomSeed)) {
+          .Random.seed <<- oldRandomSeed;
+        }
+      }, add=TRUE);
+      verbose && cat(verbose, "The random seed will be reset to its original state afterward.");
+      verbose && cat(verbose, "Seed: ", seed);
+      set.seed(seed);
+      verbose && exit(verbose);
+    }
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Subset
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     n <- nrow(data);
     keep <- sample(n, size=subset*n);
     data <- data[keep,];
@@ -613,6 +648,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
   gh <- fit;
   gh$xScale <- xScale;
 
+  pchT <- if (scatter) { pch } else { NA };
   xlim <- range(x, na.rm=TRUE);
   xlab <- "Genomic position";
 
@@ -620,7 +656,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
     if (track == "tcn") {
       plot(NA, xlim=xlim, ylim=Clim, xlab=xlab, ylab="TCN", axes=FALSE);
       if (!is.null(onBegin)) onBegin(gh=gh);
-      points(x, CT, pch=pch, col="black");
+      points(x, CT, pch=pchT, col="black");
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
       abline(v=vs, lty=1, lwd=2);
       axis(side=2); box();
@@ -632,7 +668,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
     if (track == "tcn,c1,c2") {
       plot(NA, xlim=xlim, ylim=Clim, xlab=xlab, ylab="C1, C2, TCN", axes=FALSE);
       if (!is.null(onBegin)) onBegin(gh=gh);
-      points(x, CT, pch=pch, col="black");
+      points(x, CT, pch=pchT, col="black");
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
       abline(v=vs, lty=1, lwd=2);
       axis(side=2); box();
@@ -649,7 +685,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
     if (track == "betaN") {
       plot(NA, xlim=xlim, ylim=Blim, xlab=xlab, ylab="BAF_N", axes=FALSE);
       if (!is.null(onBegin)) onBegin(gh=gh);
-      points(x, betaN, pch=pch, col=col);
+      points(x, betaN, pch=pchT, col=col);
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
       abline(v=vs, lty=1, lwd=2);
       axis(side=2); box();
@@ -659,7 +695,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
     if (track == "betaT") {
       plot(NA, xlim=xlim, ylim=Blim, xlab=xlab, ylab="BAF_T", axes=FALSE);
       if (!is.null(onBegin)) onBegin(gh=gh);
-      points(x, betaT, pch=pch, col=col);
+      points(x, betaT, pch=pchT, col=col);
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
       abline(v=vs, lty=1, lwd=2);
       axis(side=2); box();
@@ -669,7 +705,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
     if (track == "betaTN") {
       plot(NA, xlim=xlim, ylim=Blim, xlab=xlab, ylab="BAF_TN", axes=FALSE);
       if (!is.null(onBegin)) onBegin(gh=gh);
-      points(x, betaTN, pch=pch, col=col);
+      points(x, betaTN, pch=pchT, col=col);
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
       abline(v=vs, lty=1, lwd=2);
       axis(side=2); box();
@@ -684,7 +720,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
       rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
       plot(NA, xlim=xlim, ylim=Blim, xlab=xlab, ylab="DH", axes=FALSE);
       if (!is.null(onBegin)) onBegin(gh=gh);
-      points(x, rho, pch=pch, col="black");
+      points(x, rho, pch=pchT, col="black");
       mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
       abline(v=vs, lty=1, lwd=2);
       axis(side=2); box();
@@ -726,6 +762,11 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
 
 ############################################################################
 # HISTORY:
+# 2010-11-27
+# o plotTracksManyChromosomes() gained argument 'scatter'.
+# o REPRODUCIBILITY: plotTracksManyChromosomes() for PairedPSCBS gained
+#   argument 'seed', because if 'subset' is specified then a random
+#   subset of the data points are displayed.
 # 2010-11-26
 # o Added optional argument 'chromosomes' to plotTracks() to plot a
 #   subset of all chromosomes.

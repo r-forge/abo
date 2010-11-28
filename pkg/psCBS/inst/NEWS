@@ -1,6 +1,13 @@
 Package: psCBS
 ==============
 
+Version: 0.9.22 [2010-11-27]
+o BUG FIX: bootstrapTCNandDHByRegion() would incorrectly include
+  non-polymorphic loci in the set of homozygous SNPs during resampling.
+o BUG FIX: segmentByPairedPSCBS() would not accept missing values in
+  argument 'chromosome'.
+
+
 Version: 0.9.21 [2010-11-27]
 o Now arguments '...' of segmentByPairedPSCBS() are passed to
   the two segmentByCBS() calls.

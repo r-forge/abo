@@ -127,7 +127,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   disallow <- c("Inf");
   chromosome <- Arguments$getIntegers(chromosome, range=c(0,Inf), disallow=disallow);
   if (length(chromosome) > 1) {
-    chromosome <- Arguments$getIntegers(chromosome, length=length2);
+    chromosome <- Arguments$getIntegers(chromosome, length=length2, disallow=disallow);
   }
 
   # Argument 'x':
@@ -686,6 +686,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 ############################################################################
 # HISTORY:
 # 2010-11-27
+# o BUG FIX: segmentByPairedPSCBS() would not accept missing values in
+#   argument 'chromosome'.
 # o Now arguments '...' of segmentByPairedPSCBS() are passed to
 #   the two segmentByCBS() calls.
 # 2010-11-22
