@@ -36,7 +36,8 @@ setMethodS3("callAllelicBalanceByDH", "PairedPSCBS", function(fit, tau=0.10, alp
   verbose && enter(verbose, "Calling segments");
   value <- segs[,column, drop=TRUE];
   call <- (value < tau);
-  verbose && printf(verbose, "Number of segments called allelic balance (AB): %d (%.2f%%) of %d\n", sum(call), 100*sum(call)/nrow(segs), nrow(segs));
+  nbrOfABs <- sum(call, na.rm=TRUE);
+  verbose && printf(verbose, "Number of segments called allelic balance (AB): %d (%.2f%%) of %d\n", nbrOfABs, 100*nbrOfABs/nrow(segs), nrow(segs));
   verbose && exit(verbose);
 
   segs <- cbind(segs, ab.call=call);
@@ -87,7 +88,8 @@ setMethodS3("callExtremeAllelicImbalanceByDH", "PairedPSCBS", function(fit, tau=
   # One-sided test
   value <- segs[,column, drop=TRUE];
   call <- (value >= tau);
-  verbose && printf(verbose, "Number of segments called allelic balance (AB): %d (%.2f%%) of %d\n", sum(call), 100*sum(call)/nrow(segs), nrow(segs));
+  nbrOfHighAIs <- sum(call, na.rm=TRUE);
+  verbose && printf(verbose, "Number of segments called high allelic imbalance (AI): %d (%.2f%%) of %d\n", nbrOfHighAIs, 100*nbrOfHighAIs/nrow(segs), nrow(segs));
   verbose && exit(verbose);
 
   segs <- cbind(segs, ai.high.call=call);
@@ -131,6 +133,8 @@ setMethodS3("callABandHighAI", "PairedPSCBS", function(fit, tauAB=0.10, alphaAB=
 
 ##############################################################################
 # HISTORY
+# 2010-11-27
+# o Corrected verbose output to call results.
 # 2010-11-26 [HB]
 # o Now all call functions estimate symmetric bootstrap quantiles for
 #   convenince of plotting confidence intervals.

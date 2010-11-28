@@ -23,7 +23,7 @@
   Each type of track is plotted in its own panel.
  }
 
- \usage{\method{plotTracks}{PairedPSCBS}(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", scatter=TRUE, pch=".", quantiles=c(0.05, 0.95), cex=1, grid=FALSE, xlim=NULL, Clim=c(0, 6), Blim=c(0, 1), xScale=1e-06, ..., add=FALSE)}
+ \usage{\method{plotTracks}{PairedPSCBS}(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", scatter=TRUE, pch=".", quantiles=c(0.05, 0.95), cex=1, grid=FALSE, xlim=NULL, Clim=c(0, 6), Blim=c(0, 1), xScale=1e-06, ..., add=FALSE, verbose=FALSE)}
 
  \arguments{
    \item{x}{A result object returned by \code{\link{segmentByPairedPSCBS}}().}
@@ -39,6 +39,7 @@
    \item{...}{Not used.}
    \item{add}{If \code{\link[base:logical]{TRUE}}, the panels plotted are added to the existing plot,
      otherwise a new plot is created.}
+   \item{verbose}{See \code{\link[R.utils]{Verbose}}.}
  }
 
  \value{

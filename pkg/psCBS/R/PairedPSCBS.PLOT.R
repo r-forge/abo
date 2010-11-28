@@ -27,6 +27,7 @@
 #   \item{...}{Not used.}
 #   \item{add}{If @TRUE, the panels plotted are added to the existing plot,
 #     otherwise a new plot is created.}
+#   \item{verbose}{See @see "R.utils::Verbose".}
 # }
 #
 # \value{
@@ -38,7 +39,7 @@
 # @keyword IO
 # @keyword internal
 #*/########################################################################### 
-setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", scatter=TRUE, pch=".", quantiles=c(0.05,0.95), cex=1, grid=FALSE, xlim=NULL, Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE) {
+setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", scatter=TRUE, pch=".", quantiles=c(0.05,0.95), cex=1, grid=FALSE, xlim=NULL, Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE, verbose=FALSE) {
   # To please R CMD check
   fit <- x;
  
@@ -47,7 +48,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Argument 'fit':
   if (nbrOfChromosomes(fit) > 1) {
-    return(plotTracksManyChromosomes(fit, tracks=tracks, scatter=scatter, pch=pch, Clim=Clim, Blim=Blim, xScale=xScale, ..., add=add));
+    return(plotTracksManyChromosomes(fit, tracks=tracks, scatter=scatter, pch=pch, Clim=Clim, Blim=Blim, xScale=xScale, ..., add=add, verbose=verbose));
   }
 
   # Argument 'tracks':
@@ -71,6 +72,16 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
   # Argument 'add':
   add <- Arguments$getLogical(add);
 
+  # Argument 'verbose':
+  verbose <- Arguments$getVerbose(verbose);
+  if (verbose) {
+    pushState(verbose);
+    on.exit(popState(verbose));
+  }
+
+
+
+  verbose && enter(verbose, "Plotting PSCN tracks");
 
   # Extract the input data
   data <- fit$data;
@@ -137,7 +148,11 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
   # Color loci by genotype
   col <- c("gray", "black")[(muN == 1/2) + 1];
 
-  for (track in tracks) {
+  for (tt in seq(along=tracks)) {
+    track <- tracks[tt];
+    verbose && enter(verbose, sprintf("Track #%d ('%s') of %d", 
+                                             tt, track, length(tracks)));
+
     pchT <- if (scatter) { pch } else { NA };
 
     if (track == "tcn") {
@@ -214,10 +229,19 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
       for (cc in seq(along=callColumns)) {
         callColumn <- callColumns[cc];
         callLabel <- callLabels[cc];
+        verbose && enter(verbose, sprintf("Call #%d ('%s') of %d", 
+                                      cc, callLabel, length(callColumns)));
+
+        verbose && cat(verbose, "Column: ", callColumn);
 
         segsT <- segs[,c("dh.loc.start", "dh.loc.end", callColumn)];
-        segsT <- segsT[segsT[,callColumn],1:2,drop=FALSE];
+        isCalled <- which(segsT[[callColumn]]);
+        segsT <- segsT[isCalled,1:2,drop=FALSE];
+        verbose && printf(verbose, "Number of segments called %s: %d\n",
+                                                  callLabel, nrow(segsT));
         segsT <- xScale * segsT;
+
+        verbose && str(verbose, segsT);
 
         side <- 2*((cc+1) %% 2) + 1;
         # For each segment called...
@@ -228,10 +252,14 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
           xMid <- (x0+x1)/2;
           mtext(side=side, at=xMid, line=-1, cex=0.7, col="#666666", callLabel);
         } # for (ss in ...)
+        verbose && exit(verbose);
       } # for (cc in ...)
     } # if (length(callColumns) > 0)
 
-  } # for (track ...)
+    verbose && exit(verbose);
+  } # for (tt ...)
+
+  verbose && exit(verbose);
 
   invisible();  
 }) # plotTracks()
@@ -506,7 +534,9 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
 #   \item{seed}{An (optional) @integer specifying the random seed to be 
 #     set before subsampling.  The random seed is
 #     set to its original state when exiting.  If @NULL, it is not set.}
-
+#
+#   \item{verbose}{See @see "R.utils::Verbose".}
+#
 setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosomes=getChromosomes(fit), tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", quantiles=c(0.05,0.95), scatter=TRUE, seed=NULL, pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
   # To please R CMD check
   fit <- x;
@@ -546,6 +576,8 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
     on.exit(popState(verbose));
   }
 
+
+  verbose && enter(verbose, "Plotting PSCN tracks");
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Subset by chromosomes
@@ -652,7 +684,11 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
   xlim <- range(x, na.rm=TRUE);
   xlab <- "Genomic position";
 
-  for (track in tracks) {
+  for (tt in seq(along=tracks)) {
+    track <- tracks[tt];
+    verbose && enter(verbose, sprintf("Track #%d ('%s') of %d", 
+                                             tt, track, length(tracks)));
+
     if (track == "tcn") {
       plot(NA, xlim=xlim, ylim=Clim, xlab=xlab, ylab="TCN", axes=FALSE);
       if (!is.null(onBegin)) onBegin(gh=gh);
@@ -736,10 +772,19 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
       for (cc in seq(along=callColumns)) {
         callColumn <- callColumns[cc];
         callLabel <- callLabels[cc];
+        verbose && enter(verbose, sprintf("Call #%d ('%s') of %d", 
+                                      cc, callLabel, length(callColumns)));
+
+        verbose && cat(verbose, "Column: ", callColumn);
 
         segsT <- segs[,c("dh.loc.start", "dh.loc.end", callColumn)];
-        segsT <- segsT[segsT[,callColumn],1:2,drop=FALSE];
+        isCalled <- which(segsT[[callColumn]]);
+        segsT <- segsT[isCalled,1:2,drop=FALSE];
+        verbose && printf(verbose, "Number of segments called %s: %d\n",
+                                                  callLabel, nrow(segsT));
         segsT <- xScale * segsT;
+
+        verbose && str(verbose, segsT);
 
         side <- 2*((cc+1) %% 2) + 1;
         # For each segment called...
@@ -750,9 +795,14 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
           xMid <- (x0+x1)/2;
           mtext(side=side, at=xMid, line=-1, cex=0.7, col="#666666", callLabel);
         } # for (ss in ...)
+        verbose && exit(verbose);
       } # for (cc in ...)
     } # if (length(callColumns) > 0)
-  } # for (track ...)
+
+    verbose && exit(verbose);
+  } # for (tt ...)
+
+  verbose && exit(verbose);
 
   invisible(gh);
 }) # plotTracksManyChromosomes()
@@ -763,6 +813,10 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
 ############################################################################
 # HISTORY:
 # 2010-11-27
+# o BUG FIX: plotTracksManyChromosomes() would annotate called regions
+#   incorrectly.
+# o Added more verbouse output to plotTracksManyChromosomes().
+# o Added missing argument 'verbose' to plotTracksManyChromosomes().
 # o plotTracksManyChromosomes() gained argument 'scatter'.
 # o REPRODUCIBILITY: plotTracksManyChromosomes() for PairedPSCBS gained
 #   argument 'seed', because if 'subset' is specified then a random

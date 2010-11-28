@@ -107,19 +107,22 @@ str(data);
 R.oo::attachLocally(data);
 x <- position;
 
+# Drop single-locus outliers
+CTs <- dropSegmentationOutliers(CT, chromosome=1, x=x, verbose=-10);
+
 # Paired PSCBS segmentation
-fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN,
+fit <- segmentByPairedPSCBS(CTs, betaT=betaT, betaN=betaN,
                             chromosome=1, x=x, verbose=-10);
 print(fit);
 
 # Plot results
 plotTracks(fit);
 
-fit2 <- bootstrapTCNandDHByRegion(fit, verbose=-1);
+fit2 <- bootstrapTCNandDHByRegion(fit, verbose=-10);
 print(fit2);
 plotTracks(fit2);
 
-fit3 <- callABandHighAI(fit2, verbose=-1);
+fit3 <- callABandHighAI(fit2, verbose=-10);
 print(fit3);
 plotTracks(fit3);
 
