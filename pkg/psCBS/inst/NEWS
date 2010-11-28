@@ -1,6 +1,16 @@
 Package: psCBS
 ==============
 
+Version: 0.9.23 [2010-11-28]
+o BUG FIX: The algorithm in segmentByCBS() that infers which loci (of
+  the ones share the same genomic positions) that should be exclude
+  from each segment did not take missing signals into account.
+o BUG FIX: Iff argument 'chromosome' to segmentByPairedPSCBS() was of
+  length greater than one and specified exactly one unique chromosome,
+  then exception "Number of elements in argument 'chromosome' should
+  be exactly 8712 not 86209 value(s)" would be thrown.
+
+
 Version: 0.9.22 [2010-11-27]
 o BUG FIX: bootstrapTCNandDHByRegion() would incorrectly include
   non-polymorphic loci in the set of homozygous SNPs during resampling.

@@ -476,6 +476,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
       # input data, e.g. 'x'.  This is also why we record the inverse index map.
       # /HB 2010-11-16
       x <- fit$data$maploc;
+      y <- fit$data$y;
 
       lociNotPartOfSegment <- vector("list", length=nbrOfSegs);
       names(lociNotPartOfSegment) <- rownames(segs);
@@ -490,10 +491,21 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
           currEnd <- currSeg[,"loc.end"];
           units <- which(currStart <= x & x <= currEnd);
           nbrOfUnits <- length(units);
+          verbose && cat(verbose, "Number of loci in segment: ", nbrOfUnits);
+
+          # Ignore loci with missing signals
+          keep <- which(is.finite(y[units]));
+          units <- units[keep];
+          nbrOfUnits <- length(units);
+          verbose && cat(verbose, "Number of loci in segment with non-missing signals: ", nbrOfUnits);
+
           nbrToMove <- nbrOfUnits - currCount;
 
           # It should always be the case that nbrToMove > 0
           verbose && cat(verbose, "Number of loci to move: ", nbrToMove);
+
+          # Sanity check
+          stopifnot(nbrToMove > 0);
 
           # Identify units to move
           units <- units[x[units] == currStart];
@@ -557,6 +569,10 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
 
 ############################################################################
 # HISTORY:
+# 2010-11-28
+# o BUG FIX: The algorithm in segmentByCBS() that infers which loci( of
+#   the ones share the same genomic positions) that should be exclude
+#   from each segment did not take missing signals into account.
 # 2010-11-21
 # o Now segmentByCBS(..., joinSegments=TRUE) utilizes joinSegments().
 # 2010-11-20

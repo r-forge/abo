@@ -325,6 +325,11 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   nbrOfSnps <- sum(isSnp);
   verbose && cat(verbose, "Number of SNPs: ", nbrOfSnps);
 
+  # Expand 'chromosome' to be of full length
+  if (length(chromosome) == 1) {
+    chromosome <- rep(chromosome, times=nbrOfLoci);
+  }
+
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Calculate decrease-of-heterozygosity signals (DHs)
@@ -509,6 +514,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     # Sanity check
     stopifnot(length(keep) == tcnSegments[kk,"tcn.num.mark"]);
 
+    chromosomeKK <- chromosome[keep];
     xKK <- x[keep];
     nbrOfLociKK <- length(xKK);
     rhoKK <- rho[keep];
@@ -521,6 +527,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
     # Identify heterozygous SNPs
     keep <- isHetKK;
+    chromosomeKK <- chromosomeKK[keep];
     xKKHet <- xKK[keep];
     rhoKKHet <- rhoKK[keep];
     nbrOfHetsKK <- length(xKKHet);
@@ -534,7 +541,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     } else {
       knownCPsKK <- NULL;
     }
-    fit <- segmentByCBS(rhoKKHet, chromosome=chromosome, x=xKKHet, 
+    fit <- segmentByCBS(rhoKKHet, chromosome=chromosomeKK, x=xKKHet, 
                         joinSegments=joinSegments, knownCPs=knownCPsKK,
                         alpha=alphaDH, undo=undoDH, ..., verbose=verbose);
     verbose && str(verbose, fit);
@@ -644,7 +651,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     betaTN=betaTN,
     betaN=betaN,
     muN=muN,
-    chromosome=rep(chromosome, times=nbrOfLoci),
+    chromosome=chromosome,
     x=x
   );
   # Should we drop attributes? /HB 2010-09-24
@@ -685,6 +692,11 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-11-28
+# o BUG FIX: Iff argument 'chromosome' to segmentByPairedPSCBS() was of
+#   length greater than one and specified exactly one unique chromosome,
+#   then exception "Number of elements in argument 'chromosome' should
+#   be exactly 8712 not 86209 value(s)" would be thrown.
 # 2010-11-27
 # o BUG FIX: segmentByPairedPSCBS() would not accept missing values in
 #   argument 'chromosome'.
