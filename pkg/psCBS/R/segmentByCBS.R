@@ -252,6 +252,21 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
   }
 
 
+##  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+##  # Drop outliers?
+##  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+##  if (dropOutliers) {
+##    verbose && enter(verbose, "Removing single-locus outliers");
+##    isOutlier <- callSegmentationOutliers(y=y, chrom=chrom, x=x, verbose=verbose);
+##    outliers <- which(isOutlier);
+##    if (length(outliers) > 0) {
+##      verbose && cat(verbose, "Number of outliers detected: ", length(outliers));
+##      y[outliers] <- as.double(NA);
+##    }
+##    verbose && exit(verbose);
+##  }
+
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Setting up arguments to pass to segmentation function
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -514,7 +529,8 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
   params <- list(
     preserveOrder = preserveOrder,
     joinSegments = joinSegments,
-    knownCPs = knownCPs
+    knownCPs = knownCPs,
+    seed = seed
   );
 
   fit$params <- params;

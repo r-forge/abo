@@ -32,7 +32,7 @@
 #        then a cleanup of segmentions post segmentation is done.
 #        See argument \code{undo} of @see "segmentByCBS" for more
 #        details.}
-#   \item{...}{Not used.}
+#   \item{...}{Additional arguments passed to @see "segmentByCBS".}
 #   \item{flavor}{A @character specifying what type of segmentation and 
 #     calling algorithm to be used.}
 #   \item{tbn}{If @TRUE, \code{betaT} is normalized before segmentation
@@ -397,7 +397,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
   fit <- segmentByCBS(yT, chromosome=chromosome, x=x, 
                       joinSegments=joinSegments, knownCPs=knownCPs,
-                      alpha=alphaTCN, undo=undoTCN, verbose=verbose);
+                      alpha=alphaTCN, undo=undoTCN, ..., verbose=verbose);
   verbose && str(verbose, fit);
 
   tcnSegments <- fit$output;
@@ -536,7 +536,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     }
     fit <- segmentByCBS(rhoKKHet, chromosome=chromosome, x=xKKHet, 
                         joinSegments=joinSegments, knownCPs=knownCPsKK,
-                        alpha=alphaDH, undo=undoDH, verbose=verbose);
+                        alpha=alphaDH, undo=undoDH, ..., verbose=verbose);
     verbose && str(verbose, fit);
     dhSegments <- fit$output;
     dhLociNotPartOfSegment <- fit$lociNotPartOfSegment;
@@ -685,6 +685,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-11-27
+# o Now arguments '...' of segmentByPairedPSCBS() are passed to
+#   the two segmentByCBS() calls.
 # 2010-11-22
 # o BUG FIX: segmentByPairedPSCBS() would not subset the correct set of
 #   DH signals if there were some missing values in TCN.

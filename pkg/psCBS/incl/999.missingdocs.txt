@@ -30,3 +30,4 @@
   joinSegments joinSegments.CBS
 drawConfidenceBands drawConfidenceBands.PairedPSCBS
  extractByChromosomes extractByChromosomes.PSCBS
+ dropSegmentationOutliers dropSegmentationOutliers.default

@@ -92,6 +92,8 @@
 \alias{drawConfidenceBands.PairedPSCBS}
 \alias{extractByChromosomes}
 \alias{extractByChromosomes.PSCBS}
+\alias{dropSegmentationOutliers}
+\alias{dropSegmentationOutliers.default}
 
 \description{
   This page contains aliases for all "non-documented" objects that

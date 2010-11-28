@@ -1,6 +1,17 @@
 Package: psCBS
 ==============
 
+Version: 0.9.21 [2010-11-27]
+o Now arguments '...' of segmentByPairedPSCBS() are passed to
+  the two segmentByCBS() calls.
+o Added callSegmentationOutliers(), which can be used to identify
+  single-locus outliers that have a genomic signal that is clearly
+  outside the expected range.  The dropSegmentationOutliers() sets
+  locus outliers detected by this method to missing values. 
+  This is useful for excluding total copy-number outliers that
+  otherwise can have a dramatic impact on the non-robust CBS method.
+
+
 Version: 0.9.20 [2010-11-26]
 o Added optional argument 'chromosomes' to plotTracks() to plot a
   subset of all chromosomes.

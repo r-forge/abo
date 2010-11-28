@@ -41,7 +41,7 @@
         then a cleanup of segmentions post segmentation is done.
         See argument \code{undo} of \code{\link{segmentByCBS}}() for more
         details.}
-   \item{...}{Not used.}
+   \item{...}{Additional arguments passed to \code{\link{segmentByCBS}}().}
    \item{flavor}{A \code{\link[base]{character}} specifying what type of segmentation and
      calling algorithm to be used.}
    \item{tbn}{If \code{\link[base:logical]{TRUE}}, \code{betaT} is normalized before segmentation
