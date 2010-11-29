@@ -475,6 +475,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
       # means that the unit indices identified below match 'data' and not the
       # input data, e.g. 'x'.  This is also why we record the inverse index map.
       # /HB 2010-11-16
+      chromosome <- fit$data$chrom;
       x <- fit$data$maploc;
       y <- fit$data$y;
 
@@ -484,17 +485,18 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, w=NULL,
       prevSeg <- segsT[1L,];
       for (ss in 2:nrow(segsT)) {
         currSeg <- segsT[ss,];
+        chr <- currSeg[,"chrom"];
         currStart <- currSeg[,"loc.start"];
         prevEnd <- prevSeg[,"loc.end"];
         if (currStart == prevEnd) {
           currCount <- currSeg[,"num.mark"];
           currEnd <- currSeg[,"loc.end"];
-          units <- which(currStart <= x & x <= currEnd);
+          units <- which(chr == chromosome & currStart <= x & x <= currEnd);
           nbrOfUnits <- length(units);
           verbose && cat(verbose, "Number of loci in segment: ", nbrOfUnits);
 
           # Ignore loci with missing signals
-          keep <- which(is.finite(y[units]));
+          keep <- which(!is.na(y[units]));
           units <- units[keep];
           nbrOfUnits <- length(units);
           verbose && cat(verbose, "Number of loci in segment with non-missing signals: ", nbrOfUnits);

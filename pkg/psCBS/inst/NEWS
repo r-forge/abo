@@ -1,6 +1,12 @@
 Package: psCBS
 ==============
 
+Version: 0.9.24 [2010-11-28]
+o BUG FIX: postsegmentTCN() did not handle loci with the same positions
+  and that are split in two different segments.  It also did not exclude
+  loci with missing values.
+
+
 Version: 0.9.23 [2010-11-28]
 o BUG FIX: The algorithm in segmentByCBS() that infers which loci (of
   the ones share the same genomic positions) that should be exclude

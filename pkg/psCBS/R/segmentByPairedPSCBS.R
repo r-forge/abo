@@ -430,7 +430,6 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   rm(fit);
 
 
-
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # 1c. Backtransform estimates
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -592,6 +591,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     verbose && cat(verbose, "Total CN segmentation table (expanded):");
     verbose && print(verbose, tcnSegmentsKK);
 
+    # Sanity check
+    stopifnot(nrow(tcnSegmentsKK) == nrow(dhSegments));
+
     # Combine TCN and DH segmentation results
     tcndhSegments <- cbind(
       tcn.id=rep(kk, times=nrow(dhSegments)),
@@ -625,7 +627,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   C2 <- tcn - C1;
   segs <- cbind(segs, c1.mean=C1, c2.mean=C2);
   verbose && exit(verbose);
- 
+
   nbrOfSegs <- nrow(segs);
   verbose && cat(verbose, "Number of segments: ", nbrOfSegs);
 

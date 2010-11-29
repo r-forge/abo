@@ -48,6 +48,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   data <- fit$data;
   segs <- fit$output;
   params <- fit$params;
+  tcnLociNotPartOfSegment <- fit$tcnLociNotPartOfSegment;
   listOfDhLociNotPartOfSegment <- fit$listOfDhLociNotPartOfSegment;
 
   # Sanity check
@@ -218,35 +219,53 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
       next;
     }
 
+    verbose && print(verbose, segJJ);
+
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Identify loci in segment
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     chr <- segJJ$chromosome[1];
-    start <- segJJ$dh.loc.start[1];
-    stop <- segJJ$dh.loc.end[1];
+    start <- segJJ$tcn.loc.start[1];
+    stop <- segJJ$tcn.loc.end[1];
 
     nbrOfTCNs <- segJJ[,"tcn.num.mark"];
     nbrOfDHs <- segJJ[,"dh.num.mark"];
+    verbose && cat(verbose, "Number of TCNs: ", nbrOfTCNs);
+    verbose && cat(verbose, "Number of DHs: ", nbrOfDHs);
+
     if (is.na(nbrOfTCNs)) nbrOfTCNs <- 0L;
     if (is.na(nbrOfDHs)) nbrOfDHs <- 0L;
 
     unitsJJ <- whichVector(ok & chr == chromosome & start <= x & x <= stop);
+
+    lociToExclude <- tcnLociNotPartOfSegment[[tcnId]];
+
+    verbose && cat(verbose, "Excluding TCN loci that belongs to a flanking segment: ", length(lociToExclude));
+    tcnUnitsJJ <- setdiff(unitsJJ, lociToExclude);
+    nbrOfTCNUnitsJJ <- length(tcnUnitsJJ);
+    verbose && cat(verbose, "Number of loci in segment: ", nbrOfTCNUnitsJJ);
+
+    # Sanity check
+    stopifnot(nbrOfTCNUnitsJJ == nbrOfTCNs);
+
     lociToExclude <- listOfDhLociNotPartOfSegment[[tcnId]][[dhId]];
-    verbose && cat(verbose, "Excluding loci that belongs to a flanking segment: ", length(lociToExclude));
-    unitsJJ <- setdiff(unitsJJ, lociToExclude);
-    nbrOfUnitsJJ <- length(unitsJJ);
-    verbose && cat(verbose, "Number of loci in segment: ", nbrOfUnitsJJ);
+
+    verbose && cat(verbose, "Excluding DH loci that belongs to a flanking segment: ", length(lociToExclude));
+    dhUnitsJJ <- setdiff(tcnUnitsJJ, lociToExclude);
+    nbrOfDHUnitsJJ <- length(dhUnitsJJ);
+    verbose && cat(verbose, "Number of loci in segment: ", nbrOfDHUnitsJJ);
+
 
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Identify (i) heterozygous SNPs, (ii) homozygous SNPs, and
     # non-polymorphic loci
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    hetsJJ <- intersect(hets, unitsJJ);
+    hetsJJ <- intersect(hets, dhUnitsJJ);
     nbrOfHetsJJ <- length(hetsJJ);
     verbose && cat(verbose, "Number of heterozygous SNPs in segment: ", nbrOfHetsJJ);
 
-    homsJJ <- intersect(homs, unitsJJ);
+    homsJJ <- intersect(homs, dhUnitsJJ);
     nbrOfHomsJJ <- length(homsJJ);
     verbose && cat(verbose, "Number of homozygous SNPs in segment: ", nbrOfHomsJJ);
 
@@ -257,7 +276,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
     nbrOfSNPsJJ <- length(snpsJJ);
     verbose && cat(verbose, "Number of SNPs in segment: ", nbrOfSNPsJJ);
 
-    nonSNPsJJ <- intersect(nonSNPs, unitsJJ);
+    nonSNPsJJ <- intersect(nonSNPs, tcnUnitsJJ);
     nbrOfNonSNPsJJ <- length(nonSNPsJJ);
     verbose && cat(verbose, "Number of non-SNPs in segment: ", nbrOfNonSNPsJJ);
 
@@ -265,9 +284,9 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
     stopifnot(length(intersect(snpsJJ, nonSNPsJJ)) == 0);
 
     # Sanity check
-    stopifnot(nbrOfHetsJJ + nbrOfHomsJJ + nbrOfNonSNPsJJ == nbrOfUnitsJJ);
+    stopifnot(nbrOfHetsJJ + nbrOfHomsJJ + nbrOfNonSNPsJJ == nbrOfTCNUnitsJJ);
     unitsJJ2 <- sort(c(snpsJJ, nonSNPsJJ));
-    stopifnot(all(unitsJJ2 == sort(unitsJJ)));
+    stopifnot(all(unitsJJ2 == sort(tcnUnitsJJ)));
 
     # These numbers should be preserved when the resampling
     verbose && printf(verbose, "Number of (#hets, #homs, #nonSNPs): (%d,%d,%d)\n",
@@ -277,25 +296,25 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Sanity checks
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # Sanity checks
-    if (nbrOfSNPsJJ > 0) {
+    if (nbrOfTCNUnitsJJ > 0) {
+      tol <- 0.0005;
+      ys <- CT[tcnUnitsJJ];
+      mu <- mean(ys, na.rm=TRUE);
+      dMu <- (mu - segJJ$tcn.mean);
+      if (abs(dMu) > tol) {
+        str(list(nbrOfUnits=nbrOfTCNUnitsJJ, tcn.num.mark=segJJ$tcn.num.mark, mu=mu, tcn.mean=segJJ$tcn.mean, dMu=dMu, "abs(dMu)"=abs(dMu), "range(x[units])"=range(x[tcnUnitsJJ])));
+        stop("INTERNAL ERROR: Incorrect TCN mean!");
+      }
+    }
+
+    if (nbrOfHetsJJ > 0) {
       tol <- 0.0005;
       ys <- rho[hetsJJ];
       mu <- mean(ys, na.rm=TRUE);
       dMu <- (mu - segJJ$dh.mean);
       if (abs(dMu) > tol) {
-        str(list(nbrOfUnits=nbrOfUnitsJJ, dh.num.mark=segJJ$dh.num.mark, mu=mu, dh.mean=segJJ$dh.mean, dMu=dMu, "abs(dMu)"=abs(dMu), "min(x[units])"=min(x[unitsJJ])));
+        str(list(nbrOfUnits=nbrOfDHUnitsJJ, dh.num.mark=segJJ$dh.num.mark, mu=mu, dh.mean=segJJ$dh.mean, dMu=dMu, "abs(dMu)"=abs(dMu), "range(x[units])"=range(x[hetsJJ])));
         stop("INTERNAL ERROR: Incorrect DH mean!");
-      }
-    }
-
-    if (nbrOfUnitsJJ > 0) {
-      ys <- CT[unitsJJ];
-      mu <- mean(ys, na.rm=TRUE);
-      dMu <- (mu - segJJ$tcn.mean);
-      if (abs(dMu) > tol) {
-        str(list(nbrOfUnits=nbrOfUnitsJJ, dh.num.mark=segJJ$tcn.num.mark, mu=mu, tcn.mean=segJJ$tcn.mean, dMu=dMu, "abs(dMu)"=abs(dMu), "min(x[units])"=min(x[unitsJJ])));
-        stop("INTERNAL ERROR: Incorrect TCN mean!");
       }
     }
 
@@ -320,7 +339,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
       } # if (nbrOfHets > 0)
   
       # (2) Bootstrap TCNs
-      if (nbrOfUnitsJJ > 0) {
+      if (nbrOfTCNUnitsJJ > 0) {
         # (a) Resample homozygous SNPs
         homsBB <- resample(homsJJ, size=nbrOfHomsJJ, replace=TRUE);
   

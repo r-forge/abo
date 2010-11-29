@@ -223,6 +223,10 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
   isSnp <- !is.na(muN);
   isHet <- isSnp & (muN == 1/2);
 
+  # Identify loci with non-missing signals
+  ok <- (!is.na(chromosome) & !is.na(x) & !is.na(CT));
+
+  tcnLociNotPartOfSegment <- fit$tcnLociNotPartOfSegment;
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Update the TCN segments
@@ -269,9 +273,14 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
         # (b) Find the units within this first guess of the TCN segment
         #     HB: (x <= end) or (x < end); is it possible that we
         #         include the same locus in two segments? /HB 2010-09-21
-        units <- (start <= x & x <= end);
-        if (!is.na(chr)) units <- units & (chromosome == chr);
-  
+        units <- (ok & chr == chromosome & start <= x & x <= end);
+        units <- whichVector(units);
+
+        lociToExclude <- tcnLociNotPartOfSegment[[tcnId]];
+        verbose && cat(verbose, "Excluding TCN loci that belongs to a flanking segment: ", length(lociToExclude));
+        units <- setdiff(units, lociToExclude);
+        verbose && cat(verbose, "Number of loci in segment: ", length(units));
+
         # (c) Adjust the start and end of the TCN segment
         xJJ <- x[units];
         startSupport <- min(xJJ, na.rm=TRUE);
@@ -279,17 +288,23 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
         start <- min(start, startSupport, na.rm=TRUE);
         end <- max(end, endSupport, na.rm=TRUE);
   
+
         # (d) Identify the actual units
-        units <- (start <= x & x <= end);
-        if (!is.na(chr)) units <- units & (chromosome == chr);
+        units <- (ok & chr == chromosome & start <= x & x <= end);
         units <- whichVector(units);
         verbose && cat(verbose, "Units:");
         verbose && str(verbose, units);
+
+        lociToExclude <- tcnLociNotPartOfSegment[[tcnId]];
+        verbose && cat(verbose, "Excluding TCN loci that belongs to a flanking segment: ", length(lociToExclude));
+        units <- setdiff(units, lociToExclude);
+        verbose && cat(verbose, "Number of loci in segment: ", length(units));
+
   
         # Update the segment, estimates and counts
         seg[["tcn.loc.start"]] <- start;
         seg[["tcn.loc.end"]] <- end;
-        seg[["tcn.mean"]] <- mean(CT[units], na.rm=TRUE);
+        seg[["tcn.mean"]] <- mean(CT[units]);
         seg[["tcn.num.mark"]] <- length(units);
         seg[["tcn.num.snps"]] <- sum(isSnp[units]);
         seg[["tcn.num.hets"]] <- sum(isHet[units]);
@@ -335,6 +350,10 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
 
 ############################################################################
 # HISTORY:
+# 2010-11-28
+# o BUG FIX: postsegmentTCN() did not handle loci with the same positions
+#   and that are split in two different segments.  It also did not exclude
+#   loci with missing values.
 # 2010-11-21
 # o Adjusted postsegmentTCN() such that the updated TCN segment boundaries 
 #   are the maximum of the DH segment and the support by the loci.  This
