@@ -80,7 +80,7 @@ setMethodS3("extractByChromosomes", "PSCBS", function(x, chromosomes, ...) {
   cumChrLengthsExcl <- cumsum(chrLengthsExcl);
 
   shifts <- cumChrLengthsExcl[keep];
-  stopifnot(all(is.finite(shift)));
+  stopifnot(all(is.finite(shifts)));
 
   # Adjust indices
   for (cc in seq(along=chromosomes)) {
