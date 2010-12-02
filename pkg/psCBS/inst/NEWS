@@ -1,6 +1,20 @@
 Package: psCBS
 ==============
 
+Version: 0.9.30 [2010-12-01]
+o Rewrote all code dealing with the identification of loci belong
+  to segments.  The code is now utilizing the 'segRows' element
+  returned by DNAcopy::segment().  Lots of the code was rewritten
+  and therefore completely new bugs may have been introduced.
+
+
+Version: 0.9.25 [2010-11-30]
+o BUG FIX: Argument 'flavor' of segmentByPairedPSCBS() would be ignored
+  if multiple chromsomomes were segmented.
+o BUG FIX: extractByChromosome() for PSCBS would call it self instead
+  of extractByChromosomes().
+
+
 Version: 0.9.24 [2010-11-28]
 o BUG FIX: postsegmentTCN() did not handle loci with the same positions
   and that are split in two different segments.  It also did not exclude

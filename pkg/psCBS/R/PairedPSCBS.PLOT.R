@@ -537,7 +537,7 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
 #
 #   \item{verbose}{See @see "R.utils::Verbose".}
 #
-setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosomes=getChromosomes(fit), tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", quantiles=c(0.05,0.95), scatter=TRUE, seed=NULL, pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
+setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosomes=getChromosomes(fit), tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", quantiles=c(0.05,0.95), scatter=TRUE, seed=0xBEEF, pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
   # To please R CMD check
   fit <- x;
  
@@ -812,6 +812,9 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
 
 ############################################################################
 # HISTORY:
+# 2010-12-01
+# o Now using a default 'seed' for plotTracksManyChromosomes() such
+#   that the scatter data in the plots are reproducible by default.
 # 2010-11-27
 # o BUG FIX: plotTracksManyChromosomes() would annotate called regions
 #   incorrectly.

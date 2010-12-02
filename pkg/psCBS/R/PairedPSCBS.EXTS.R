@@ -15,122 +15,6 @@ setMethodS3("print", "PairedPSCBS", function(x, ...) {
 })
 
 
-setMethodS3("subsetByDhSegments", "PairedPSCBS", function(fit, idxs, ..., verbose=FALSE) {
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Validate arguments
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  segs <- fit$output;
-  stopifnot(!is.null(segs)); 
-  nbrOfSegments <- nrow(segs);
-
-  # Argument 'idxs':
-  idxs <- Arguments$getIndices(idxs, max=nbrOfSegments);
-
-  # Argument 'verbose':
-  verbose <- Arguments$getVerbose(verbose);
-  if (verbose) {
-    pushState(verbose);
-    on.exit(popState(verbose));
-  } 
-
-
-
-  verbose && enter(verbose, "Extracting a subset of the DH segments");
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  # Extract the data and segmentation results
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  data <- fit$data;
-  stopifnot(!is.null(data));
-
-  listOfDhLociNotPartOfSegment <- fit$listOfDhLociNotPartOfSegment;
-
-  chromosomes <- getChromosomes(fit);
-  nbrOfChromosomes <- length(chromosomes);
-  verbose && cat(verbose, "Number of chromosomes: ", nbrOfChromosomes);
-  verbose && print(verbose, chromosomes); 
-
-  verbose && cat(verbose, "Number of segments: ", nbrOfSegments);
-
-  chromosome <- data$chromosome;
-  x <- data$x;
-  nbrOfLoci <- length(x);
-
-  verbose && enter(verbose, "Subsetting segments");
-  # Subset the region-level data
-  segs <- segs[idxs,,drop=FALSE];
-  verbose && print(verbose, segs);
-  verbose && cat(verbose, "Number of TCN markers: ", sum(segs[["tcn.num.mark"]], na.rm=TRUE));
-  verbose && exit(verbose);
-
-  verbose && enter(verbose, "Subsetting data");
-  # Subset the locus-level data
-  keep <- logical(nbrOfLoci);
-  for (kk in seq(length=nbrOfSegments)) {
-    segKK <- segs[kk,];
-    chrKK <- as.numeric(segKK[,"chromosome"]);
-    xRange <- as.numeric(segKK[,c("dh.loc.start", "dh.loc.end")]);
-    # Skip NA divider?
-    if (all(is.na(xRange))) {
-      next;
-    }
-    # Identify all SNPs in the region
-    keepKK <- (xRange[1] <= x & x <= xRange[2]);
-    if (!is.na(chrKK)) keepKK <- keepKK & (chromosome == chrKK);
-    nKK <- sum(keepKK, na.rm=TRUE);
-
-    # Special case?
-    if (nKK > segKK[,"dh.num.mark"]) {
-      verbose && cat(verbose, "Number of loci in DH segment: ", nKK);
-      verbose && cat(verbose, "Number of loci in DH segment: ", segKK[,"dh.num.mark"]);
-
-      # Sanity check
-      stopifnot(!is.null(listOfDhLociNotPartOfSegment));
-
-      tcnId <- segKK[,"tcn.id"];
-      dhId <- segKK[,"dh.id"];
-      dhLociNotPartOfSegment <- listOfDhLociNotPartOfSegment[[tcnId]];
-      # Sanity check
-      stopifnot(!is.null(dhLociNotPartOfSegment));
-
-      lociToExclude <- dhLociNotPartOfSegment[[dhId]];
-      verbose && cat(verbose, "Excluding loci that belongs to a flanking segment: ", length(lociToExclude));
-      keepKK[lociToExclude] <- FALSE;
-      nKK <- sum(keepKK, na.rm=TRUE);
-    }
-
-    verbose && cat(verbose, "Number of units: ", nKK);
-    verbose && cat(verbose, "Number of TCN markers: ", segKK[,"tcn.num.mark"]);
-
-    # Sanity check
-    stopifnot(nKK == segKK[,"dh.num.mark"]);
-
-    keep <- keep | keepKK;
-  } # for (kk ...)
-  keep <- whichVector(keep);
-  verbose && cat(verbose, "Units to keep:");
-  verbose && str(verbose, keep);
-
-  data <- data[keep,,drop=FALSE];
-  rm(keep); # Not needed anymore
-  verbose && cat(verbose, "Number of units: ", nrow(data));
-  verbose && exit(verbose);
-
-  # Sanity check
-#  stopifnot(nrow(data) == sum(segs[["tcn.num.mark"]], na.rm=TRUE));
-
-  fitS <- fit;
-  fitS$data <- data;
-  fitS$output <- segs;
-
-  verbose && exit(verbose);
-
-  fitS;
-})
-
-
-
-
 setMethodS3("bootstrapCIs", "PairedPSCBS", function(fit, ...) {
   # ...
 })
@@ -186,7 +70,7 @@ setMethodS3("extractDeltaC1C2", "PairedPSCBS", function(...) {
 
 
 
-setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
+setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., force=FALSE, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -199,19 +83,24 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
  
   verbose && enter(verbose, "Post-segmenting TCNs");
 
+  flavor <- fit$params$flavor;
+  if (!force && regexpr("&", flavor, fixed=TRUE) != -1) {
+    verbose && cat(verbose, "Nothing to do. Already postsegmentTCN:ed: ", flavor);
+    verbose && exit(verbose);
+    return(fit);
+  }
+
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Extract the data and segmentation results
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   data <- fit$data;
-  stopifnot(!is.null(data));
 
   segs <- fit$output;
-  stopifnot(!is.null(segs));
-
-  chromosomes <- getChromosomes(fit);
-  nbrOfChromosomes <- length(chromosomes);
-  verbose && cat(verbose, "Number of chromosomes: ", nbrOfChromosomes);
-  verbose && print(verbose, chromosomes);
+  keep <- is.finite(segs$chromosome);
+  segs <- segs[keep,,drop=FALSE];
+  tcnSegRows <- fit$tcnSegRows[keep,,drop=FALSE];
+  dhSegRows <- fit$dhSegRows[keep,,drop=FALSE];
 
   nbrOfSegments <- nrow(segs);
   verbose && cat(verbose, "Number of segments: ", nbrOfSegments);
@@ -223,20 +112,25 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
   isSnp <- !is.na(muN);
   isHet <- isSnp & (muN == 1/2);
 
-  # Identify loci with non-missing signals
-  ok <- (!is.na(chromosome) & !is.na(x) & !is.na(CT));
-
-  tcnLociNotPartOfSegment <- fit$tcnLociNotPartOfSegment;
-
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Update the TCN segments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  chromosomes <- getChromosomes(fit);
+  nbrOfChromosomes <- length(chromosomes);
+  verbose && cat(verbose, "Number of chromosomes: ", nbrOfChromosomes);
+  verbose && print(verbose, chromosomes);
+
   for (cc in seq(length=nbrOfChromosomes)) {
     chr <- chromosomes[cc];
     chrTag <- sprintf("chr%02d", chr);
     verbose && enter(verbose, sprintf("Chromosome %d ('%s') of %d", chr, chrTag, nbrOfChromosomes));
     rows <- which(is.element(segs[["chromosome"]], chr));
+    verbose && cat(verbose, "Rows:");
+    verbose && print(verbose, rows);
+
     segsCC <- segs[rows,,drop=FALSE];
+    tcnSegRowsCC <- tcnSegRows[rows,,drop=FALSE];
+    dhSegRowsCC <- dhSegRows[rows,,drop=FALSE];
     nbrOfSegmentsCC <- nrow(segsCC);
     verbose && cat(verbose, "Number of segments: ", nbrOfSegmentsCC);
 
@@ -244,83 +138,137 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
     I <- length(tcnIds);
     for (ii in seq(length=I)) {
       tcnId <- tcnIds[ii];
-      verbose && enter(verbose, sprintf("TCN segment %d ('%s') of %d", ii, tcnId, I));
+      verbose && enter(verbose, sprintf("TCN segment #%d ('%s') of %d", ii, tcnId, I));
 
       rowsII <- which(segsCC[["tcn.id"]] == tcnId);
+      J <- length(rowsII);
+      # Nothing todo?
+      if (J == 1) {
+        verbose && cat(verbose, "Nothing todo. Only on DH segmentation. Skipping.");    
+        verbose && exit(verbose);
+        next;    
+      }
+
+      verbose && cat(verbose, "Rows:");
+      verbose && print(verbose, rowsII);
       segsII <- segsCC[rowsII,,drop=FALSE];
-  
-      J <- nrow(segsII);
+
+      tcnSegRowsII <- tcnSegRowsCC[rowsII,,drop=FALSE];
+      dhSegRowsII <- dhSegRowsCC[rowsII,,drop=FALSE];
+print(tcnSegRowsII);
+print(dhSegRowsII);
+
+      nbrOfTCNsBefore <- segsII[1,"tcn.num.mark"];
+
       for (jj in seq(length=J)) {
-        verbose && enter(verbose, sprintf("DH segment %d of %d", jj, J));
+        verbose && enter(verbose, sprintf("DH segment #%d of %d", jj, J));
         seg <- segsII[jj,,drop=FALSE];
+        tcnSegRow <- unlist(tcnSegRowsII[jj,,drop=FALSE]);
+        dhSegRow <- unlist(dhSegRowsII[jj,,drop=FALSE]);
+        # Sanity check
+        stopifnot(all(is.na(tcnSegRow)) || (tcnSegRow[1] <= tcnSegRow[2]));
+        stopifnot(all(is.na(dhSegRow)) || (dhSegRow[1] <= dhSegRow[2]));
   
         # (a) Start and end of TCN segment is (somewhere) in 
         #     the middle of the end of previous DH segment and
         #     the start of the current DH segment.
         if (jj == 1) {
-          start <- seg[["tcn.loc.start"]];
+          xStart <- seg[["tcn.loc.start"]];
+          idxStart <- tcnSegRow[1];
         } else if (jj > 1) {
-          starts <- c(segsII[jj-1,"dh.loc.end"], seg[["dh.loc.start"]]);
-          start <- mean(starts);
+          xStarts <- c(segsII[jj-1,"dh.loc.end"], seg[["dh.loc.start"]]);
+          xStart <- mean(xStarts);
+          idxStart <- max(dhSegRow[1], tcnSegRow[1], na.rm=TRUE);
+          idxStart <- min(idxEnd+1L, idxStart);
         }
         if (jj == J) {
-          end <- seg[["tcn.loc.end"]];
+          xEnd <- seg[["tcn.loc.end"]];
+          idxEnd <- tcnSegRow[2];
         } else if (jj < J) {
-          ends <- c(seg[["dh.loc.end"]], segsII[jj+1,"dh.loc.start"]);
-          end <- mean(ends);
+          xEnds <- c(seg[["dh.loc.end"]], segsII[jj+1,"dh.loc.start"]);
+          xEnd <- mean(xEnds);
+          idxEnd <- min(dhSegRow[2], tcnSegRow[2], na.rm=TRUE);
         }
-  
-        # (b) Find the units within this first guess of the TCN segment
-        #     HB: (x <= end) or (x < end); is it possible that we
-        #         include the same locus in two segments? /HB 2010-09-21
-        units <- (ok & chr == chromosome & start <= x & x <= end);
-        units <- whichVector(units);
 
-        lociToExclude <- tcnLociNotPartOfSegment[[tcnId]];
-        verbose && cat(verbose, "Excluding TCN loci that belongs to a flanking segment: ", length(lociToExclude));
-        units <- setdiff(units, lociToExclude);
-        verbose && cat(verbose, "Number of loci in segment: ", length(units));
+        verbose && printf(verbose, "[xStart,xEnd] = [%g,%g]\n", xStart, xEnd);
+        verbose && printf(verbose, "[idxStart,idxEnd] = [%d,%d]\n", idxStart, idxEnd);
+
+        # Sanity check
+        stopifnot(xStart <= xEnd);
+        stopifnot(idxStart <= idxEnd);
+
+        # (b) Identify units
+        units <- which(chromosome == chr & xStart <= x & x <= xEnd);
+        verbose && printf(verbose, "[idxStart,idxEnd] = [%d,%d]\n", min(units), max(units));
+        verbose && cat(verbose, "Number of initial loci: ", length(units));
+
+
+        # (c) Drop if it belongs to neighboring segment
+        keep <- which(idxStart <= units & units <= idxEnd);
+        nbrOfDropped <- length(units) - length(keep);
+        verbose && cat(verbose, "Number of loci dropped: ", nbrOfDropped);
+        units <- units[keep];
+        xJJ <- x[units];
+        xSupport <- range(xJJ, na.rm=FALSE);
+        verbose && printf(verbose, "[xStart,xEnd] = [%g,%g]\n", xSupport[1], xSupport[2]);
+        verbose && printf(verbose, "[idxStart,idxEnd] = [%d,%d]\n", min(units), max(units));
+        verbose && cat(verbose, "Number of loci: ", length(units));
 
         # (c) Adjust the start and end of the TCN segment
-        xJJ <- x[units];
-        startSupport <- min(xJJ, na.rm=TRUE);
-        endSupport <- max(xJJ, na.rm=TRUE);
-        start <- min(start, startSupport, na.rm=TRUE);
-        end <- max(end, endSupport, na.rm=TRUE);
+        keep <- which(!is.na(xJJ));
+        xJJ <- xJJ[keep];
+        units <- units[keep];
+        tcnSegRow <- range(units);
+        xSupport <- range(xJJ, na.rm=FALSE);
+        verbose && printf(verbose, "[xStart,xEnd] = [%g,%g]\n", xSupport[1], xSupport[2]);
+        verbose && printf(verbose, "[idxStart,idxEnd] = [%d,%d]\n", tcnSegRow[1], tcnSegRow[2]);
+        verbose && cat(verbose, "Number of loci: ", length(units));
+
+        xRange <- range(c(xStart,xEnd), xSupport, na.rm=TRUE);
   
-
-        # (d) Identify the actual units
-        units <- (ok & chr == chromosome & start <= x & x <= end);
-        units <- whichVector(units);
-        verbose && cat(verbose, "Units:");
-        verbose && str(verbose, units);
-
-        lociToExclude <- tcnLociNotPartOfSegment[[tcnId]];
-        verbose && cat(verbose, "Excluding TCN loci that belongs to a flanking segment: ", length(lociToExclude));
-        units <- setdiff(units, lociToExclude);
-        verbose && cat(verbose, "Number of loci in segment: ", length(units));
-
-  
-        # Update the segment, estimates and counts
-        seg[["tcn.loc.start"]] <- start;
-        seg[["tcn.loc.end"]] <- end;
-        seg[["tcn.mean"]] <- mean(CT[units]);
-        seg[["tcn.num.mark"]] <- length(units);
+        # Update the segment boundaries, estimates and counts
+        seg[["tcn.loc.start"]] <- xRange[1];
+        seg[["tcn.loc.end"]] <- xRange[2];
+        seg[["tcn.mean"]] <- mean(CT[units], na.rm=TRUE);
+        seg[["tcn.num.mark"]] <- sum(!is.na(CT[units]));
         seg[["tcn.num.snps"]] <- sum(isSnp[units]);
         seg[["tcn.num.hets"]] <- sum(isHet[units]);
-  
+
+        # Sanity check
+        stopifnot(nrow(seg) == length(jj));
+
         segsII[jj,] <- seg;
-        rm(xJJ, start, end, units, seg);
+        tcnSegRowsII[jj,] <- tcnSegRow;
 
         verbose && exit(verbose);
       } # for (jj ...)
 
+      # Sanity check
+      stopifnot(nrow(segsII) == length(rowsII));
+
+print(segsII);
+
+      # Sanity check
+      nbrOfTCNsAfter <- sum(segsII[,"tcn.num.mark"], na.rm=TRUE);
+      verbose && cat(verbose, "Number of TCNs before: ", nbrOfTCNsBefore);
+      verbose && cat(verbose, "Number of TCNs after: ", nbrOfTCNsAfter);
+#      stopifnot(nbrOfTCNsAfter >= nbrOfTCNsBefore);
+
+
+
       segsCC[rowsII,] <- segsII;
+      tcnSegRowsCC[rowsII,] <- tcnSegRowsII;
+
       rm(rowsII, segsII);
       verbose && exit(verbose);
     } # for (ii ...)
 
+    # Sanity check
+    stopifnot(nrow(segsCC) == length(rows));
+
     segs[rows,] <- segsCC;
+    tcnSegRows[rows,] <- tcnSegRowsCC;
+
     rm(rows, segsCC);
     verbose && exit(verbose);
   } # for (cc ...)
@@ -335,11 +283,15 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
   segs$c2.mean <- C2;
   verbose && exit(verbose);
 
-
   # Return results
+  keep <- which(is.finite(fit$output$chromosome));
   fitS <- fit;
   fitS$data <- data;
-  fitS$output <- segs;
+  fitS$output[keep,] <- segs;
+  fitS$tcnSegRows[keep,] <- tcnSegRows;
+
+  # Update 'flavor'
+  fitS$params$flavor <- gsub(",", "&", flavor);
 
   verbose && exit(verbose);
 
@@ -350,6 +302,11 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
 
 ############################################################################
 # HISTORY:
+# 2010-12-01
+# o Now postsegmentTCN() checks if it is already postsegmented.
+# 2010-11-30
+# o TODO: postsegmentTCN() does not make sure of 'dhLociToExclude'. Why?
+# o Now postsegmentTCN() recognizes the new 'tcnLociToExclude'.
 # 2010-11-28
 # o BUG FIX: postsegmentTCN() did not handle loci with the same positions
 #   and that are split in two different segments.  It also did not exclude
