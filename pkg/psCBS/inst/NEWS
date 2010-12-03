@@ -1,6 +1,17 @@
 Package: psCBS
 ==============
 
+Version: 0.9.32 [2010-12-03]
+o BUG FIX: In rare cases the bootstrap sanity checks can indeed produce
+  an invalid 'range', more precisely where (range[,2] >= range[,1]) is
+  not true.
+
+
+Version: 0.9.31 [2010-12-02]
+o Added option "psCBS/sanityChecks/tolerance" for specifying the 
+  tolerance of some internal sanity checks.  
+
+
 Version: 0.9.30 [2010-12-01]
 o Rewrote all code dealing with the identification of loci belong
   to segments.  The code is now utilizing the 'segRows' element

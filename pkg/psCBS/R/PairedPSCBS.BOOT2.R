@@ -1,4 +1,7 @@
 setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, statsFcn=function(x) quantile(x, probs=c(0.025, 0.050, 0.95, 0.975), na.rm=TRUE), by=c("betaTN", "betaT"), ..., seed=NULL, verbose=FALSE) {
+  # Settings for sanity checks
+  tol <- getOption("psCBS/sanityChecks/tolerance", 0.0005);
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -301,7 +304,6 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
     # Sanity checks
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     if (nbrOfTCNs > 0) {
-      tol <- 0.0005;
       ys <- CT[idxsTCN];
       mu <- mean(ys, na.rm=TRUE);
       dMu <- (mu - segJJ$tcn.mean);
@@ -312,7 +314,6 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
     }
 
     if (nbrOfDHs > 0) {
-      tol <- 0.0005;
       ys <- rho[idxsDH];
       mu <- mean(ys, na.rm=TRUE);
       dMu <- (mu - segJJ$dh.mean);
@@ -432,7 +433,12 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
 
       Mkkjj <- Mkk[jj,,drop=TRUE]; # A vector of length B
 
-      S[jj,,kk] <- statsFcn(Mkkjj);
+      values <- statsFcn(Mkkjj);
+
+      # Sanity checks
+      stopifnot(length(values) == nbrOfStats);
+
+      S[jj,,kk] <- values;
 
       verbose && exit(verbose);
     } # for (jj ...)
@@ -490,6 +496,17 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   
           range <- Skk[,c(1,ncol(Skk)),drop=FALSE];
           verbose && str(verbose, range);
+          # Sanity checks
+          tryCatch({
+            stopifnot(all(range[,2] >= range[,1], na.rm=TRUE));
+          }, error = function(ex) {
+            ok <- (range[,2] >= range[,1]);
+            idxs <- which(!ok);
+            str(list(range=range));
+            rownames(range) <- seq(length=nrow(range));
+            print(range[idxs,,drop=FALSE]);
+            throw(ex);
+          })
     
           # Segmentation means
           key <- sprintf("%s.mean", field);
@@ -505,11 +522,19 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
           range <- range[keep,,drop=FALSE];
           segMean <- segMean[keep];
   
-          # Sanity check
-          stopifnot(all(range[,2] >= range[,1], na.rm=TRUE));
-          eps <- 1e-3;
-          stopifnot(all(segMean + eps >= range[,1], na.rm=TRUE));
-          stopifnot(all(segMean - eps <= range[,2], na.rm=TRUE));
+          # Sanity checks
+          tryCatch({
+            stopifnot(all(range[,2] >= range[,1], na.rm=TRUE));
+          }, error = function(ex) {
+            ok <- (range[,2] >= range[,1]);
+            idxs <- which(!ok);
+            str(list(range=range));
+            rownames(range) <- seq(length=nrow(range));
+            print(range[idxs,,drop=FALSE]);
+            throw(ex);
+          })
+          stopifnot(all(segMean + tol >= range[,1], na.rm=TRUE));
+          stopifnot(all(segMean - tol <= range[,2], na.rm=TRUE));
     
           verbose && exit(verbose);
         } # for (kk ...)
@@ -539,6 +564,13 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
 
 ##############################################################################
 # HISTORY
+# 2010-12-03
+# o BUG FIX: In rare cases the bootstrap sanity checks can indeed produce
+#   an invalid 'range', more precisely where (range[,2] >= range[,1]) is
+#   not true.
+# 2010-12-02
+# o Now bootstrapTCNandDHByRegion() uses option
+#   "psCBS/sanityChecks/tolerance".
 # 2010-12-01
 # o BUG FIX: bootstrapTCNandDHByRegion() did not always exclude the correct
 #   loci.

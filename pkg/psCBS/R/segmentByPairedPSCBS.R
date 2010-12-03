@@ -104,6 +104,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # To please R CMD check
   index <- NULL; rm(index);
 
+  # Settings for sanity checks
+  tol <- getOption("psCBS/sanityChecks/tolerance", 0.0005);
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -477,8 +480,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     # Sanity check
     stopifnot(sum(!is.na(dataKK$CT)) == nbrOfTCNLociKK);
     gammaT <- tcnSegments[kk,"tcn.mean"];
-    print(all.equal(mean(dataKK$CT, na.rm=TRUE), gammaT, tolerance=1e-4));
-    stopifnot(all.equal(mean(dataKK$CT, na.rm=TRUE), gammaT, tolerance=1e-4));
+
+    print(all.equal(mean(dataKK$CT, na.rm=TRUE), gammaT, tolerance=tol));
+    stopifnot(all.equal(mean(dataKK$CT, na.rm=TRUE), gammaT, tolerance=tol));
 
     verbose && cat(verbose, "Locus data for TCN segment:");
     verbose && str(verbose, dataKK);
@@ -663,6 +667,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-12-02
+# o Now segmentByPairedPSCBS() uses option "psCBS/sanityChecks/tolerance".
 # 2010-11-30
 # o Now segmentByPairedPSCBS() returns data frames 'tcnLociToExclude'
 #   and 'dhLociToExclude'.
