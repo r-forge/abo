@@ -433,12 +433,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
 
       Mkkjj <- Mkk[jj,,drop=TRUE]; # A vector of length B
 
-      values <- statsFcn(Mkkjj);
-
-      # Sanity checks
-      stopifnot(length(values) == nbrOfStats);
-
-      S[jj,,kk] <- values;
+      S[jj,,kk] <- statsFcn(Mkkjj);
 
       verbose && exit(verbose);
     } # for (jj ...)
@@ -482,7 +477,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
     # Is it possible to check?
     if (any(probs < 0.10) && any(probs > 0.90)) {
       tryCatch({
-        fields <- dimnames(M)[[3]];
+        fields <- dimnames(S)[[3]];
         for (kk in seq(along=fields)) {
           field <- fields[kk];
           verbose && enter(verbose, sprintf("Field #%d ('%s') of %d", kk, field, length(fields)));
@@ -496,17 +491,6 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   
           range <- Skk[,c(1,ncol(Skk)),drop=FALSE];
           verbose && str(verbose, range);
-          # Sanity checks
-          tryCatch({
-            stopifnot(all(range[,2] >= range[,1], na.rm=TRUE));
-          }, error = function(ex) {
-            ok <- (range[,2] >= range[,1]);
-            idxs <- which(!ok);
-            str(list(range=range));
-            rownames(range) <- seq(length=nrow(range));
-            print(range[idxs,,drop=FALSE]);
-            throw(ex);
-          })
     
           # Segmentation means
           key <- sprintf("%s.mean", field);
@@ -523,16 +507,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
           segMean <- segMean[keep];
   
           # Sanity checks
-          tryCatch({
-            stopifnot(all(range[,2] >= range[,1], na.rm=TRUE));
-          }, error = function(ex) {
-            ok <- (range[,2] >= range[,1]);
-            idxs <- which(!ok);
-            str(list(range=range));
-            rownames(range) <- seq(length=nrow(range));
-            print(range[idxs,,drop=FALSE]);
-            throw(ex);
-          })
+          stopifnot(all(range[,2] + tol >= range[,1], na.rm=TRUE));
           stopifnot(all(segMean + tol >= range[,1], na.rm=TRUE));
           stopifnot(all(segMean - tol <= range[,2], na.rm=TRUE));
     
@@ -567,7 +542,8 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
 # 2010-12-03
 # o BUG FIX: In rare cases the bootstrap sanity checks can indeed produce
 #   an invalid 'range', more precisely where (range[,2] >= range[,1]) is
-#   not true.
+#   not true.  This can happen if there is no variation in the bootstrap
+#   estimates.  Beause of this we allow for some tolerance.
 # 2010-12-02
 # o Now bootstrapTCNandDHByRegion() uses option
 #   "psCBS/sanityChecks/tolerance".

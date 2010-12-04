@@ -4,7 +4,8 @@ Package: psCBS
 Version: 0.9.32 [2010-12-03]
 o BUG FIX: In rare cases the bootstrap sanity checks can indeed produce
   an invalid 'range', more precisely where (range[,2] >= range[,1]) is
-  not true.
+  not true.  This can happen if there is no variation in the bootstrap
+  estimates.  Beause of this we allow for some tolerance.
 
 
 Version: 0.9.31 [2010-12-02]
