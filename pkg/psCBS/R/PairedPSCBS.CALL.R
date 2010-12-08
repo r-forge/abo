@@ -36,8 +36,8 @@ setMethodS3("callAllelicBalanceByDH", "PairedPSCBS", function(fit, tau=0.10, alp
   verbose && enter(verbose, "Calling segments");
   value <- segs[,column, drop=TRUE];
   call <- (value < tau);
-  nbrOfABs <- sum(call, na.rm=TRUE);
-  verbose && printf(verbose, "Number of segments called allelic balance (AB): %d (%.2f%%) of %d\n", nbrOfABs, 100*nbrOfABs/nrow(segs), nrow(segs));
+  nbrOfCalls <- sum(call, na.rm=TRUE);
+  verbose && printf(verbose, "Number of segments called allelic balance (AB): %d (%.2f%%) of %d\n", nbrOfCalls, 100*nbrOfCalls/nrow(segs), nrow(segs));
   verbose && exit(verbose);
 
   segs <- cbind(segs, ab.call=call);
@@ -47,6 +47,58 @@ setMethodS3("callAllelicBalanceByDH", "PairedPSCBS", function(fit, tau=0.10, alp
 
   fit;
 }, protected=TRUE) # callAllelicBalanceByDH()
+
+
+setMethodS3("callLowC1ByC1", "PairedPSCBS", function(fit, tau=0.50, alpha=0.05, ..., verbose=FALSE) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+  # Argument 'tau':
+  tau <- Arguments$getDouble(tau, range=c(0,Inf));
+
+  # Argument 'alpha':
+  alpha <- Arguments$getDouble(alpha, range=c(0,1));
+
+  # Argument 'verbose':
+  verbose <- Arguments$getVerbose(verbose);
+  if (verbose) {
+    pushState(verbose);
+    on.exit(popState(verbose));
+  }
+
+  verbose && enter(verbose, "Calling segments of allelic balance from one-sided DH bootstrap confidence intervals");
+  verbose && cat(verbose, "tau (offset adjusting for bias in C1): ", tau);
+  verbose && cat(verbose, "alpha (CI quantile; significance level): ", alpha);
+
+  # Calculate C1 confidence intervals, if not already done
+  probs <- c(alpha, 1-alpha);
+  statsFcn <- function(x) quantile(x, probs=probs, na.rm=TRUE);
+  fit <- bootstrapTCNandDHByRegion(fit, statsFcn=statsFcn, ..., verbose=less(verbose, 2));
+
+  segs <- as.data.frame(fit);
+
+  # Extract confidence interval
+  alphaTag <- sprintf("%g%%", 100*alpha);
+  column <- sprintf("c1_%s", alphaTag);
+  # Sanity checks
+  stopifnot(is.element(column, colnames(segs)));
+
+  # One-sided test
+  verbose && enter(verbose, "Calling segments");
+  value <- segs[,column, drop=TRUE];
+  call <- (value < tau);
+  nbrOfCalls <- sum(call, na.rm=TRUE);
+  verbose && printf(verbose, "Number of segments called low C1 (LowC1, \"LOH_C1\"): %d (%.2f%%) of %d\n", nbrOfCalls, 100*nbrOfCalls/nrow(segs), nrow(segs));
+  verbose && exit(verbose);
+
+  segs <- cbind(segs, lowc1.call=call);
+  fit$output <- segs;
+
+  verbose && exit(verbose);
+
+  fit;
+}, protected=TRUE) # callLowC1ByC1()
+
 
 
 setMethodS3("callExtremeAllelicImbalanceByDH", "PairedPSCBS", function(fit, tau=0.60, alpha=0.05, ..., verbose=FALSE) {
@@ -88,8 +140,8 @@ setMethodS3("callExtremeAllelicImbalanceByDH", "PairedPSCBS", function(fit, tau=
   # One-sided test
   value <- segs[,column, drop=TRUE];
   call <- (value >= tau);
-  nbrOfHighAIs <- sum(call, na.rm=TRUE);
-  verbose && printf(verbose, "Number of segments called high allelic imbalance (AI): %d (%.2f%%) of %d\n", nbrOfHighAIs, 100*nbrOfHighAIs/nrow(segs), nrow(segs));
+  nbrOfCalls <- sum(call, na.rm=TRUE);
+  verbose && printf(verbose, "Number of segments called high allelic imbalance (AI/\"LOH_AI\"): %d (%.2f%%) of %d\n", nbrOfCalls, 100*nbrOfCalls/nrow(segs), nrow(segs));
   verbose && exit(verbose);
 
   segs <- cbind(segs, ai.high.call=call);
@@ -131,8 +183,41 @@ setMethodS3("callABandHighAI", "PairedPSCBS", function(fit, tauAB=0.10, alphaAB=
 }) # callABandHighAI()
 
 
+setMethodS3("callABandLowC1", "PairedPSCBS", function(fit, tauAB=0.10, alphaAB=0.05, tauLowC1=0.50, alphaLowC1=0.05, ..., verbose=FALSE) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+  # Argument 'verbose':
+  verbose <- Arguments$getVerbose(verbose);
+  if (verbose) {
+    pushState(verbose);
+    on.exit(popState(verbose));
+  }
+
+  verbose && enter(verbose, "Calling segments to be in allelic balance (AB) or low minor copy number (low C1)");
+
+  # Calculate DH confidence intervals, if not already done
+  probs <- sort(unique(c(alphaAB, alphaLowC1)));
+  probs <- sort(unique(c(probs, 1-probs)));
+  statsFcn <- function(x) quantile(x, probs=probs, na.rm=TRUE);
+  fit <- bootstrapTCNandDHByRegion(fit, statsFcn=statsFcn, ..., verbose=less(verbose, 1));
+
+  # Call allelic balance
+  fit <- callAllelicBalanceByDH(fit, tau=tauAB, alpha=alphaAB, ..., verbose=less(verbose, 1));
+
+  # Call high allelic imbalance
+  fit <- callLowC1ByC1(fit, tau=tauLowC1, alpha=alphaLowC1, ..., verbose=less(verbose, 1));
+
+  verbose && exit(verbose);
+
+  fit;
+}) # callABandLowC1()
+
+
 ##############################################################################
 # HISTORY
+# 2010-12-07
+# o Added callLowC1ByC1() and callABandLowC1().
 # 2010-11-27
 # o Corrected verbose output to call results.
 # 2010-11-26 [HB]

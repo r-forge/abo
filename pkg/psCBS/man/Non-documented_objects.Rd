@@ -94,6 +94,10 @@
 \alias{extractByChromosomes.PSCBS}
 \alias{dropSegmentationOutliers}
 \alias{dropSegmentationOutliers.default}
+\alias{callABandLowC1}
+\alias{callABandLowC1.PairedPSCBS}
+\alias{callLowC1ByC1}
+\alias{callLowC1ByC1.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

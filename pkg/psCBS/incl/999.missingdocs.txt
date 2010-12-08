@@ -31,3 +31,5 @@
 drawConfidenceBands drawConfidenceBands.PairedPSCBS
  extractByChromosomes extractByChromosomes.PSCBS
  dropSegmentationOutliers dropSegmentationOutliers.default
+ callABandLowC1 callABandLowC1.PairedPSCBS callLowC1ByC1
+ callLowC1ByC1.PairedPSCBS

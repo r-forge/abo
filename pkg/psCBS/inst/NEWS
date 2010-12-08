@@ -1,6 +1,10 @@
 Package: psCBS
 ==============
 
+Version: 0.9.33 [2010-12-07]
+o Added callLowC1ByC1() and callABandLowC1().
+
+
 Version: 0.9.32 [2010-12-03]
 o BUG FIX: In rare cases the bootstrap sanity checks can indeed produce
   an invalid 'range', more precisely where (range[,2] >= range[,1]) is
