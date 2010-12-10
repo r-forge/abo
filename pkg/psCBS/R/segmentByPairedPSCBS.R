@@ -335,7 +335,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
       stopifnot(all.equal(fit$data$CT, CT));
       stopifnot(all.equal(fit$data$muN, muN));
 
-      # Updata betaT (which is otherwise equal to betaTN)
+      # Updata betaT (which is otherwise equals betaTN)
       fit$data$betaT <- betaT;
 
       rm(list=fields); # Not needed anymore
