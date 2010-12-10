@@ -119,13 +119,17 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # Argument 'betaT':
   betaT <- Arguments$getDoubles(betaT, length=length2, disallow="Inf");
 
-  # Argument 'betaN':
-  betaN <- Arguments$getDoubles(betaN, length=length2, disallow="Inf");
-
   # Argument 'muN':
   if (!is.null(muN)) {
     muN <- Arguments$getDoubles(muN, length=length2, range=c(0,1), disallow="Inf");
   }
+
+  # Argument 'tbn':
+  tbn <- Arguments$getLogical(tbn);
+
+  # Argument 'betaN':
+  betaN <- Arguments$getDoubles(betaN, length=length2, disallow="Inf");
+
 
   # Argument 'chromosome':
   disallow <- c("Inf");
@@ -161,9 +165,6 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   if (!is.element(flavor, knownFlavors)) {
     throw("Segmentation flavor is not among the supported ones (", paste(sprintf("\"%s\"", knownFlavors), collapse=", "), "): ", flavor);
   }
-
-  # Argument 'tbn':
-  tbn <- Arguments$getLogical(tbn);
 
   # Argument 'joinSegments':
   joinSegments <- Arguments$getLogical(joinSegments);
@@ -317,7 +318,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
       # Extract subset
       dataKK <- subset(data, chromosome == chromosomeKK);
       verbose && str(verbose, dataKK);
-      fields <- attachLocally(dataKK, fields=c("CT", "betaTN", "betaN", "muN", "chromosome", "x"));
+      fields <- attachLocally(dataKK, fields=c("CT", "betaT", "betaTN", "betaN", "muN", "chromosome", "x"));
       rm(dataKK); # Not needed anymore
      
       fit <- segmentByPairedPSCBS(CT=CT, betaT=betaTN, 
@@ -328,6 +329,15 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
                 undoTCN=undoTCN, undoDH=undoDH,
                 flavor=flavor,
                 ..., verbose=verbose);
+
+      # Sanity checks
+      stopifnot(nrow(fit$data) == length(CT));
+      stopifnot(all.equal(fit$data$CT, CT));
+      stopifnot(all.equal(fit$data$muN, muN));
+
+      # Updata betaT (which is otherwise equal to betaTN)
+      fit$data$betaT <- betaT;
+
       rm(list=fields); # Not needed anymore
 
       verbose && print(verbose, head(as.data.frame(fit)));
@@ -667,6 +677,10 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2010-12-09
+# o BUG FIX: When there were multiple chromsomes processed by
+#   segmentByPairedPSCBS(), then the returned data object would
+#   contain 'betaT' identical to 'betaTN'.
 # 2010-12-02
 # o Now segmentByPairedPSCBS() uses option "psCBS/sanityChecks/tolerance".
 # 2010-11-30

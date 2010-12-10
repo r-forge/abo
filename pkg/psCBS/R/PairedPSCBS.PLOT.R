@@ -16,6 +16,8 @@
 # \arguments{
 #   \item{x}{A result object returned by @see "segmentByPairedPSCBS".}
 #   \item{tracks}{A @character @vector specifying what types of tracks to plot.}
+#   \item{scatter}{A @character @vector specifying which of the tracks should
+#     have scatter plot.}
 #   \item{calls}{A @character @vector of regular expression identifying
 #     call labels to be highlighted in the panels.}
 #   \item{pch}{The type of points to use.}
@@ -39,7 +41,7 @@
 # @keyword IO
 # @keyword internal
 #*/########################################################################### 
-setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", scatter=TRUE, pch=".", quantiles=c(0.05,0.95), cex=1, grid=FALSE, xlim=NULL, Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE, verbose=FALSE) {
+setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=".*", pch=".", quantiles=c(0.05,0.95), cex=1, grid=FALSE, xlim=NULL, Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE, verbose=FALSE) {
   # To please R CMD check
   fit <- x;
  
@@ -55,6 +57,19 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
   knownTracks <- c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN");
   tracks <- match.arg(tracks, choices=knownTracks, several.ok=TRUE);
   tracks <- unique(tracks);
+
+  # Argument 'scatter':
+  if (!is.null(scatter)) {
+    scatter <- Arguments$getCharacter(scatter);
+    if (scatter == "*") {
+      scatter <- tracks;
+    } else {
+      scatterT <- strsplit(scatter, split=",", fixed=TRUE);
+      tracksT <- strsplit(tracks, split=",", fixed=TRUE);
+      stopifnot(all(is.element(scatterT, tracksT)));
+      rm(scatterT, tracksT);
+    }
+  }
 
   # Argument 'calls':
   if (!is.null(calls)) {
@@ -153,7 +168,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
     verbose && enter(verbose, sprintf("Track #%d ('%s') of %d", 
                                              tt, track, length(tracks)));
 
-    pchT <- if (scatter) { pch } else { NA };
+    pchT <- if (!is.null(scatter)) { pch } else { NA };
 
     if (track == "tcn") {
       plot(x, CT, pch=pchT, cex=cex, col="black", xlim=xlim, ylim=Clim, ylab="TCN");
@@ -537,7 +552,7 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
 #
 #   \item{verbose}{See @see "R.utils::Verbose".}
 #
-setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosomes=getChromosomes(fit), tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", quantiles=c(0.05,0.95), scatter=TRUE, seed=0xBEEF, pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
+setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosomes=getChromosomes(fit), tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=".*", quantiles=c(0.05,0.95), seed=0xBEEF, pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
   # To please R CMD check
   fit <- x;
  
@@ -555,6 +570,19 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
   # Argument 'tracks':
   tracks <- match.arg(tracks, several.ok=TRUE);
   tracks <- unique(tracks);
+
+  # Argument 'scatter':
+  if (!is.null(scatter)) {
+    scatter <- Arguments$getCharacter(scatter);
+    if (scatter == "*") {
+      scatter <- tracks;
+    } else {
+      scatterT <- strsplit(scatter, split=",", fixed=TRUE);
+      tracksT <- strsplit(tracks, split=",", fixed=TRUE);
+      stopifnot(all(is.element(scatterT, tracksT)));
+      rm(scatterT, tracksT);
+    }
+  }
 
   # Argument 'calls':
   if (!is.null(calls)) {
@@ -680,7 +708,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
   gh <- fit;
   gh$xScale <- xScale;
 
-  pchT <- if (scatter) { pch } else { NA };
+  pchT <- if (!is.null(scatter)) { pch } else { NA };
   xlim <- range(x, na.rm=TRUE);
   xlab <- "Genomic position";
 

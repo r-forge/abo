@@ -23,11 +23,13 @@
   Each type of track is plotted in its own panel.
  }
 
- \usage{\method{plotTracks}{PairedPSCBS}(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], calls=".*", scatter=TRUE, pch=".", quantiles=c(0.05, 0.95), cex=1, grid=FALSE, xlim=NULL, Clim=c(0, 6), Blim=c(0, 1), xScale=1e-06, ..., add=FALSE, verbose=FALSE)}
+ \usage{\method{plotTracks}{PairedPSCBS}(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=".*", pch=".", quantiles=c(0.05, 0.95), cex=1, grid=FALSE, xlim=NULL, Clim=c(0, 6), Blim=c(0, 1), xScale=1e-06, ..., add=FALSE, verbose=FALSE)}
 
  \arguments{
    \item{x}{A result object returned by \code{\link{segmentByPairedPSCBS}}().}
    \item{tracks}{A \code{\link[base]{character}} \code{\link[base]{vector}} specifying what types of tracks to plot.}
+   \item{scatter}{A \code{\link[base]{character}} \code{\link[base]{vector}} specifying which of the tracks should
+     have scatter plot.}
    \item{calls}{A \code{\link[base]{character}} \code{\link[base]{vector}} of regular expression identifying
      call labels to be highlighted in the panels.}
    \item{pch}{The type of points to use.}
