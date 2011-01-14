@@ -1,6 +1,19 @@
 Package: psCBS
 ==============
 
+Version: 0.9.36 [2011-01-14]
+o Added estimateTauAB() for estimating the tauAB tuning parameter
+  when calling segments in allelic balance.  Updated 
+  example(segmentByPairedPSCBS) to illustrate how to use it.
+o Added extractByRegions() for PairedPSCBS.
+
+
+Version: 0.9.35 [2011-01-12]
+o Now postsegmentTCN(..., force=TRUE) for PairedPSCBS also updates
+  the TCN estimates even for segments where the DH segmentation did
+  not find any additional change points.
+
+
 Version: 0.9.34 [2010-12-09]
 o BUG FIX: When there were multiple chromsomes processed by
   segmentByPairedPSCBS(), then the returned data object would

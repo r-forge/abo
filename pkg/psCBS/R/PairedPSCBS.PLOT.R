@@ -238,7 +238,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
     }
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # For each panel of tracks, annotate will calls?
+    # For each panel of tracks, annotate with calls?
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     if (length(callColumns) > 0) {
       for (cc in seq(along=callColumns)) {

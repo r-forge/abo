@@ -98,6 +98,14 @@
 \alias{callABandLowC1.PairedPSCBS}
 \alias{callLowC1ByC1}
 \alias{callLowC1ByC1.PairedPSCBS}
+\alias{estimateStdDevForHeterozygousBAF}
+\alias{estimateStdDevForHeterozygousBAF.PairedPSCBS}
+\alias{extractByRegion}
+\alias{extractByRegion.PairedPSCBS}
+\alias{extractByRegions}
+\alias{extractByRegions.PairedPSCBS}
+\alias{estimateTauAB}
+\alias{estimateTauAB.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

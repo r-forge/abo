@@ -148,8 +148,8 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., force=FALSE, ver
       rowsII <- which(segsCC[["tcn.id"]] == tcnId);
       J <- length(rowsII);
       # Nothing todo?
-      if (J == 1) {
-        verbose && cat(verbose, "Nothing todo. Only on DH segmentation. Skipping.");    
+      if (!force && J == 1) {
+        verbose && cat(verbose, "Nothing todo. Only one DH segmentation. Skipping.");    
         verbose && exit(verbose);
         next;    
       }
@@ -340,8 +340,165 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., force=FALSE, ver
 
 
 
+
+setMethodS3("extractByRegion", "PairedPSCBS", function(this, region, ...) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Argument 'region':
+  region <- Arguments$getIndex(region, max=nbrOfSegments(this));
+
+  extractByRegions(this, regions=region, ...);
+}) # extractByRegion()
+
+
+
+setMethodS3("extractByRegions", "PairedPSCBS", function(this, regions, ..., verbose=FALSE) {
+  fit <- this;
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Argument 'regions':
+  regions <- Arguments$getIndices(regions, max=nbrOfSegments(fit));
+
+  # Argument 'verbose':
+  verbose <- Arguments$getVerbose(verbose);
+  if (verbose) {
+    pushState(verbose);
+    on.exit(popState(verbose));
+  }
+
+ 
+  verbose && enter(verbose, "Extracting subset by regions");
+
+  verbose && cat(verbose, "Number of segments: ", length(regions));
+  verbose && str(verbose, regions);
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Extract data and estimates
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  data <- fit$data;
+  tcnSegRows <- fit$tcnSegRows;
+  dhSegRows <- fit$dhSegRows;
+  segs <- fit$output;
+  params <- fit$params;
+
+  # Sanity checks
+  stopifnot(all(!is.na(data$chromosome) & !is.na(data$x)));
+  stopifnot(length(tcnSegRows) == length(dhSegRows));
+
+  # Sanity checks
+  if (!params$joinSegments) {
+    throw("Cannot bootstrap TCN and DH by segments unless PSCNs are segmented using joinSegments=TRUE.");
+  } 
+
+  # Subset segments
+  segsT <- segs[regions,,drop=FALSE];
+  verbose && str(verbose, segsT);
+
+  # Identify data rows to be extract
+  segRows <- tcnSegRows;
+  segRows <- segRows[regions,,drop=FALSE];
+  from <- segRows[[1]];
+  to <- segRows[[2]];
+  ok <- (!is.na(from) & !is.na(to));
+  from <- from[ok];
+  to <- to[ok];
+  keep <- logical(nrow(data));
+  for (rr in seq(along=from)) {
+    keep[from[rr]:to[rr]] <- TRUE;
+  }
+  keep <- which(keep);
+  verbose && printf(verbose, "Identified %d (%.2f%%) of %d data rows:\n", length(keep), 100*length(keep)/nrow(data), nrow(data));
+  verbose && str(verbose, keep);
+
+  # Subset data
+  dataT <- data[keep,,drop=FALSE];
+  verbose && str(verbose, dataT);
+
+  # Create new object
+  res <- fit;
+  res$data <- dataT;
+  res$output <- segsT;
+
+  verbose && exit(verbose);
+
+  res;
+}) # extractByRegions()
+
+
+
+setMethodS3("estimateStdDevForHeterozygousBAF", "PairedPSCBS", function(this, tau=0.20, ..., verbose=FALSE) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Argument 'tau':
+  tau <- Arguments$getDouble(tau, range=c(0,1));
+
+  # Argument 'verbose':
+  verbose <- Arguments$getVerbose(verbose);
+  if (verbose) {
+    pushState(verbose);
+    on.exit(popState(verbose));
+  }
+
+
+  verbose && enter(verbose, "Estimating standard deviation of tumor BAFs for heterozygous SNPs");
+  verbose && cat(verbose, "Threshold: ", tau);
+
+  # Find segments that have low DHs
+  segs <- as.data.frame(this);
+  idxs <- which(segs$dh.mean <= tau);
+  verbose && cat(verbose, "Identified segments with small DH levels: ", length(idxs));
+  verbose && str(verbose, idxs);
+
+  # Sanity check
+  if (length(idxs) == 0) {
+    throw("Cannot estimate standard deviation.  There exist no segments with DH less or equal to the given threshold: ", tau); 
+  }
+
+  # Extract those segments
+  verbose && enter(verbose, "Extracting identified segments");
+  fitT <- extractByRegions(this, idxs);
+  verbose && exit(verbose);
+
+  # Get the tumor BAFs for the heterozygous SNPs
+  verbose && enter(verbose, "Extracting BAFs for the heterozygous SNPs");
+  beta <- with(fitT$data, betaTN[muN == 1/2]);
+  verbose && str(verbose, beta);
+  verbose && exit(verbose);
+
+  # Estimate the standard deviation for those
+  sd <- mad(beta, na.rm=TRUE);
+  verbose && cat(verbose, "Estimated standard deviation: ", sd);
+
+  verbose && exit(verbose);
+
+  sd;
+}) # estimateStdDevForHeterozygousBAF()
+
+
+setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=2, ...) {
+  sd <- estimateStdDevForHeterozygousBAF(this, ...);
+  tau <- scale * sd;
+  tau;
+}) # estimateTauAB()
+
+
 ############################################################################
 # HISTORY:
+# 2011-01-14
+# o Added estimateTauAB() for estimating the DeltaAB parameter.
+# o Added estimateStdDevForHeterozygousBAF() for PairedPSCBS.
+# o BUG FIX: extractByRegions() did not handle the case where multiple loci
+#   at the same position are split up in two different segments.
+# 2011-01-12
+# o Added extractByRegions() and extractByRegion() for PairedPSCBS.
+# o Now postsegmentTCN(..., force=TRUE) for PairedPSCBS also updates
+#   the TCN estimates even for segments where the DH segmentation did
+#   not find any additional change points.
 # 2010-12-02
 # o Now postsegmentTCN() assert that total number of TCN loci before
 #   and after is the same.
