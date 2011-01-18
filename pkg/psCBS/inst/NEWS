@@ -1,6 +1,15 @@
 Package: psCBS
 ==============
 
+Version: 0.9.38 [2011-01-18]
+o DOCUMENTATION: Documented more plotTracks() arguments for PairedPSCBS.
+o BUG FIX: Now plotTracks(..., add=TRUE) for PairedPSCBS plots to 
+  the current figure/panel.
+o Now plotTracks(..., add=FALSE) for PairedPSCBS only sets up subplots
+  if argument 'tracks' specifies more than one panel.
+o Added arguments 'changepoints' and 'col' to plotTracks() for PairedPSCBS.
+
+
 Version: 0.9.37 [2011-01-18]
 o BUG FIX: 'tcnSegRows' and 'dhSegRows' where not updated by
   extractByRegions() for PairedPSCBS.

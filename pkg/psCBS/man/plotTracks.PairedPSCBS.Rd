@@ -23,7 +23,7 @@
   Each type of track is plotted in its own panel.
  }
 
- \usage{\method{plotTracks}{PairedPSCBS}(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=".*", pch=".", quantiles=c(0.05, 0.95), cex=1, grid=FALSE, xlim=NULL, Clim=c(0, 6), Blim=c(0, 1), xScale=1e-06, ..., add=FALSE, verbose=FALSE)}
+ \usage{\method{plotTracks}{PairedPSCBS}(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=".*", pch=".", col=NULL, cex=1, changepoints=FALSE, grid=FALSE, quantiles=c(0.05, 0.95), xlim=NULL, Clim=c(0, 6), Blim=c(0, 1), xScale=1e-06, ..., add=FALSE, verbose=FALSE)}
 
  \arguments{
    \item{x}{A result object returned by \code{\link{segmentByPairedPSCBS}}().}
@@ -32,7 +32,13 @@
      have scatter plot.}
    \item{calls}{A \code{\link[base]{character}} \code{\link[base]{vector}} of regular expression identifying
      call labels to be highlighted in the panels.}
-   \item{pch}{The type of points to use.}
+   \item{pch}{The type of the scatter points, if any.}
+   \item{col}{The color of the scatter points, if any.}
+   \item{cex}{The size of the scatter points, if any.}
+   \item{changepoints}{If \code{\link[base:logical]{TRUE}}, changepoints are drawn as vertical lines.}
+   \item{grid}{If \code{\link[base:logical]{TRUE}}, horizontal lines are displayed.}
+   \item{quantiles}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} in [0,1] specifying the quantiles
+      of the confidence bands to be drawn, if any.}
    \item{xlim}{(Optional) The genomic range to plot.}
    \item{Clim}{The range of copy numbers.}
    \item{Blim}{The range of allele B fractions (BAFs) and

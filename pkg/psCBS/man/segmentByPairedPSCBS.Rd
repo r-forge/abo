@@ -118,11 +118,16 @@ print(fit);
 # Plot results
 plotTracks(fit);
 
+# Estimate the below tauAB tuning parameter for call AB regions
+tauAB <- estimateTauAB(fit, scale=2);
+print(tauAB);
+## [1] 0.1354
+
 fit2 <- bootstrapTCNandDHByRegion(fit, verbose=-10);
 print(fit2);
 plotTracks(fit2);
 
-fit3 <- callABandHighAI(fit2, verbose=-10);
+fit3 <- callABandHighAI(fit2, tauAB=tauAB, verbose=-10);
 print(fit3);
 plotTracks(fit3);
 
