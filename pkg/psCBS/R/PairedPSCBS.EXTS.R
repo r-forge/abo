@@ -357,6 +357,20 @@ setMethodS3("extractByRegions", "PairedPSCBS", function(this, regions, ..., verb
   fit <- this;
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Local functions
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  updateSegRows <- function(segRows, regions) {
+    segRows <- segRows[regions,,drop=FALSE];
+    ns <- segRows[,2] - segRows[,1] + 1L;
+    from <- c(1L, cumsum(ns)[-length(ns)]);
+    to <- from + (ns - 1L);
+    segRows[,1] <- from;
+    segRows[,2] <- to;
+    verbose && str(verbose, segRows);
+    segRows;
+  } # updateSegRows()
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Argument 'regions':
@@ -394,11 +408,20 @@ setMethodS3("extractByRegions", "PairedPSCBS", function(this, regions, ..., verb
     throw("Cannot bootstrap TCN and DH by segments unless PSCNs are segmented using joinSegments=TRUE.");
   } 
 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Subset segments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  verbose && enter(verbose, "Update 'output'");
   segsT <- segs[regions,,drop=FALSE];
   verbose && str(verbose, segsT);
+  verbose && exit(verbose);
 
-  # Identify data rows to be extract
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Subset data accordingly
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  verbose && enter(verbose, "Update 'data'");
+
   segRows <- tcnSegRows;
   segRows <- segRows[regions,,drop=FALSE];
   from <- segRows[[1]];
@@ -414,14 +437,44 @@ setMethodS3("extractByRegions", "PairedPSCBS", function(this, regions, ..., verb
   verbose && printf(verbose, "Identified %d (%.2f%%) of %d data rows:\n", length(keep), 100*length(keep)/nrow(data), nrow(data));
   verbose && str(verbose, keep);
 
-  # Subset data
   dataT <- data[keep,,drop=FALSE];
   verbose && str(verbose, dataT);
+
+  verbose && exit(verbose);
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Update 'segRows'
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  verbose && enter(verbose, "Update 'segRows'");
+
+  segRows <- updateSegRows(tcnSegRows, regions=regions);
+  d <- tcnSegRows[regions,] - segRows;
+  # Sanity check
+  stopifnot(identical(d[,1], d[,2]));
+  d <- d[,1];
+  verbose && cat(verbose, "Row deltas:");
+  verbose && str(verbose, d);
+
+  tcnSegRows <- tcnSegRows[regions,,drop=FALSE] - d;
+  verbose && str(verbose, tcnSegRows);
+  # Sanity checks
+  stopifnot(max(tcnSegRows, na.rm=TRUE) <= nrow(dataT));
+
+  dhSegRows <- dhSegRows[regions,,drop=FALSE] - d;
+  verbose && str(verbose, dhSegRows);
+  # Sanity checks
+  stopifnot(max(dhSegRows, na.rm=TRUE) <= nrow(dataT));
+
+  verbose && exit(verbose);
+
 
   # Create new object
   res <- fit;
   res$data <- dataT;
   res$output <- segsT;
+  res$tcnSegRows <- tcnSegRows;
+  res$dhSegRows <- dhSegRows;
 
   verbose && exit(verbose);
 
@@ -489,6 +542,9 @@ setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=2, ...) {
 
 ############################################################################
 # HISTORY:
+# 2011-01-18
+# o BUG FIX: 'tcnSegRows' and 'dhSegRows' where not updated by
+#   extractByRegions() for PairedPSCBS.
 # 2011-01-14
 # o Added estimateTauAB() for estimating the DeltaAB parameter.
 # o Added estimateStdDevForHeterozygousBAF() for PairedPSCBS.

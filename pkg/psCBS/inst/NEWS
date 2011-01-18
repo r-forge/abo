@@ -1,6 +1,11 @@
 Package: psCBS
 ==============
 
+Version: 0.9.37 [2011-01-18]
+o BUG FIX: 'tcnSegRows' and 'dhSegRows' where not updated by
+  extractByRegions() for PairedPSCBS.
+
+
 Version: 0.9.36 [2011-01-14]
 o Added estimateTauAB() for estimating the tauAB tuning parameter
   when calling segments in allelic balance.  Updated 
