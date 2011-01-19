@@ -35,6 +35,7 @@
 #   \item{...}{Not used.}
 #   \item{add}{If @TRUE, the panels plotted are added to the existing plot,
 #     otherwise a new plot is created.}
+#   \item{subplots}{If @TRUE, then subplots are automatically setup.}
 #   \item{verbose}{See @see "R.utils::Verbose".}
 # }
 #
@@ -47,7 +48,7 @@
 # @keyword IO
 # @keyword internal
 #*/########################################################################### 
-setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=".*", pch=".", col=NULL, cex=1, changepoints=FALSE, grid=FALSE, quantiles=c(0.05,0.95), xlim=NULL, Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE, verbose=FALSE) {
+setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=".*", pch=".", col=NULL, cex=1, changepoints=FALSE, grid=FALSE, quantiles=c(0.05,0.95), xlim=NULL, Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE, subplots=!add && (length(tracks) > 1), verbose=FALSE) {
 
   # To please R CMD check
   fit <- x;
@@ -99,6 +100,9 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
 
   # Argument 'add':
   add <- Arguments$getLogical(add);
+
+  # Argument 'subplots':
+  subplots <- Arguments$getLogical(subplots);
 
   # Argument 'verbose':
   verbose <- Arguments$getVerbose(verbose);
@@ -167,7 +171,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
     }
   }
 
-  if (length(tracks) > 1 && !add) {
+  if (subplots) {
     subplots(length(tracks), ncol=1);
     par(mar=c(1,4,1,2)+1);
   }
@@ -899,6 +903,8 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
 
 ############################################################################
 # HISTORY:
+# 2011-01-19
+# o Added argument 'subplots'.
 # 2011-01-18
 # o DOCUMENTATION: Documented more plotTracks() arguments for PairedPSCBS.
 # o Now plotTracks(..., add=TRUE) for PairedPSCBS plots to the current

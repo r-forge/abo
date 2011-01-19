@@ -106,6 +106,18 @@
 \alias{extractByRegions.PairedPSCBS}
 \alias{estimateTauAB}
 \alias{estimateTauAB.PairedPSCBS}
+\alias{mergeTwoSegments}
+\alias{mergeTwoSegments.PairedPSCBS}
+\alias{updateMeans}
+\alias{updateMeans.PairedPSCBS}
+\alias{dropByRegions}
+\alias{dropByRegions.PairedPSCBS}
+\alias{extractLocusLevelC1C2}
+\alias{extractLocusLevelC1C2.PairedPSCBS}
+\alias{extractLocusLevelTCN}
+\alias{extractLocusLevelTCN.PairedPSCBS}
+\alias{plotTracks2}
+\alias{plotTracks2.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

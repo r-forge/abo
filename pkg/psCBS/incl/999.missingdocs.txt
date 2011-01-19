@@ -38,3 +38,10 @@ drawConfidenceBands drawConfidenceBands.PairedPSCBS
   extractByRegion.PairedPSCBS extractByRegions
   extractByRegions.PairedPSCBS
 estimateTauAB estimateTauAB.PairedPSCBS
+ mergeTwoSegments mergeTwoSegments.PairedPSCBS 
+ updateMeans updateMeans.PairedPSCBS
+ dropByRegions dropByRegions.PairedPSCBS
+ extractLocusLevelC1C2 extractLocusLevelC1C2.PairedPSCBS
+ extractLocusLevelTCN extractLocusLevelTCN.PairedPSCBS
+ plotTracks2 plotTracks2.PairedPSCBS
+
