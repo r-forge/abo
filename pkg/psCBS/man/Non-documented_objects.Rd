@@ -120,6 +120,8 @@
 \alias{plotTracks2.PairedPSCBS}
 \alias{estimateMeanForDH}
 \alias{estimateMeanForDH.PairedPSCBS}
+\alias{applyByRegion}
+\alias{applyByRegion.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

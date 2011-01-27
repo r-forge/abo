@@ -45,3 +45,4 @@ estimateTauAB estimateTauAB.PairedPSCBS
  extractLocusLevelTCN extractLocusLevelTCN.PairedPSCBS
  plotTracks2 plotTracks2.PairedPSCBS
 estimateMeanForDH estimateMeanForDH.PairedPSCBS
+applyByRegion applyByRegion.PairedPSCBS
