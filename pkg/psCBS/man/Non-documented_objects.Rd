@@ -118,6 +118,8 @@
 \alias{extractLocusLevelTCN.PairedPSCBS}
 \alias{plotTracks2}
 \alias{plotTracks2.PairedPSCBS}
+\alias{estimateMeanForDH}
+\alias{estimateMeanForDH.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

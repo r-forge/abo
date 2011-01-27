@@ -533,8 +533,74 @@ setMethodS3("estimateStdDevForHeterozygousBAF", "PairedPSCBS", function(this, ta
 }) # estimateStdDevForHeterozygousBAF()
 
 
-setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=2, ...) {
-  sd <- estimateStdDevForHeterozygousBAF(this, ...);
+
+
+setMethodS3("estimateMeanForDH", "PairedPSCBS", function(this, tau=0.20, ..., verbose=FALSE) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Argument 'tau':
+  tau <- Arguments$getDouble(tau, range=c(0,1));
+
+  # Argument 'verbose':
+  verbose <- Arguments$getVerbose(verbose);
+  if (verbose) {
+    pushState(verbose);
+    on.exit(popState(verbose));
+  }
+
+
+  verbose && enter(verbose, "Estimating mean of tumor DHs for heterozygous SNPs");
+  verbose && cat(verbose, "Threshold: ", tau);
+
+  # Find segments that have low DHs
+  segs <- as.data.frame(this);
+  idxs <- which(segs$dh.mean <= tau);
+  verbose && cat(verbose, "Identified segments with small DH levels: ", length(idxs));
+  verbose && str(verbose, idxs);
+
+  # Sanity check
+  if (length(idxs) == 0) {
+    throw("Cannot estimate standard deviation.  There exist no segments with DH less or equal to the given threshold: ", tau); 
+  }
+
+  # Extract those segments
+  verbose && enter(verbose, "Extracting identified segments");
+  fitT <- extractByRegions(this, idxs);
+  verbose && exit(verbose);
+
+  # Get the tumor DHs for the heterozygous SNPs
+  verbose && enter(verbose, "Extracting DHs for the heterozygous SNPs");
+  rho <- with(fitT$data, rho[muN == 1/2]);
+  verbose && str(verbose, rho);
+  verbose && exit(verbose);
+
+  # Estimate the average for those
+  mu <- median(rho, na.rm=TRUE);
+  verbose && cat(verbose, "Estimated mean: ", mu);
+
+  verbose && exit(verbose);
+
+  mu;
+}) # estimateMeanForDH()
+
+
+
+setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=2, flavor=c("hBAF", "DH"), ...) {
+  # Argument 'flavor':
+  flavor <- match.arg(flavor);
+
+  if (flavor == "hBAF") {
+    # sigma = mad(hBAF) = 1.4826*median(|hBAF-m|),
+    # where m = median(hBAF) ~= 1/2
+    sd <- estimateStdDevForHeterozygousBAF(this, ...);
+  } else if (flavor == "DH") {
+    # sigma = 1/2*1.4826*median(|hBAF-1/2|), 
+    # because DH = 2*|hBAF-1/2|
+    mu <- estimateMeanForDH(this, ...);
+    sd <- 1/2 * 1.4826 * mu;
+  }
+
   tau <- scale * sd;
   tau;
 }) # estimateTauAB()
@@ -542,6 +608,12 @@ setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=2, ...) {
 
 ############################################################################
 # HISTORY:
+# 2011-01-27
+# o Added flavor="DH" to estimateTauAB() to estimate from DH instead 
+#   of hBAF.  As argued by the equations in the comments, these two
+#   approaches gives virtually the same results.  The advantage with the
+#   DH approach is that it requires one less degree of freedom.
+# o Added estimateMeanForDH().
 # 2011-01-18
 # o BUG FIX: 'tcnSegRows' and 'dhSegRows' where not updated by
 #   extractByRegions() for PairedPSCBS.

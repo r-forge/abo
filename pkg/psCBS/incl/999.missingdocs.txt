@@ -44,4 +44,4 @@ estimateTauAB estimateTauAB.PairedPSCBS
  extractLocusLevelC1C2 extractLocusLevelC1C2.PairedPSCBS
  extractLocusLevelTCN extractLocusLevelTCN.PairedPSCBS
  plotTracks2 plotTracks2.PairedPSCBS
-
+estimateMeanForDH estimateMeanForDH.PairedPSCBS

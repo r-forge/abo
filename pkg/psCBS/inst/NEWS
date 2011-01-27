@@ -1,6 +1,11 @@
 Package: psCBS
 ==============
 
+Version: 0.9.40 [2011-01-27]
+o Added argument 'flavor' to estimateTauAB() for estimating the
+  AB threshold using alternative methods.
+
+
 Version: 0.9.39 [2011-01-19]
 o Added trial version of new plotTracks2(), which will later replace
   plotTracks().  Currently it only works for single chromosomes.
