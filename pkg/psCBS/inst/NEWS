@@ -1,6 +1,10 @@
 Package: psCBS
 ==============
 
+Version: 0.9.41 [2011-02-03]
+o Added argument 'tauTCN' to estimateTauAB().
+
+
 Version: 0.9.40 [2011-01-27]
 o Added argument 'flavor' to estimateTauAB() for estimating the
   AB threshold using alternative methods.

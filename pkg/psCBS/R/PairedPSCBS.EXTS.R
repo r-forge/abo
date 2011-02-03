@@ -483,12 +483,15 @@ setMethodS3("extractByRegions", "PairedPSCBS", function(this, regions, ..., verb
 
 
 
-setMethodS3("estimateStdDevForHeterozygousBAF", "PairedPSCBS", function(this, tau=0.20, ..., verbose=FALSE) {
+setMethodS3("estimateStdDevForHeterozygousBAF", "PairedPSCBS", function(this, tauDH=0.20, tauTCN=5, ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  # Argument 'tau':
-  tau <- Arguments$getDouble(tau, range=c(0,1));
+  # Argument 'tauDH':
+  tauDH <- Arguments$getDouble(tauDH, range=c(0,1));
+
+  # Argument 'tauTCN':
+  tauTCN <- Arguments$getDouble(tauTCN, range=c(0,Inf));
 
   # Argument 'verbose':
   verbose <- Arguments$getVerbose(verbose);
@@ -499,19 +502,51 @@ setMethodS3("estimateStdDevForHeterozygousBAF", "PairedPSCBS", function(this, ta
 
 
   verbose && enter(verbose, "Estimating standard deviation of tumor BAFs for heterozygous SNPs");
-  verbose && cat(verbose, "Threshold: ", tau);
+  verbose && cat(verbose, "DH threshold: ", tauDH);
+  verbose && cat(verbose, "TCN threshold: ", tauTCN);
 
-  # Find segments that have low DHs
   segs <- as.data.frame(this);
-  idxs <- which(segs$dh.mean <= tau);
-  verbose && cat(verbose, "Identified segments with small DH levels: ", length(idxs));
+
+  verbose && cat(verbose, "Number of segments: ", nrow(segs));
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Find segments to be used for the estimation
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Find segments that have low DHs
+  idxsDH <- which(segs$dh.mean <= tauDH);
+  verbose && cat(verbose, "Identified segments with small DH levels: ", length(idxsDH));
+  verbose && str(verbose, idxsDH);
+
+  # Sanity check
+  if (length(idxsDH) == 0) {
+    throw("Cannot estimate standard deviation.  There exist no segments with DH less or equal to the given threshold: ", tauDH); 
+  }
+
+  # Find segments that have low TCNs
+  idxsTCN <- which(segs$tcn.mean <= tauTCN);
+  verbose && cat(verbose, "Identified segments with small TCN levels: ", length(idxsTCN));
+  verbose && str(verbose, idxsTCN);
+
+  # Sanity check
+  if (length(idxsTCN) == 0) {
+    throw("Cannot estimate standard deviation.  There exist no segments with TCN less or equal to the given threshold: ", tauTCN); 
+  }
+
+  # Segments with small DH and small TCN
+  idxs <- intersect(idxsDH, idxsTCN);
+  verbose && cat(verbose, "Identified segments with small DH and small TCN levels: ", length(idxs));
   verbose && str(verbose, idxs);
 
   # Sanity check
   if (length(idxs) == 0) {
-    throw("Cannot estimate standard deviation.  There exist no segments with DH less or equal to the given threshold: ", tau); 
+    throw("Cannot estimate standard deviation.  There exist no segments with small DH and small TCN.");
   }
 
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Extract data and estimate parameters
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Extract those segments
   verbose && enter(verbose, "Extracting identified segments");
   fitT <- extractByRegions(this, idxs);
@@ -527,6 +562,7 @@ setMethodS3("estimateStdDevForHeterozygousBAF", "PairedPSCBS", function(this, ta
   sd <- mad(beta, na.rm=TRUE);
   verbose && cat(verbose, "Estimated standard deviation: ", sd);
 
+
   verbose && exit(verbose);
 
   sd;
@@ -535,12 +571,15 @@ setMethodS3("estimateStdDevForHeterozygousBAF", "PairedPSCBS", function(this, ta
 
 
 
-setMethodS3("estimateMeanForDH", "PairedPSCBS", function(this, tau=0.20, ..., verbose=FALSE) {
+setMethodS3("estimateMeanForDH", "PairedPSCBS", function(this, tauDH=0.20, tauTCN=5, ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  # Argument 'tau':
-  tau <- Arguments$getDouble(tau, range=c(0,1));
+  # Argument 'tauDH':
+  tauDH <- Arguments$getDouble(tauDH, range=c(0,1));
+
+  # Argument 'tauTCN':
+  tauTCN <- Arguments$getDouble(tauTCN, range=c(0,Inf));
 
   # Argument 'verbose':
   verbose <- Arguments$getVerbose(verbose);
@@ -551,19 +590,50 @@ setMethodS3("estimateMeanForDH", "PairedPSCBS", function(this, tau=0.20, ..., ve
 
 
   verbose && enter(verbose, "Estimating mean of tumor DHs for heterozygous SNPs");
-  verbose && cat(verbose, "Threshold: ", tau);
+  verbose && cat(verbose, "DH threshold: ", tauDH);
+  verbose && cat(verbose, "TCN threshold: ", tauTCN);
 
-  # Find segments that have low DHs
   segs <- as.data.frame(this);
-  idxs <- which(segs$dh.mean <= tau);
-  verbose && cat(verbose, "Identified segments with small DH levels: ", length(idxs));
+
+  verbose && cat(verbose, "Number of segments: ", nrow(segs));
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Find segments to be used for the estimation
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Find segments that have low DHs
+  idxsDH <- which(segs$dh.mean <= tauDH);
+  verbose && cat(verbose, "Identified segments with small DH levels: ", length(idxsDH));
+  verbose && str(verbose, idxsDH);
+
+  # Sanity check
+  if (length(idxsDH) == 0) {
+    throw("Cannot estimate standard deviation.  There exist no segments with DH less or equal to the given threshold: ", tauDH); 
+  }
+
+  # Find segments that have low TCNs
+  idxsTCN <- which(segs$tcn.mean <= tauTCN);
+  verbose && cat(verbose, "Identified segments with small TCN levels: ", length(idxsTCN));
+  verbose && str(verbose, idxsTCN);
+
+  # Sanity check
+  if (length(idxsTCN) == 0) {
+    throw("Cannot estimate standard deviation.  There exist no segments with TCN less or equal to the given threshold: ", tauTCN); 
+  }
+
+  # Segments with small DH and small TCN
+  idxs <- intersect(idxsDH, idxsTCN);
+  verbose && cat(verbose, "Identified segments with small DH and small TCN levels: ", length(idxs));
   verbose && str(verbose, idxs);
 
   # Sanity check
   if (length(idxs) == 0) {
-    throw("Cannot estimate standard deviation.  There exist no segments with DH less or equal to the given threshold: ", tau); 
+    throw("Cannot estimate standard deviation.  There exist no segments with small DH and small TCN.");
   }
 
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Extract data and estimate parameters
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Extract those segments
   verbose && enter(verbose, "Extracting identified segments");
   fitT <- extractByRegions(this, idxs);
@@ -579,6 +649,7 @@ setMethodS3("estimateMeanForDH", "PairedPSCBS", function(this, tau=0.20, ..., ve
   mu <- median(rho, na.rm=TRUE);
   verbose && cat(verbose, "Estimated mean: ", mu);
 
+
   verbose && exit(verbose);
 
   mu;
@@ -586,29 +657,81 @@ setMethodS3("estimateMeanForDH", "PairedPSCBS", function(this, tau=0.20, ..., ve
 
 
 
-setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=2, flavor=c("hBAF", "DH"), ...) {
+setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=3, flavor=c("hBAF", "DH", "DHskew"), ..., verbose=FALSE) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Argument 'flavor':
   flavor <- match.arg(flavor);
+
+  # Argument 'verbose':
+  verbose <- Arguments$getVerbose(verbose);
+  if (verbose) {
+    pushState(verbose);
+    on.exit(popState(verbose));
+  }
+
+  verbose && enter(verbose, "Estimating DH threshold for calling allelic imbalances");
+  verbose && cat(verbose, "flavor: ", flavor);
+  verbose && cat(verbose, "scale: ", scale);
 
   if (flavor == "hBAF") {
     # sigma = mad(hBAF) = 1.4826*median(|hBAF-m|),
     # where m = median(hBAF) ~= 1/2
-    sd <- estimateStdDevForHeterozygousBAF(this, ...);
+    sd <- estimateStdDevForHeterozygousBAF(this, ..., verbose=verbose);
+    verbose && printf(verbose, "sd: %.3g\n", sd);
   } else if (flavor == "DH") {
     # sigma = 1/2*1.4826*median(|hBAF-1/2|), 
     # because DH = 2*|hBAF-1/2|
-    mu <- estimateMeanForDH(this, ...);
+    mu <- estimateMeanForDH(this, ..., verbose=verbose);
+    verbose && printf(verbose, "mu: %.3g\n", mu);
     sd <- 1/2 * 1.4826 * mu;
+    verbose && printf(verbose, "sd: %.3g\n", sd);
+  } else if (flavor == "DHskew") {
+    fit <- this;
+    if (is.null(fit$output$dh.skew)) {
+      verbose && enter(verbose, "Estimating DH skewness for each segment");
+      fit <- applyByRegion(fit, FUN=.addTcnDhStatitics, verbose=less(verbose, 5));
+      verbose && exit(verbose);
+    }
+    mu <- fit$output$dh.mean;
+    skew <- fit$output$dh.skew;
+
+    tauSkew <- -0.55;
+    keep <- which(skew < tauSkew);
+    verbose && printf(verbose, "Number of segments heavily skewed (< %.3f): %d\n", tauSkew, length(keep));
+    # Sanity check
+    if (length(keep) == 0) {
+      throw("Cannot estimate DH threshold for AB. No segments with strong skewness exists.");
+    }
+    tauDH <- median(mu[keep], na.rm=TRUE);
+    verbose && printf(verbose, "tauDH: %.3g\n", tauDH);
+    tauDH <- 1.10*tauDH;
+    verbose && printf(verbose, "Adjusted +10%% tauDH: %.3g\n", tauDH);
+
+    # sigma = 1/2*1.4826*median(|hBAF-1/2|), 
+    # because DH = 2*|hBAF-1/2|
+    mu <- estimateMeanForDH(this, tau=tauDH, ...);
+    verbose && printf(verbose, "mu: %.3g\n", mu);
+    sd <- 1/2 * 1.4826 * mu;
+    verbose && printf(verbose, "sd: %.3g\n", sd);
   }
 
   tau <- scale * sd;
+  verbose && printf(verbose, "tau: %.3g\n", tau);
+
+  verbose && exit(verbose);
+
   tau;
 }) # estimateTauAB()
 
 
 ############################################################################
 # HISTORY:
+# 2011-02-03
+# o Added argument 'tauTCN' to estimateMeanForDH().
 # 2011-01-27
+# o Added flavor="DHskew" to estimateTauAB().
 # o Added flavor="DH" to estimateTauAB() to estimate from DH instead 
 #   of hBAF.  As argued by the equations in the comments, these two
 #   approaches gives virtually the same results.  The advantage with the
