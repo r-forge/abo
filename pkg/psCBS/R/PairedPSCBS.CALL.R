@@ -43,6 +43,12 @@ setMethodS3("callAllelicBalanceByDH", "PairedPSCBS", function(fit, tau=0.10, alp
   segs <- cbind(segs, ab.call=call);
   fit$output <- segs;
 
+  # Append 'tau' and 'alpha' to parameters
+  params <- fit$params;
+  params$tauAB <- tau;
+  params$alphaAB <- alpha;
+  fit$params <- params;
+
   verbose && exit(verbose);
 
   fit;
@@ -67,6 +73,7 @@ setMethodS3("callLowC1ByC1", "PairedPSCBS", function(fit, tau=0.50, alpha=0.05, 
   }
 
   verbose && enter(verbose, "Calling segments of allelic balance from one-sided DH bootstrap confidence intervals");
+
   verbose && cat(verbose, "tau (offset adjusting for bias in C1): ", tau);
   verbose && cat(verbose, "alpha (CI quantile; significance level): ", alpha);
 
@@ -94,6 +101,12 @@ setMethodS3("callLowC1ByC1", "PairedPSCBS", function(fit, tau=0.50, alpha=0.05, 
   segs <- cbind(segs, lowc1.call=call);
   fit$output <- segs;
 
+  # Append 'tau' and 'alpha' to parameters
+  params <- fit$params;
+  params$tauLowC1 <- tau;
+  params$alphaLowC1 <- alpha;
+  fit$params <- params;
+
   verbose && exit(verbose);
 
   fit;
@@ -118,8 +131,8 @@ setMethodS3("callExtremeAllelicImbalanceByDH", "PairedPSCBS", function(fit, tau=
     on.exit(popState(verbose));
   }
 
-
   verbose && enter(verbose, "Calling segments of extreme allelic imbalance (AI) from one-sided DH bootstrap confidence intervals");
+
   verbose && cat(verbose, "tau (offset adjusting for normal contamination and other biases): ", tau);
   verbose && cat(verbose, "alpha (CI quantile; significance level): ", alpha);
 
@@ -138,6 +151,7 @@ setMethodS3("callExtremeAllelicImbalanceByDH", "PairedPSCBS", function(fit, tau=
   stopifnot(is.element(column, colnames(segs)));
 
   # One-sided test
+  verbose && enter(verbose, "Calling segments");
   value <- segs[,column, drop=TRUE];
   call <- (value >= tau);
   nbrOfCalls <- sum(call, na.rm=TRUE);
@@ -147,12 +161,20 @@ setMethodS3("callExtremeAllelicImbalanceByDH", "PairedPSCBS", function(fit, tau=
   segs <- cbind(segs, ai.high.call=call);
   fit$output <- segs;
 
+  # Append 'tau' and 'alpha' to parameters
+  params <- fit$params;
+  params$tauExtremeDH <- tau;
+  params$alphaExtremeDH <- alpha;
+  fit$params <- params;
+
+  verbose && exit(verbose);
+
   fit;
 }, protected=TRUE) # callExtremeAllelicImbalanceByDH()
 
 
 
-setMethodS3("callABandHighAI", "PairedPSCBS", function(fit, tauAB=0.10, alphaAB=0.05, tauHighAI=0.60, alphaHighAI=0.05, ..., verbose=FALSE) {
+setMethodS3("callABandHighAI", "PairedPSCBS", function(fit, tauAB=estimateTauAB(fit), alphaAB=0.05, tauHighAI=0.60, alphaHighAI=0.05, ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
@@ -183,7 +205,7 @@ setMethodS3("callABandHighAI", "PairedPSCBS", function(fit, tauAB=0.10, alphaAB=
 }) # callABandHighAI()
 
 
-setMethodS3("callABandLowC1", "PairedPSCBS", function(fit, tauAB=0.10, alphaAB=0.05, tauLowC1=0.50, alphaLowC1=0.05, ..., verbose=FALSE) {
+setMethodS3("callABandLowC1", "PairedPSCBS", function(fit, tauAB=estimateTauAB(fit), alphaAB=0.05, tauLowC1=0.50, alphaLowC1=0.05, ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
@@ -216,6 +238,9 @@ setMethodS3("callABandLowC1", "PairedPSCBS", function(fit, tauAB=0.10, alphaAB=0
 
 ##############################################################################
 # HISTORY
+# 2011-02-03
+# o Updated default for 'tauAB' of callABandHighAI() and callABandLowC1()
+#   to be estimated from data using estimateTauAB().
 # 2010-12-07
 # o Added callLowC1ByC1() and callABandLowC1().
 # 2010-11-27

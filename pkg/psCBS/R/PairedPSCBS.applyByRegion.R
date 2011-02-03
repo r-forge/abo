@@ -232,60 +232,9 @@ setMethodS3("applyByRegion", "PairedPSCBS", function(fit, FUN, ..., verbose=FALS
 
 
 
-robustSkewness <- function(x, na.rm=TRUE, ...) {
-  # cf. https://wis.kuleuven.be/stat/robust/Papers/medcouple.pdf
-  if (na.rm) {
-    x <- x[!is.na(x)];
-  }
-
-  m <- median(x);
-  xL <- x[x < m];
-  xR <- x[x > m];
-  mL <- median(xL);
-  mR <- median(xR);
-
-  z <- mL / (mL+mR); # in [0,1]
-  z <- z - 1/2;      # in [-1/2,+1/2]
-  z <- 2*z;          # in [-1,+1]
-  z;
-} # robustSkewness()
-
-.addTcnDhStatitics <- function(rr, output, data, robust=TRUE, ...) {
-  # Calculate locus-level (C1,C2)
-  C <- data$CT;
-  rho <- data$rho;
-  CC <- data.frame(C=C, rho=rho);
-
-  if (robust) {
-    require("robustbase") || throw("Package not loaded: robustbase");
-    sdFcn <- function(x, ...) mad(x, na.rm=TRUE);
-    skewFcn <- function(x, ...) robustSkewness(x, na.rm=TRUE);
-  } else {
-    sdFcn <- function(x, ...) sd(x, na.rm=TRUE);
-    skewFcn <- function(x, ...) skewness(x, na.rm=TRUE);
-  }
-
-  # Calculate region-level (TCN,DH) std devs.
-  sigmaCC <- apply(CC, MARGIN=2, FUN=sdFcn);
-  names(sigmaCC) <- c("tch.sd", "dh.sd");
-  gammaCC <- apply(CC, MARGIN=2, FUN=skewFcn);
-  names(gammaCC) <- c("tch.skew", "dh.skew");
-
-  # Update segment table
-  outputT <- c(sigmaCC, gammaCC);
-  outputT <- as.list(outputT);
-  outputT <- as.data.frame(outputT);
-
-  output <- cbind(output, outputT);
-
-  list(data=data, output=output);
-} # .addTcnDhStatitics()
-
-
 #############################################################################
 # HISTORY:
 # 2011-01-27
-# o Added robustSkewness().
 # o Added .addCACBWithStatitics().
 # o Added .addC1C2WithStatitics().
 # o Added applyByRegion().

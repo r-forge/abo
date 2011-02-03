@@ -657,7 +657,7 @@ setMethodS3("estimateMeanForDH", "PairedPSCBS", function(this, tauDH=0.20, tauTC
 
 
 
-setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=3, flavor=c("hBAF", "DH", "DHskew"), ..., verbose=FALSE) {
+setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=3, flavor=c("hBAF", "DH"), ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -687,35 +687,36 @@ setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=3, flavor=c("hB
     verbose && printf(verbose, "mu: %.3g\n", mu);
     sd <- 1/2 * 1.4826 * mu;
     verbose && printf(verbose, "sd: %.3g\n", sd);
-  } else if (flavor == "DHskew") {
-    fit <- this;
-    if (is.null(fit$output$dh.skew)) {
-      verbose && enter(verbose, "Estimating DH skewness for each segment");
-      fit <- applyByRegion(fit, FUN=.addTcnDhStatitics, verbose=less(verbose, 5));
-      verbose && exit(verbose);
-    }
-    mu <- fit$output$dh.mean;
-    skew <- fit$output$dh.skew;
-
-    tauSkew <- -0.55;
-    keep <- which(skew < tauSkew);
-    verbose && printf(verbose, "Number of segments heavily skewed (< %.3f): %d\n", tauSkew, length(keep));
-    # Sanity check
-    if (length(keep) == 0) {
-      throw("Cannot estimate DH threshold for AB. No segments with strong skewness exists.");
-    }
-    tauDH <- median(mu[keep], na.rm=TRUE);
-    verbose && printf(verbose, "tauDH: %.3g\n", tauDH);
-    tauDH <- 1.10*tauDH;
-    verbose && printf(verbose, "Adjusted +10%% tauDH: %.3g\n", tauDH);
-
-    # sigma = 1/2*1.4826*median(|hBAF-1/2|), 
-    # because DH = 2*|hBAF-1/2|
-    mu <- estimateMeanForDH(this, tau=tauDH, ...);
-    verbose && printf(verbose, "mu: %.3g\n", mu);
-    sd <- 1/2 * 1.4826 * mu;
-    verbose && printf(verbose, "sd: %.3g\n", sd);
   }
+##   } else if (flavor == "DHskew") {
+##     fit <- this;
+##     if (is.null(fit$output$dh.skew)) {
+##       verbose && enter(verbose, "Estimating DH skewness for each segment");
+##       fit <- applyByRegion(fit, FUN=.addTcnDhStatitics, verbose=less(verbose, 5));
+##       verbose && exit(verbose);
+##     }
+##     mu <- fit$output$dh.mean;
+##     skew <- fit$output$dh.skew;
+## 
+##     tauSkew <- -0.55;
+##     keep <- which(skew < tauSkew);
+##     verbose && printf(verbose, "Number of segments heavily skewed (< %.3f): %d\n", tauSkew, length(keep));
+##     # Sanity check
+##     if (length(keep) == 0) {
+##       throw("Cannot estimate DH threshold for AB. No segments with strong skewness exists.");
+##     }
+##     tauDH <- median(mu[keep], na.rm=TRUE);
+##     verbose && printf(verbose, "tauDH: %.3g\n", tauDH);
+##     tauDH <- 1.10*tauDH;
+##     verbose && printf(verbose, "Adjusted +10%% tauDH: %.3g\n", tauDH);
+## 
+##     # sigma = 1/2*1.4826*median(|hBAF-1/2|), 
+##     # because DH = 2*|hBAF-1/2|
+##     mu <- estimateMeanForDH(this, tau=tauDH, ...);
+##     verbose && printf(verbose, "mu: %.3g\n", mu);
+##     sd <- 1/2 * 1.4826 * mu;
+##     verbose && printf(verbose, "sd: %.3g\n", sd);
+##  }
 
   tau <- scale * sd;
   verbose && printf(verbose, "tau: %.3g\n", tau);
