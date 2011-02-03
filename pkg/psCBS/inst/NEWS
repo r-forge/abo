@@ -1,7 +1,11 @@
 Package: psCBS
 ==============
 
-Version: 0.9.41 [2011-02-03]
+Version: 0.9.42 [2011-02-03]
+o Added estimateKappa() for estimating the normal contamination.
+
+
+Version: 0.9.41 [2011-02-02]
 o Updated default for 'tauAB' of callABandHighAI() and callABandLowC1()
   to be estimated from data using estimateTauAB().
 o Added argument 'tauTCN' to estimateTauAB().

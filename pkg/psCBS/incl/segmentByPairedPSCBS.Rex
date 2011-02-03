@@ -32,6 +32,11 @@ tauAB <- estimateTauAB(fit, scale=2);
 print(tauAB);
 ## [1] 0.1354
 
+# Estimate "normal contamination"
+kappa <- estimateKappa(fit);
+print(kappa);
+## [1] 0.2179
+
 fit2 <- bootstrapTCNandDHByRegion(fit, verbose=-10);
 print(fit2);
 plotTracks(fit2);

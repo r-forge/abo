@@ -122,6 +122,10 @@
 \alias{estimateMeanForDH.PairedPSCBS}
 \alias{applyByRegion}
 \alias{applyByRegion.PairedPSCBS}
+\alias{estimateKappa}
+\alias{estimateKappa.PairedPSCBS}
+\alias{estimateKappaByC1Density}
+\alias{estimateKappaByC1Density.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that
