@@ -48,3 +48,4 @@ estimateMeanForDH estimateMeanForDH.PairedPSCBS
 applyByRegion applyByRegion.PairedPSCBS
  estimateKappa estimateKappa.PairedPSCBS estimateKappaByC1Density
  estimateKappaByC1Density.PairedPSCBS
+  estimateHighDHQuantileAtAB estimateHighDHQuantileAtAB.PairedPSCBS

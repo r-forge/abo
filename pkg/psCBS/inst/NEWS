@@ -1,6 +1,10 @@
 Package: psCBS
 ==============
 
+Version: 0.9.44 [2011-02-18]
+o Added estimateHighDHQuantileAtAB() for PairedPSCBS.
+
+
 Version: 0.9.43 [2011-02-06]
 o BUG FIX: plotTracks2() queired non-existing argument 'tracks'.
 

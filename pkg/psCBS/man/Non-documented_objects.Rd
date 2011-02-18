@@ -126,6 +126,8 @@
 \alias{estimateKappa.PairedPSCBS}
 \alias{estimateKappaByC1Density}
 \alias{estimateKappaByC1Density.PairedPSCBS}
+\alias{estimateHighDHQuantileAtAB}
+\alias{estimateHighDHQuantileAtAB.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that
