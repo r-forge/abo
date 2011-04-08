@@ -350,8 +350,6 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
       verbose && exit(verbose);
     } # for (kk ...)
 
-return(fitList);
-
     verbose && enter(verbose, "Merging");
     fit <- Reduce(append, fitList);
     # Not needed anymore
