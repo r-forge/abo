@@ -65,7 +65,7 @@
  }
 
  \value{
-   Returns the fit object.
+   Returns the segmentation results as a \code{\link{PairedPSCBS}} object.
  }
 
  \details{

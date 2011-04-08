@@ -56,7 +56,7 @@
 # }
 #
 # \value{
-#   Returns the fit object.
+#   Returns the segmentation results as a @see "PairedPSCBS" object.
 # }
 # 
 # \details{

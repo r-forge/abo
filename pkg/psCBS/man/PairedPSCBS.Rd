@@ -43,10 +43,7 @@ extends list\cr
  \section{Fields and Methods}{
   \bold{Methods:}\cr
 \tabular{rll}{
- \tab \code{applyByRegion} \tab  -\cr
  \tab \code{as.data.frame} \tab  -\cr
- \tab \code{callABandHighAI} \tab  -\cr
- \tab \code{callABandLowC1} \tab  -\cr
  \tab \code{\link[psCBS:callAllelicBalance.PairedPSCBS]{callAllelicBalance}} \tab Calls segments that are in allelic balance.\cr
  \tab \code{callSegments} \tab  -\cr
  \tab \code{\link[psCBS:estimateKappa.PairedPSCBS]{estimateKappa}} \tab Estimate global background in segmented copy numbers.\cr

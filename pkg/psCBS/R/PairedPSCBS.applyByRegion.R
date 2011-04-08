@@ -131,7 +131,7 @@ setMethodS3("applyByRegion", "PairedPSCBS", function(fit, FUN, ..., verbose=FALS
   verbose && exit(verbose);
 
   res;
-})
+}, private=TRUE)
 
 
 .addC1C2WithStatitics <- function(rr, output, data, robust=TRUE, ...) {

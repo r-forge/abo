@@ -53,7 +53,7 @@ setMethodS3("callLowC1ByC1", "PairedPSCBS", function(fit, tau=0.50, alpha=0.05, 
   verbose && exit(verbose);
 
   fit;
-}, protected=TRUE) # callLowC1ByC1()
+}, private=TRUE) # callLowC1ByC1()
 
 
 
@@ -113,7 +113,7 @@ setMethodS3("callExtremeAllelicImbalanceByDH", "PairedPSCBS", function(fit, tau=
   verbose && exit(verbose);
 
   fit;
-}, protected=TRUE) # callExtremeAllelicImbalanceByDH()
+}, private=TRUE) # callExtremeAllelicImbalanceByDH()
 
 
 
@@ -145,7 +145,7 @@ setMethodS3("callABandHighAI", "PairedPSCBS", function(fit, tauAB=estimateTauAB(
   verbose && exit(verbose);
 
   fit;
-}) # callABandHighAI()
+}, private=TRUE) # callABandHighAI()
 
 
 setMethodS3("callABandLowC1", "PairedPSCBS", function(fit, tauAB=estimateTauAB(fit), alphaAB=0.05, tauLowC1=0.50, alphaLowC1=0.05, ..., verbose=FALSE) {
@@ -176,7 +176,7 @@ setMethodS3("callABandLowC1", "PairedPSCBS", function(fit, tauAB=estimateTauAB(f
   verbose && exit(verbose);
 
   fit;
-}) # callABandLowC1()
+}, private=TRUE) # callABandLowC1()
 
 
 ##############################################################################
