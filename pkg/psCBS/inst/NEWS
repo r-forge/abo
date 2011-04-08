@@ -2,6 +2,11 @@
 Package: psCBS
 ==============
 
+Version: 0.9.45 [2011-04-05]
+o BUG FIX: estimateHighDHQuantileAtAB() for PairedPSCBS would throw
+  an error on an undefined 'trim' if verbose output was used.
+
+
 Version: 0.9.44 [2011-02-18]
 o Added estimateHighDHQuantileAtAB() for PairedPSCBS.
 

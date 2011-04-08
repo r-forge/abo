@@ -701,7 +701,7 @@ setMethodS3("estimateHighDHQuantileAtAB", "PairedPSCBS", function(this, quantile
   verbose && cat(verbose, "DH threshold: ", tauDH);
   verbose && cat(verbose, "TCN threshold: ", tauTCN);
   verbose && cat(verbose, "Robust estimator: ", robust);
-  verbose && cat(verbose, "Trim: ", trim);
+  verbose && cat(verbose, "Scale factor: ", scale);
 
   segs <- as.data.frame(this);
 
@@ -883,6 +883,9 @@ setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=NULL, flavor=c(
 
 ############################################################################
 # HISTORY:
+# 2011-04-05
+# o BUG FIX: estimateHighDHQuantileAtAB() for PairedPSCBS would throw
+#   an error on an undefined 'trim' if verbose output was used.
 # 2011-02-17
 # o Added arguments 'robust' and 'trim' to estimateMeanForDH().
 # 2011-02-03
