@@ -533,7 +533,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   verbose && exit(verbose);
 
   fitB;
-}) # bootstrapTCNandDHByRegion()
+}, private=TRUE) # bootstrapTCNandDHByRegion()
 
 
 

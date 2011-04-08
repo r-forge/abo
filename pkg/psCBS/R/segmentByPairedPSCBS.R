@@ -2,12 +2,13 @@
 # @RdocDefault segmentByPairedPSCBS
 # @alias segmentByPairedPSCBS
 #
-# @title "Segment copy numbers using the paired PSCBS method"
+# @title "Segment total copy numbers and allele B fractions using the paired PSCBS method"
 #
 # \description{
 #  @get "title" [1].
+#  This method requires matched normals.
 #  This is a low-level segmentation method.
-#  It is intended to be applied to one sample and one chromosome at the time.
+#  It is intended to be applied to one tumor-normal sample at the time.
 # }
 #
 # @synopsis

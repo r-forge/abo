@@ -2,8 +2,8 @@
  arrowsDeltaC1C2 arrowsDeltaC1C2.PairedPSCBS as.data.frame.PairedPSCBS
  bootstrapCIs bootstrapCIs.PairedPSCBS bootstrapDHByRegion
  bootstrapDHByRegion.PairedPSCBS callABandHighAI
- callABandHighAI.PairedPSCBS callAllelicBalance
- callAllelicBalance.PairedPSCBS callExtremeAllelicImbalance
+ callABandHighAI.PairedPSCBS 
+ callExtremeAllelicImbalance
  callExtremeAllelicImbalance.PairedPSCBS callSegments
  callSegments.PairedPSCBS drawLevels drawLevels.DNAcopy
  drawLevels.PairedPSCBS extractByChromosome extractByChromosome.PSCBS
@@ -20,7 +20,6 @@
  print.PairedPSCBS subsetByDhSegments subsetByDhSegments.PairedPSCBS
  plotTracksManyChromosomes plotTracksManyChromosomes.PairedPSCBS
  tileChromosomes tileChromosomes.PairedPSCBS
- callAllelicBalanceByDH callAllelicBalanceByDH.PairedPSCBS
  callExtremeAllelicImbalanceByDH
  callExtremeAllelicImbalanceByDH.PairedPSCBS
   as.data.frame.CBS drawLevels.CBS getChromosomes.CBS
@@ -37,7 +36,6 @@ drawConfidenceBands drawConfidenceBands.PairedPSCBS
   estimateStdDevForHeterozygousBAF.PairedPSCBS extractByRegion
   extractByRegion.PairedPSCBS extractByRegions
   extractByRegions.PairedPSCBS
-estimateTauAB estimateTauAB.PairedPSCBS
  mergeTwoSegments mergeTwoSegments.PairedPSCBS 
  updateMeans updateMeans.PairedPSCBS
  dropByRegions dropByRegions.PairedPSCBS
@@ -46,6 +44,7 @@ estimateTauAB estimateTauAB.PairedPSCBS
  plotTracks2 plotTracks2.PairedPSCBS
 estimateMeanForDH estimateMeanForDH.PairedPSCBS
 applyByRegion applyByRegion.PairedPSCBS
- estimateKappa estimateKappa.PairedPSCBS estimateKappaByC1Density
- estimateKappaByC1Density.PairedPSCBS
   estimateHighDHQuantileAtAB estimateHighDHQuantileAtAB.PairedPSCBS
+  estimateKappa estimateKappaByC1Density
+  callAllelicBalance callAllelicBalanceByDH
+estimateTauAB

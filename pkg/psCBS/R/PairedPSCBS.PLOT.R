@@ -2,6 +2,7 @@
 # @set "class=PairedPSCBS"
 # @RdocMethod plotTracks
 # @alias plotTracks
+# @alias plot
 #
 # @title "Plots parental specific copy numbers along the genome"
 #
@@ -345,7 +346,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
 
 setMethodS3("plot", "PairedPSCBS", function(x, ...) {
   plotTracks(x, ...);
-})
+}, private=TRUE)
 
 
 setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "dh", "c1", "c2"), xScale=1e-6, ...) {
@@ -375,7 +376,7 @@ setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "dh", "c1",
   class(dummy) <- "DNAcopy";
 
   drawLevels(dummy, xScale=xScale, ...);
-})
+}, private=TRUE)
 
 
 setMethodS3("drawConfidenceBands", "PairedPSCBS", function(fit, what=c("tcn", "dh", "c1", "c2"), quantiles=c(0.05,0.95), col=col, alpha=0.4, xScale=1e-6, ...) {
@@ -430,7 +431,7 @@ setMethodS3("drawConfidenceBands", "PairedPSCBS", function(fit, what=c("tcn", "d
   for (kk in seq(length=nrow(segsT))) {
     rect(xleft=segsT[kk,1], xright=segsT[kk,2], ybottom=segsT[kk,3], ytop=segsT[kk,4], col=colQ, border=FALSE);
   }
-})
+}, private=TRUE)
 
 
 
@@ -438,7 +439,7 @@ setMethodS3("plotC1C2", "PairedPSCBS", function(fit, ..., xlab=expression(C[1]),
   plot(NA, xlim=Clim, ylim=Clim, xlab=xlab, ylab=ylab);
   abline(a=0, b=1, lty=3);
   pointsC1C2(fit, ...);
-})
+}, private=TRUE)
 
 
 setMethodS3("pointsC1C2", "PairedPSCBS", function(fit, cex=NULL, ...) {
@@ -455,14 +456,14 @@ setMethodS3("pointsC1C2", "PairedPSCBS", function(fit, cex=NULL, ...) {
   }
 
   points(X, cex=cex, ...);
-})
+}, private=TRUE)
 
 
 setMethodS3("linesC1C2", "PairedPSCBS", function(fit, ...) {
   xy <- extractMinorMajorCNs(fit);
   xy <- xy[,1:2,drop=FALSE];
   lines(xy, ...);
-}) # linessC1C2()
+}, private=TRUE)
 
 
 
@@ -472,21 +473,21 @@ setMethodS3("plotDeltaC1C2", "PairedPSCBS", function(fit, ..., xlab=expression(D
   abline(h=0, lty=3);
   abline(v=0, lty=3);
   pointsDeltaC1C2(fit, ...);
-})
+}, private=TRUE)
 
 
 setMethodS3("pointsDeltaC1C2", "PairedPSCBS", function(fit, ...) {
   data <- extractDeltaC1C2(fit);
   X <- data[,1:2,drop=FALSE];
   points(X, ...);
-})
+}, private=TRUE)
 
 
 setMethodS3("linesDeltaC1C2", "PairedPSCBS", function(fit, ...) {
   xy <- extractDeltaC1C2(fit);
   xy <- xy[,1:2,drop=FALSE];
   lines(xy, ...);
-})
+}, private=TRUE)
 
 
 
@@ -497,7 +498,7 @@ setMethodS3("arrowsC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
   y <- xy[,2,drop=TRUE];
   s <- seq(length=length(x)-1);
   arrows(x0=x[s],y=y[s], x1=x[s+1],y1=y[s+1], code=2, length=length, ...);
-}) # arrowsC1C2()
+}, private=TRUE)
 
 
 setMethodS3("arrowsDeltaC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
@@ -507,7 +508,7 @@ setMethodS3("arrowsDeltaC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
   y <- xy[,2,drop=TRUE];
   s <- seq(length=length(x)-1);
   arrows(x0=x[s],y=y[s], x1=x[s+1],y1=y[s+1], code=2, length=length, ...);
-})
+}, private=TRUE)
 
 
 
@@ -603,7 +604,7 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
   verbose && exit(verbose);
 
   fit;
-}) # tileChromosomes()
+}, private=TRUE) # tileChromosomes()
 
 
 #   \item{chromosomes}{An optional @numeric @vector specifying which 

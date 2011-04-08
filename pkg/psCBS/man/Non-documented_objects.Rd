@@ -26,8 +26,6 @@
 \alias{bootstrapDHByRegion.PairedPSCBS}
 \alias{callABandHighAI}
 \alias{callABandHighAI.PairedPSCBS}
-\alias{callAllelicBalance}
-\alias{callAllelicBalance.PairedPSCBS}
 \alias{callExtremeAllelicImbalance}
 \alias{callExtremeAllelicImbalance.PairedPSCBS}
 \alias{callSegments}
@@ -73,8 +71,6 @@
 \alias{plotTracksManyChromosomes.PairedPSCBS}
 \alias{tileChromosomes}
 \alias{tileChromosomes.PairedPSCBS}
-\alias{callAllelicBalanceByDH}
-\alias{callAllelicBalanceByDH.PairedPSCBS}
 \alias{callExtremeAllelicImbalanceByDH}
 \alias{callExtremeAllelicImbalanceByDH.PairedPSCBS}
 \alias{as.data.frame.CBS}
@@ -104,8 +100,6 @@
 \alias{extractByRegion.PairedPSCBS}
 \alias{extractByRegions}
 \alias{extractByRegions.PairedPSCBS}
-\alias{estimateTauAB}
-\alias{estimateTauAB.PairedPSCBS}
 \alias{mergeTwoSegments}
 \alias{mergeTwoSegments.PairedPSCBS}
 \alias{updateMeans}
@@ -122,12 +116,13 @@
 \alias{estimateMeanForDH.PairedPSCBS}
 \alias{applyByRegion}
 \alias{applyByRegion.PairedPSCBS}
-\alias{estimateKappa}
-\alias{estimateKappa.PairedPSCBS}
-\alias{estimateKappaByC1Density}
-\alias{estimateKappaByC1Density.PairedPSCBS}
 \alias{estimateHighDHQuantileAtAB}
 \alias{estimateHighDHQuantileAtAB.PairedPSCBS}
+\alias{estimateKappa}
+\alias{estimateKappaByC1Density}
+\alias{callAllelicBalance}
+\alias{callAllelicBalanceByDH}
+\alias{estimateTauAB}
 
 \description{
   This page contains aliases for all "non-documented" objects that

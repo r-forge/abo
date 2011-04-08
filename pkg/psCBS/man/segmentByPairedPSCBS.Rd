@@ -11,12 +11,13 @@
 \alias{segmentByPairedPSCBS}
  \alias{segmentByPairedPSCBS}
 
- \title{Segment copy numbers using the paired PSCBS method}
+ \title{Segment total copy numbers and allele B fractions using the paired PSCBS method}
 
  \description{
-  Segment copy numbers using the paired PSCBS method [1].
+  Segment total copy numbers and allele B fractions using the paired PSCBS method [1].
+  This method requires matched normals.
   This is a low-level segmentation method.
-  It is intended to be applied to one sample and one chromosome at the time.
+  It is intended to be applied to one tumor-normal sample at the time.
  }
 
  \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh"), tbn=TRUE, joinSegments=TRUE, knownCPs=NULL, seed=NULL, verbose=FALSE)}

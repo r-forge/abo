@@ -14,6 +14,7 @@
 \alias{plotTracks,PairedPSCBS-method}
 
  \alias{plotTracks}
+ \alias{plot}
 
  \title{Plots parental specific copy numbers along the genome}
 

@@ -1,3 +1,117 @@
+###########################################################################/**
+# @set class=PairedPSCBS
+# @RdocMethod estimateKappa
+#
+# @title "Estimate global background in segmented copy numbers"
+#
+# \description{
+#  @get "title".
+#  The global background, here called \eqn{\kappa},
+#  may have multiple origins where normal contamination is one,
+#  but not necessarily the only one.
+# }
+#
+# @synopsis
+#
+# \arguments{
+#   \item{flavor}{A @character string specifying which type of
+#    estimator to use.}
+#   \item{...}{Additional arguments passed to the estimator.}
+# }
+#
+# \value{
+#   Returns the background estimate as a @numeric scalar.
+# }
+#
+# @author
+#
+# \seealso{
+#   Internally, one of the following methods are used:
+#   @seemethod "estimateKappaByC1Density".
+# }
+#
+#*/###########################################################################  
+setMethodS3("estimateKappa", "PairedPSCBS", function(this, flavor=c("density(C1)"), ...) {
+  # Argument 'flavor':
+  flavor <- match.arg(flavor);
+
+  if (flavor == "density(C1)") {
+    estimateKappaByC1Density(this, ...);
+  } else {
+    throw("Cannot estimate background. Unsupported flavor: ", flavor);
+  }
+})
+
+
+
+###########################################################################/**
+# @set class=PairedPSCBS
+# @RdocMethod estimateKappaByC1Density
+#
+# @title "Estimate global background in segmented copy numbers"
+#
+# \description{
+#  @get "title" based on the location of peaks in a weighted
+#  density estimator of the minor copy number mean levels. 
+#  The global background, here called \eqn{\kappa},
+#  may have multiple origins where normal contamination is one,
+#  but not necessarily the only one.
+# }
+#
+# @synopsis
+#
+# \arguments{
+#   \item{adjust}{A @numeric scale factor specifying the size of
+#    the bandwidth parameter used by the density estimator.}
+#   \item{minDensity}{A non-negative @numeric threshold specifying
+#    the minimum density a peak should have in order to consider
+#    it a peak.}
+#   \item{...}{Not used.}
+#   \item{verbose}{See @see "R.utils::Verbose".}
+# }
+#
+# \value{
+#   Returns the background estimate as a @numeric scalar.
+# }
+# 
+# \section{Algorithm}{
+#  \itemize{
+#  \item Retrieve segment-level minor copy numbers and corresponding weights:
+#   \enumerate{
+#    \item Grabs the segment-level C1 estimates.
+#    \item Calculate segment weights proportional to the number of heterozygous SNPs.
+#   }
+#
+#  \item Identify subset of regions with C1=0:
+#   \enumerate{
+#    \item Estimates the weighted empirical density function
+#          (truncated at zero below).  Tuning parameter 'adjust'.
+#    \item Find the first two peaks
+#          (with a density greater than tuning parameter 'minDensity').
+#    \item Assumes that the two peaks corresponds to C1=0 and C1=1.
+#    \item Defines threshold Delta0.5 as the center location between
+#          these two peaks.
+#   }
+#
+#  \item Estimate the normal contamination:
+#   \enumerate{
+#    \item For all segments with C1 < Delta0.5, calculate the weighted
+#          median of their C1:s.
+#    \item Let kappa be the above weighted median. 
+#          This is the estimated background.
+#   }
+#  }
+# }
+#
+# @author
+#
+# \seealso{
+#   Instead of calling this method explicitly, it is recommended
+#   to use the @seemethod "estimateKappa" method.
+# }
+#
+# @keyword internal
+#*/###########################################################################  
 setMethodS3("estimateKappaByC1Density", "PairedPSCBS", function(this, adjust=1, minDensity=0.2, ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
@@ -80,19 +194,15 @@ setMethodS3("estimateKappaByC1Density", "PairedPSCBS", function(this, adjust=1, 
   verbose && exit(verbose);
 
   kappa;
-}) # estimateKappaByC1Density()
+}, protected=TRUE) # estimateKappaByC1Density()
 
 
-setMethodS3("estimateKappa", "PairedPSCBS", function(this, flavor=c("density(C1)"), ...) {
-  # Argument 'flavor':
-  flavor <- match.arg(flavor);
-
-  estimateKappaByC1Density(this, ...);
-})
 
 
 #############################################################################
 # HISTORY:
+# 2011-04-08
+# o Added Rdoc for estimateKappaByC1Density().
 # 2011-02-03
 # o Added estimateKappa().
 # o Added estimateKappaByC1Density().

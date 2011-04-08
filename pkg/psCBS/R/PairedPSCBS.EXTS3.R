@@ -65,7 +65,7 @@ setMethodS3("mergeTwoSegments", "PairedPSCBS", function(this, left, ...) {
   res <- updateMeans(res);
 
   res;
-})
+}, private=TRUE)
 
 
 setMethodS3("dropByRegions", "PairedPSCBS", function(this, regions, H=1, ...) {
@@ -97,7 +97,7 @@ setMethodS3("dropByRegions", "PairedPSCBS", function(this, regions, H=1, ...) {
   res$dropped <- extractByRegions(this, regions=regions, ...);
 
   res;
-})
+}, private=TRUE)
 
 
 
@@ -109,13 +109,13 @@ setMethodS3("extractLocusLevelC1C2", "PairedPSCBS", function(fit, ...) {
   C1 <- 1/2*(1-rho)*C;
   C2 <- C-C1;
   data.frame(C1=C1, C2=C2);
-}) # extractLocusLevelC1C2()
+}, private=TRUE) # extractLocusLevelC1C2()
 
 
 setMethodS3("extractLocusLevelTCN", "PairedPSCBS", function(fit, ...) {
   data <- fit$data;
   C <- data$CT;
-}) # extractLocusLevelTCN()
+}, private=TRUE) # extractLocusLevelTCN()
 
 
 setMethodS3("updateMeans", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
@@ -219,7 +219,7 @@ setMethodS3("updateMeans", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
   verbose && exit(verbose);
 
   res;
-}) # updateMeans()
+}, private=TRUE) # updateMeans()
 
 
 

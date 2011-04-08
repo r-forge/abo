@@ -2,6 +2,11 @@
 Package: psCBS
 ==============
 
+Version: 0.9.47 [2011-04-08]
+o DOCUMENTATION: Added help pages for more methods.
+o CLEANUP: Started to restructure the source code files.
+
+
 Version: 0.9.46 [2011-04-08]
 o BUG FIX: postsegmentTCN() for PairedPSCBS could generate an invalid
   'tcnSegRows' matrix, where the indices for two consecutive segments
