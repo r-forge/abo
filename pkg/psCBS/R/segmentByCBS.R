@@ -364,7 +364,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, index=s
     fit$output <- fit$output[-1,,drop=FALSE];
     fit$segRows <- fit$segRows[-1,,drop=FALSE];
   }
-    
+
   verbose && cat(verbose, "Captured output that was sent to stdout:");
   stdout <- paste(stdout, collapse="\n");
   verbose && cat(verbose, stdout);
@@ -405,9 +405,19 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, index=s
 
   class(fit) <- c("CBS", class(fit));
 
+  # Sanity checks
+  segRows <- fit$segRows;
+  stopifnot(all(segRows[,1] <= segRows[,2], na.rm=TRUE));
+  stopifnot(all(segRows[-nrow(segRows),2] < segRows[-1,1], na.rm=TRUE));
+
   # Join segments?
   if (joinSegments) {
     fit <- joinSegments(fit, range=knownCPs, verbose=verbose);
+
+    # Sanity checks
+    segRows <- fit$segRows;
+    stopifnot(all(segRows[,1] <= segRows[,2], na.rm=TRUE));
+    stopifnot(all(segRows[-nrow(segRows),2] < segRows[-1,1], na.rm=TRUE));
   }
 
   verbose && cat(verbose, "Results object:");
@@ -425,6 +435,8 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, index=s
 
 ############################################################################
 # HISTORY:
+# 2011-04-07
+# o ROBUSTNESS: Added 'segRows' field validation in segmentByCBS().
 # 2010-12-01
 # o Now segmentByCBS() is utilizing 'segRows' from DNAcopy::segment(),
 #   which makes it possible to drop all code of trying to infer which

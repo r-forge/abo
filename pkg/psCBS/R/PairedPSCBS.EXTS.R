@@ -107,6 +107,14 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., force=FALSE, ver
   tcnSegRows <- fit$tcnSegRows[keep,,drop=FALSE];
   dhSegRows <- fit$dhSegRows[keep,,drop=FALSE];
 
+  # Sanity check
+  stopifnot(nrow(dhSegRows) == nrow(tcnSegRows));
+  stopifnot(all(tcnSegRows[,1] <= tcnSegRows[,2], na.rm=TRUE));
+#  stopifnot(all(tcnSegRows[-nrow(tcnSegRows),2] < tcnSegRows[-1,1], na.rm=TRUE));
+  stopifnot(all(dhSegRows[,1] <= dhSegRows[,2], na.rm=TRUE));
+  stopifnot(all(dhSegRows[-nrow(dhSegRows),2] < dhSegRows[-1,1], na.rm=TRUE));
+
+
   nbrOfSegments <- nrow(segs);
   verbose && cat(verbose, "Number of segments: ", nbrOfSegments);
 
@@ -160,8 +168,11 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., force=FALSE, ver
 
       tcnSegRowsII <- tcnSegRowsCC[rowsII,,drop=FALSE];
       dhSegRowsII <- dhSegRowsCC[rowsII,,drop=FALSE];
-##print(tcnSegRowsII);
-##print(dhSegRowsII);
+
+      verbose && cat(verbose, "TCN & DH segRows before:");
+      verbose && print(verbose, tcnSegRowsII);
+      verbose && print(verbose, dhSegRowsII);
+
       tcnSegRowsIIBefore <- tcnSegRowsII;
       nbrOfTCNsBefore <- segsII[1,"tcn.num.mark"];
 
@@ -195,70 +206,22 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., force=FALSE, ver
           # (c) Adjust for missing values
           keep <- which(!is.na(CT[units]));
           units <- units[keep];
+
+          # (d) Adjust for DH boundaries
+          if (jj > 1L) {
+            minIdx <- tcnSegRowsII[jj-1L,2L, drop=TRUE];
+            units <- units[units > minIdx];
+          }
+          if (jj < J) {
+            maxIdx <- dhSegRowsII[jj+1L,1L, drop=TRUE];
+            units <- units[units < maxIdx];
+          }
+
           tcnSegRow <- range(units);
           verbose && printf(verbose, "[idxStart,idxEnd] = [%d,%d]\n", tcnSegRow[1], tcnSegRow[2]);
           verbose && cat(verbose, "Number of non-missing TCN loci: ", length(units));
         } else {
-          throw("Not implemented correctly.")  # /HB 2010-12-02
-          # (a) Start and end of TCN segment is (somewhere) in 
-          #     the middle of the end of previous DH segment and
-          #     the start of the current DH segment.
-          if (jj == 1) {
-            xStart <- seg[["tcn.loc.start"]];
-            idxStart <- tcnSegRow[1];
-          } else if (jj > 1) {
-            xStarts <- c(segsII[jj-1,"dh.loc.end"], seg[["dh.loc.start"]]);
-            xStart <- mean(xStarts);
-            idxStart <- max(dhSegRow[1], tcnSegRow[1], na.rm=TRUE);
-            idxStart <- min(idxEnd+1L, idxStart);
-          }
-          if (jj == J) {
-            xEnd <- seg[["tcn.loc.end"]];
-            idxEnd <- tcnSegRow[2];
-          } else if (jj < J) {
-            xEnds <- c(seg[["dh.loc.end"]], segsII[jj+1,"dh.loc.start"]);
-            xEnd <- mean(xEnds);
-            idxEnd <- min(dhSegRow[2], tcnSegRow[2], na.rm=TRUE);
-          }
-   
-          verbose && printf(verbose, "[xStart,xEnd] = [%.0f,%.0f]\n", xStart, xEnd);
-          verbose && printf(verbose, "[idxStart,idxEnd] = [%d,%d]\n", idxStart, idxEnd);
-          verbose && cat(verbose, "Number of initial loci: ", idxEnd-idxStart+1L);
-  
-          # Sanity check
-          stopifnot(xStart <= xEnd);
-          stopifnot(idxStart <= idxEnd);
-  
-          # (b) Identify units
-          units <- which(chromosome == chr & xStart <= x & x <= xEnd);
-          verbose && printf(verbose, "[idxStart,idxEnd] = [%d,%d]\n", min(units), max(units));
-          verbose && cat(verbose, "Number of initial loci: ", length(units));
-  
-          # (c) Drop if it belongs to neighboring segment
-          keep <- which(idxStart <= units & units <= idxEnd);
-          nbrOfDropped <- length(units) - length(keep);
-          verbose && cat(verbose, "Number of loci dropped: ", nbrOfDropped);
-          units <- units[keep];
-          xJJ <- x[units];
-          xSupport <- range(xJJ, na.rm=FALSE);
-          verbose && printf(verbose, "[xStart,xEnd] = [%.0f,%.0f]\n", xSupport[1], xSupport[2]);
-          verbose && printf(verbose, "[idxStart,idxEnd] = [%d,%d]\n", min(units), max(units));
-          verbose && cat(verbose, "Number of loci: ", length(units));
-  
-          # (c) Adjust the start and end of the TCN segment
-          keep <- which(!is.na(xJJ));
-          xJJ <- xJJ[keep];
-          units <- units[keep];
-          tcnSegRow <- range(units);
-          xSupport <- range(xJJ, na.rm=FALSE);
-          verbose && printf(verbose, "[xStart,xEnd] = [%.0f,%.0f]\n", xSupport[1], xSupport[2]);
-          verbose && printf(verbose, "[idxStart,idxEnd] = [%d,%d]\n", tcnSegRow[1], tcnSegRow[2]);
-          verbose && cat(verbose, "Number of loci: ", length(units));
-  
-          xRange <- range(c(xStart,xEnd), xSupport, na.rm=TRUE);
-
-          xStart <- xRange[1];
-          xEnd <- xRange[2];
+          throw("Not implemented yet.")  # /HB 2010-12-02
         } # if (joinSegments)
   
         gamma <- mean(CT[units]);
@@ -285,9 +248,11 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., force=FALSE, ver
       # Sanity check
       stopifnot(nrow(segsII) == length(rowsII));
 
+      verbose && cat(verbose, "TCN & DH segRows afterward:");
+      verbose && print(verbose, tcnSegRowsII);
+      verbose && print(verbose, dhSegRowsII);
+
 ##print(segsII);
-##print(tcnSegRowsIIBefore);
-##print(tcnSegRowsII);
 
       # Sanity check
       nbrOfTCNsAfter <- sum(segsII[,"tcn.num.mark"], na.rm=TRUE);
@@ -295,6 +260,12 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., force=FALSE, ver
       verbose && cat(verbose, "Number of TCNs after: ", nbrOfTCNsAfter);
       stopifnot(nbrOfTCNsAfter >= nbrOfTCNsBefore);
 
+      # Sanity check
+      stopifnot(nrow(dhSegRowsII) == nrow(tcnSegRowsII));
+      stopifnot(all(tcnSegRowsII[,1] <= tcnSegRowsII[,2], na.rm=TRUE));
+      stopifnot(all(tcnSegRowsII[-nrow(tcnSegRowsII),2] < tcnSegRowsII[-1,1], na.rm=TRUE));
+      stopifnot(all(dhSegRowsII[,1] <= dhSegRowsII[,2], na.rm=TRUE));
+      stopifnot(all(dhSegRowsII[-nrow(dhSegRowsII),2] < dhSegRowsII[-1,1], na.rm=TRUE));
 
       segsCC[rowsII,] <- segsII;
       tcnSegRowsCC[rowsII,] <- tcnSegRowsII;
@@ -306,12 +277,26 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., force=FALSE, ver
     # Sanity check
     stopifnot(nrow(segsCC) == length(rows));
 
+    # Sanity check
+    stopifnot(nrow(dhSegRowsCC) == nrow(tcnSegRowsCC));
+    stopifnot(all(tcnSegRowsCC[,1] <= tcnSegRowsCC[,2], na.rm=TRUE));
+    stopifnot(all(tcnSegRowsCC[-nrow(tcnSegRowsCC),2] < tcnSegRowsCC[-1,1], na.rm=TRUE));
+    stopifnot(all(dhSegRowsCC[,1] <= dhSegRowsCC[,2], na.rm=TRUE));
+    stopifnot(all(dhSegRowsCC[-nrow(dhSegRowsCC),2] < dhSegRowsCC[-1,1], na.rm=TRUE));
+
     segs[rows,] <- segsCC;
     tcnSegRows[rows,] <- tcnSegRowsCC;
 
     rm(rows, segsCC);
     verbose && exit(verbose);
   } # for (cc ...)
+
+  # Sanity check
+  stopifnot(nrow(dhSegRows) == nrow(tcnSegRows));
+  stopifnot(all(tcnSegRows[,1] <= tcnSegRows[,2], na.rm=TRUE));
+  stopifnot(all(tcnSegRows[-nrow(tcnSegRows),2] < tcnSegRows[-1,1], na.rm=TRUE));
+  stopifnot(all(dhSegRows[,1] <= dhSegRows[,2], na.rm=TRUE));
+  stopifnot(all(dhSegRows[-nrow(dhSegRows),2] < dhSegRows[-1,1], na.rm=TRUE));
 
   verbose && enter(verbose, "Update (C1,C2) per segment");
   # Append (C1,C2) estimates
@@ -330,8 +315,17 @@ setMethodS3("postsegmentTCN", "PairedPSCBS", function(fit, ..., force=FALSE, ver
   fitS$output[keep,] <- segs;
   fitS$tcnSegRows[keep,] <- tcnSegRows;
 
+  # Sanity check
+  tcnSegRows <- fitS$tcnSegRows;
+  dhSegRows <- fitS$dhSegRows;
+  stopifnot(nrow(dhSegRows) == nrow(tcnSegRows));
+  stopifnot(all(tcnSegRows[,1] <= tcnSegRows[,2], na.rm=TRUE));
+  stopifnot(all(tcnSegRows[-nrow(tcnSegRows),2] < tcnSegRows[-1,1], na.rm=TRUE));
+  stopifnot(all(dhSegRows[,1] <= dhSegRows[,2], na.rm=TRUE));
+  stopifnot(all(dhSegRows[-nrow(dhSegRows),2] < dhSegRows[-1,1], na.rm=TRUE));
+
   # Update 'flavor'
-  fitS$params$flavor <- gsub(",", "&", flavor);
+  fitS$params$flavor <- gsub(",", "&", flavor, fixed=TRUE);
 
   verbose && exit(verbose);
 
@@ -883,6 +877,10 @@ setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=NULL, flavor=c(
 
 ############################################################################
 # HISTORY:
+# 2011-04-08
+# o BUG FIX: postsegmentTCN() for PairedPSCBS could generate an invalid
+#   'tcnSegRows' matrix, where the indices for two consecutive segments
+#   would overlap, which is invalid.
 # 2011-04-05
 # o BUG FIX: estimateHighDHQuantileAtAB() for PairedPSCBS would throw
 #   an error on an undefined 'trim' if verbose output was used.

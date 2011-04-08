@@ -2,6 +2,14 @@
 Package: psCBS
 ==============
 
+Version: 0.9.46 [2011-04-08]
+o BUG FIX: postsegmentTCN() for PairedPSCBS could generate an invalid
+  'tcnSegRows' matrix, where the indices for two consecutive segments
+  would overlap, which is invalid.  This was caught with real data,
+  but it seems to have required a very rare combination of data in
+  order for it to occur.
+
+
 Version: 0.9.45 [2011-04-05]
 o BUG FIX: estimateHighDHQuantileAtAB() for PairedPSCBS would throw
   an error on an undefined 'trim' if verbose output was used.

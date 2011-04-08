@@ -350,6 +350,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
       verbose && exit(verbose);
     } # for (kk ...)
 
+return(fitList);
+
     verbose && enter(verbose, "Merging");
     fit <- Reduce(append, fitList);
     # Not needed anymore
@@ -430,6 +432,10 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   tcnSegments <- fit$output;
   tcnSegRows <- fit$segRows;
   rm(fit);
+
+  # Sanity checks
+  stopifnot(all(tcnSegRows[,1] <= tcnSegRows[,2], na.rm=TRUE));
+  stopifnot(all(tcnSegRows[-nrow(tcnSegRows),2] < tcnSegRows[-1,1], na.rm=TRUE));
 
   verbose && exit(verbose);
 
@@ -516,10 +522,18 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     verbose && str(verbose, fit);
     dhSegments <- fit$output;
     dhSegRowsKK <- fit$segRows;
+
+    verbose && cat(verbose, "DH segmentation (locally-indexed) rows:");
+    verbose && print(verbose, dhSegRowsKK);
+    verbose && str(verbose, index);
+
     # Remap to genome-wide indices
     for (cc in 1:2) {
       dhSegRowsKK[,cc] <- index[dhSegRowsKK[,cc]];
     }
+
+    verbose && cat(verbose, "DH segmentation rows:");
+    verbose && print(verbose, dhSegRowsKK);
 
     # Not needed anymore
     rm(list=fields);
@@ -549,6 +563,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
     # Expand the TCN segmentation result data frame
     rows <- rep(kk, times=nrow(dhSegments));
+    verbose && cat(verbose, "Rows:");
+    verbose && print(verbose, rows);
     tcnSegmentsKK <- tcnSegments[rows,,drop=FALSE];
     tcnSegRowsKK <- tcnSegRows[rows,,drop=FALSE];
     # Sanity check
@@ -556,20 +572,42 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     stopifnot(nrow(tcnSegRowsKK) == nrow(dhSegments));
     stopifnot(is.na(tcnSegRowsKK[,1]) || is.na(dhSegRowsKK[,1]) || (tcnSegRowsKK[,1] <= dhSegRowsKK[,1]));
     stopifnot(is.na(tcnSegRowsKK[,2]) || is.na(dhSegRowsKK[,2]) || (dhSegRowsKK[,2] <= tcnSegRowsKK[,2]));
+    verbose && cat(verbose, "TCN segmentation rows:");
+    verbose && print(verbose, tcnSegRowsKK);
+    stopifnot(all(tcnSegRowsKK[,1] == tcnSegRowsKK[1,1], na.rm=TRUE));
+    stopifnot(all(tcnSegRowsKK[,2] == tcnSegRowsKK[1,2], na.rm=TRUE));
 
-##    verbose && cat(verbose, "TCN and DH segmentation rows:");
-##    verbose && print(verbose, dhSegRowsKK);
-##    verbose && print(verbose, tcnSegRowsKK);
+    verbose && cat(verbose, "TCN and DH segmentation rows:");
+    verbose && print(verbose, tcnSegRowsKK);
+    verbose && print(verbose, dhSegRowsKK);
+    verbose && print(verbose, tcnSegsExpanded);
 
     # Append
     tcnSegsExpanded <- rbind(tcnSegsExpanded, tcnSegRowsKK);
+    verbose && cat(verbose, "TCN segmentation (expanded) rows:");
+    verbose && print(verbose, tcnSegsExpanded);
     rownames(tcnSegsExpanded) <- NULL;
 
     dhSegRows <- rbind(dhSegRows, dhSegRowsKK);
     rownames(dhSegRows) <- NULL;
 
-    verbose && str(verbose, tcnSegRows);
-    verbose && str(verbose, dhSegRows);
+    verbose && cat(verbose, "TCN and DH segmentation rows:");
+    verbose && print(verbose, tcnSegRows);
+    verbose && print(verbose, dhSegRows);
+    verbose && print(verbose, tcnSegsExpanded);
+
+    # Sanity checks
+    stopifnot(all(tcnSegRows[,1] <= tcnSegRows[,2], na.rm=TRUE));
+    stopifnot(all(tcnSegRows[-nrow(tcnSegRows),2] < tcnSegRows[-1,1], na.rm=TRUE));
+    stopifnot(all(dhSegRows[,1] <= dhSegRows[,2], na.rm=TRUE));
+    stopifnot(all(dhSegRows[-nrow(dhSegRows),2] < dhSegRows[-1,1], na.rm=TRUE));
+    stopifnot(all(tcnSegsExpanded[,1] <= tcnSegsExpanded[,2], na.rm=TRUE));
+    stopifnot(all(tcnSegsExpanded[,1] <= dhSegRows[,1], na.rm=TRUE));
+    stopifnot(all(tcnSegsExpanded[,2] >= dhSegRows[,2], na.rm=TRUE));
+##    if (!all(tcnSegsExpanded[-nrow(tcnSegsExpanded),2] < tcnSegsExpanded[-1,1], na.rm=TRUE)) {
+##      stopifnot(all(tcnSegsExpanded[-nrow(tcnSegsExpanded),2] < tcnSegsExpanded[-1,1], na.rm=TRUE));
+##    }
+
 
     # Sanity check
     stopifnot(nrow(dhSegRows) == nrow(tcnSegsExpanded));
@@ -608,6 +646,14 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # Sanity check
   stopifnot(nrow(dhSegRows) == nrow(tcnSegsExpanded));
   rownames(tcnSegRows) <- rownames(dhSegRows) <- NULL;
+
+  stopifnot(all(tcnSegRows[,1] <= tcnSegRows[,2], na.rm=TRUE));
+  stopifnot(all(tcnSegRows[-nrow(tcnSegRows),2] < tcnSegRows[-1,1], na.rm=TRUE));
+  stopifnot(all(dhSegRows[,1] <= dhSegRows[,2], na.rm=TRUE));
+  stopifnot(all(dhSegRows[-nrow(dhSegRows),2] < dhSegRows[-1,1], na.rm=TRUE));
+  stopifnot(all(tcnSegsExpanded[,1] <= tcnSegsExpanded[,2], na.rm=TRUE));
+##  stopifnot(all(tcnSegsExpanded[-nrow(tcnSegsExpanded),2] < tcnSegsExpanded[-1,1], na.rm=TRUE));
+
 
   # Move 'chrom' column to the first column
   idx <- match("chromosome", names(segs));
@@ -661,7 +707,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
   # Update 
   if (is.element(flavor, c("tcn&dh", "sqrt(tcn)&dh"))) {
-    fit$params$flavor <- gsub("&", ",", flavor); # AD HOC.
+    fit$params$flavor <- gsub("&", ",", flavor, fixed=TRUE); # AD HOC.
     fit <- postsegmentTCN(fit, verbose=verbose);
   }
 
@@ -677,6 +723,10 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2011-04-07
+# o ROBUSTNESS: Added validation of the different 'tcnSegRows' and
+#   'dhSegRows' calculations in segmentByPairedPSCBS().  This helps
+#   us narrow down a bug in postsegmentTCN().
 # 2010-12-09
 # o BUG FIX: When there were multiple chromsomes processed by
 #   segmentByPairedPSCBS(), then the returned data object would
