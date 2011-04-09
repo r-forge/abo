@@ -48,3 +48,4 @@ applyByRegion applyByRegion.PairedPSCBS
   estimateKappa estimateKappaByC1Density
   callAllelicBalance callAllelicBalanceByDH
 estimateTauAB
+estimateTauABBySmallDH

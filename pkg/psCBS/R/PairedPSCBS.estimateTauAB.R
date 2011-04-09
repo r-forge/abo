@@ -25,13 +25,14 @@
 #
 # \seealso{
 #   Internally, one of the following methods are used:
+#   @seemethod "estimateTauABBySmallDH",
 #   @seemethod "estimateStdDevForHeterozygousBAF",
 #   @seemethod "estimateMeanForDH", and
 #   @seemethod "estimateHighDHQuantileAtAB".
 # }
 #
 #*/###########################################################################  
-setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=NULL, flavor=c("q(DH)", "mad(hBAF)", "median(DH)"), ..., verbose=FALSE) {
+setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=NULL, flavor=c("qq(DH)", "q(DH)", "mad(hBAF)", "median(DH)"), ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -70,6 +71,11 @@ setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=NULL, flavor=c(
     if (is.null(scale)) scale <- 1;
     verbose && cat(verbose, "scale: ", scale);
     tau <- estimateHighDHQuantileAtAB(this, scale=scale, ..., verbose=verbose);
+  } else if (flavor == "qq(DH)") {
+    if (is.null(scale)) scale <- 1;
+    verbose && cat(verbose, "scale: ", scale);
+    tau <- estimateTauABBySmallDH(this, ..., verbose=verbose);
+    tau <- scale * tau;
   } else {
     throw("Unkown flavor: ", flavor);
   }
@@ -430,9 +436,134 @@ setMethodS3("estimateHighDHQuantileAtAB", "PairedPSCBS", function(this, quantile
 
 
 
+
+###########################################################################/**
+# @set class=PairedPSCBS
+# @RdocMethod estimateTauABBySmallDH
+#
+# @title "Estimate a threshold for calling allelic balance from DH"
+#
+# \description{
+#  @get "title".
+# }
+#
+# @synopsis
+#
+# \arguments{
+#   \item{q1}{A @numeric value specifying the weighted quantile of the
+#    segment-level DHs used to identify segments with small DH means.}
+#   \item{q2}{A @numeric value specifying the quantile of the locus-level
+#    DH signals for those segments with small DH mean levels.}
+#   \item{...}{Not used.}
+#   \item{verbose}{See @see "R.utils::Verbose".} 
+# }
+#
+# \value{
+#   Returns the threshold estimate as a @numeric scalar.
+# }
+#
+# \section{Algorithm}{
+#  \itemize{
+#   \item Grabs the segment-level DH estimates.
+#   \item Calculate segment weights proportional to the number 
+#         of heterozygous SNPs.
+#   \item Calculate tau as the 5\% quantile of the weighted DH means.
+#   \item Choose the segments with means less than tau.
+#   \item Calculate threshold DeltaAB as the 90\% quantile of the
+#         observed locus-level DHs from the selected segments in Step 4.
+#  }
+# }
+#
+# @author
+#
+# \seealso{
+#   Instead of calling this method explicitly, it is recommended
+#   to use the @seemethod "estimateTauAB" method.
+# }
+#
+# @keyword internal
+#*/###########################################################################  
+
+setMethodS3("estimateTauABBySmallDH", "PairedPSCBS", function(fit, q1=0.05, q2=0.90, ..., verbose=FALSE) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+  # Argument 'q1' & 'q2':
+  q1 <- Arguments$getDouble(q1, range=c(0,1));
+  q2 <- Arguments$getDouble(q2, range=c(0,1));
+
+  # Argument 'verbose':
+  verbose <- Arguments$getVerbose(verbose);
+  if (verbose) {
+    pushState(verbose);
+    on.exit(popState(verbose));
+  }
+
+  verbose && enter(verbose, "Estimating DH threshold for AB caller");
+  verbose && cat(verbose, "quantile #1: ", q1);
+  verbose && cat(verbose, "quantile #2: ", q2);
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Extract the region-level estimates
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  segs <- fit$output;
+  dh <- segs$dh.mean;
+  stopifnot(!is.null(dh));
+  n <- segs$dh.num.mark;
+
+  # Drop missing values
+  keep <- (!is.na(dh) & !is.na(n));
+  idxs <- which(keep);
+  dh <- dh[idxs];
+  n <- n[idxs];
+  verbose && cat(verbose, "Number of segments: ", length(idxs));
+  # Sanity check
+  stopifnot(length(idxs) > 0);
+
+  # Calculated weighted quantile
+  weights <- n / sum(n);
+  tauDH <- weightedQuantile(dh, w=weights, probs=q1);
+  verbose && printf(verbose, "Weighted %g%% quantile of DH: %f\n", 100*q1, tauDH);
+
+  # Identify segments with DH this small
+  keep <- (dh <= tauDH);
+  idxs <- idxs[keep];
+  verbose && cat(verbose, "Number of segments with small DH: ", length(idxs));
+  # Sanity check
+  stopifnot(length(idxs) > 0);
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Extract the locus-level estimates
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Extract the regions of interest
+  fitT <- extractByRegions(fit, idxs);
+
+  # Extract the data
+  data <- fitT$data;
+  rho <- data$rho;
+  stopifnot(!is.null(rho));
+
+  verbose && cat(verbose, "Number of data points: ", length(rho));
+
+  rho <- rho[is.finite(rho)];
+  verbose && cat(verbose, "Number of finite data points: ", length(rho));
+
+  # Drop missing values
+  tauAB <- quantile(rho, probs=q2, na.rm=FALSE, names=FALSE);
+  verbose && printf(verbose, "Estimate of tauAB: %g\n", tauAB);
+  
+  # Sanity check
+  tauAB <- Arguments$getDouble(tauAB);
+
+  tauAB;
+}, protected=TRUE) # estimateTauABBySmallDH()
+
+
 ############################################################################
 # HISTORY:
 # 2011-04-08
+# o Added estimateTauABBySmallDH() for PairedPSCBS.
 # o Added Rdoc help to estimateTauAB() for PairedPSCBS.
 # o Extracted from PairedPSCBS.EXTS.R.
 # o BUG FIX: postsegmentTCN() for PairedPSCBS could generate an invalid

@@ -20,7 +20,7 @@
  Estimate a threshold for calling allelic balance from DH.
 }
 
-\usage{\method{estimateTauAB}{PairedPSCBS}(this, scale=NULL, flavor=c("q(DH)", "mad(hBAF)", "median(DH)"), ..., verbose=FALSE)}
+\usage{\method{estimateTauAB}{PairedPSCBS}(this, scale=NULL, flavor=c("qq(DH)", "q(DH)", "mad(hBAF)", "median(DH)"), ..., verbose=FALSE)}
 
 \arguments{
   \item{scale}{An optional \code{\link[base]{numeric}} scale factor.}
@@ -37,6 +37,7 @@
 
 \seealso{
   Internally, one of the following methods are used:
+  \code{\link[psCBS:estimateTauABBySmallDH.PairedPSCBS]{*estimateTauABBySmallDH}()},
   \code{\link[psCBS:estimateStdDevForHeterozygousBAF.PairedPSCBS]{*estimateStdDevForHeterozygousBAF}()},
   \code{\link[psCBS:estimateMeanForDH.PairedPSCBS]{*estimateMeanForDH}()}, and
   \code{\link[psCBS:estimateHighDHQuantileAtAB.PairedPSCBS]{*estimateHighDHQuantileAtAB}()}.

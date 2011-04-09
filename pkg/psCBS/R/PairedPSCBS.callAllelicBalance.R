@@ -144,6 +144,9 @@ setMethodS3("callAllelicBalanceByDH", "PairedPSCBS", function(fit, tau=0.10, alp
 
 
 
+
+
+
 ##############################################################################
 # HISTORY
 # 2011-04-08

@@ -123,6 +123,7 @@
 \alias{callAllelicBalance}
 \alias{callAllelicBalanceByDH}
 \alias{estimateTauAB}
+\alias{estimateTauABBySmallDH}
 
 \description{
   This page contains aliases for all "non-documented" objects that
