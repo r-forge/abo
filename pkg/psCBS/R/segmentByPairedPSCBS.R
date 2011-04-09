@@ -61,6 +61,7 @@
 # 
 # \details{
 #   Internally @see "segmentByCBS" is used for segmentation.
+#
 #   This segmentation method does \emph{not} support weights.
 #
 #   The "DNAcopy::segment" implementation of CBS uses approximation

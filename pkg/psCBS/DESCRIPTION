@@ -7,7 +7,7 @@ Description: Segments allele specific DNA copy number data to detect regions
 	with abnormal copy number within each parental chromosome
 Maintainer: Henrik Bengtsson <henrikb@braju.com>
 Depends: DNAcopy (>= 1.24.0), R.methodsS3 (>= 1.2.1), R.utils (>= 1.7.4)
-Suggests: aroma.light (>= 1.18.4), matrixStats (>= 0.2.2), R.oo (>= 1.8.0)
+Suggests: aroma.light (>= 1.18.4), matrixStats (>= 0.2.2), R.oo (>= 1.8.0), Hmisc (>= 3.8-3)
 License: GPL (>= 2)
 LazyLoad: yes
 biocViews: Microarray, CopyNumberVariants

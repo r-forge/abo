@@ -3,6 +3,7 @@ Package: psCBS
 ==============
 
 Version: 0.9.47 [2011-04-08]
+o Added internal weightedQuantile().
 o DOCUMENTATION: Added help pages for more methods.
 o CLEANUP: Started to restructure the source code files.
 
