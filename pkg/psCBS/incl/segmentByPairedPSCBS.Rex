@@ -65,7 +65,7 @@ plotTracks(fit);
 # NOTE: Ideally, this should be done on whole-genome data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Explicitly estimate the threshold in C1 for calling LOH
-tauLOH <- estimateTauLOH(fit, flavor="minC1|nonAB*", verbose=-10);
+tauLOH <- estimateTauLOH(fit, flavor="minC1|nonAB", verbose=-10);
 print(tauLOH);
 ## [1] 
 
