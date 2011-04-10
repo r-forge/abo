@@ -1,7 +1,7 @@
 ###########################################################################/**
 # @set class=PairedPSCBS
-# @RdocMethod callAllelicBalance
-# @aliasmethod callAB
+# @RdocMethod callAB
+# @aliasmethod callAllelicBalance
 #
 # @title "Calls segments that are in allelic balance"
 #
@@ -15,6 +15,8 @@
 #   \item{flavor}{A @character string specifying which type of
 #    call to use.}
 #   \item{...}{Additional arguments passed to the caller.}
+#   \item{force}{If @FALSE, and allelic-balance calls already exits,
+#    then nothing is done, otherwise the calls are done.}
 # }
 #
 # \value{
@@ -29,17 +31,31 @@
 # }
 #
 #*/###########################################################################
-setMethodS3("callAllelicBalance", "PairedPSCBS", function(fit, flavor=c("DeltaAB*"), ...) {
+setMethodS3("callAB", "PairedPSCBS", function(fit, flavor=c("DeltaAB*"), ..., force=FALSE) {
   # Argument 'flavor':
   flavor <- match.arg(flavor);
 
+
+  # Already done?
+  segs <- as.data.frame(fit);
+  calls <- segs$ab.call;
+  if (!force && !is.null(calls)) {
+    return(invisible(fit));
+  }
+  
+
   if (flavor == "DeltaAB*") {
-    callAllelicBalanceByDH(fit, ...);
+    fit <- callAllelicBalanceByDH(fit, ...);
   } else {
     throw("Cannot call allelic balance. Unsupported flavor: ", flavor);
   }
+
+  return(invisible(fit));
 })
 
+setMethodS3("callAllelicBalance", "default", function(...) {
+  callAB(...);
+})
 
 
 
@@ -86,7 +102,7 @@ setMethodS3("callAllelicBalance", "PairedPSCBS", function(fit, flavor=c("DeltaAB
 #
 # @keyword internal
 #*/###########################################################################
-setMethodS3("callAllelicBalanceByDH", "PairedPSCBS", function(fit, tau=0.10, alpha=0.05, ..., verbose=FALSE) {
+setMethodS3("callAllelicBalanceByDH", "PairedPSCBS", function(fit, tau=estimateTauAB(fit, flavor="qq(DH)"), alpha=0.05, ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
@@ -149,6 +165,11 @@ setMethodS3("callAllelicBalanceByDH", "PairedPSCBS", function(fit, tau=0.10, alp
 
 ##############################################################################
 # HISTORY
+# 2011-04-10
+# o callAllelicBalance() calls callAB().
+# 2011-04-09
+# o Now callAllelicBalance(..., force=FALSE) skips the caller if allelic-
+#   balance calls already exist.
 # 2011-04-08
 # o Added Rdoc for callAllelicBalance() and callAllelicBalanceByDH().
 # o Extracted from PairedPSCBS.CALL.R.

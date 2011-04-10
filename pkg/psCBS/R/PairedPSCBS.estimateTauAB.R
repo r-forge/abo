@@ -5,7 +5,7 @@
 # @title "Estimate a threshold for calling allelic balance from DH"
 #
 # \description{
-#  @get "title".
+#  @get "title" to be used by the @seemethod "callAB" method.
 # }
 #
 # @synopsis

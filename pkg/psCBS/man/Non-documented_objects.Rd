@@ -124,6 +124,11 @@
 \alias{callAllelicBalanceByDH}
 \alias{estimateTauAB}
 \alias{estimateTauABBySmallDH}
+\alias{estimateTauLOH}
+\alias{estimateTauLOHByMinC1ForNonAB}
+\alias{callAB}
+\alias{callAllelicBalance.default}
+\alias{callLOH}
 
 \description{
   This page contains aliases for all "non-documented" objects that

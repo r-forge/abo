@@ -1,21 +1,21 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Do not modify this file since it was automatically generated from:
 % 
-%  PairedPSCBS.callAllelicBalance.R
+%  PairedPSCBS.callAB.R
 % 
 % by the Rdoc compiler part of the R.oo package.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\name{callAllelicBalance.PairedPSCBS}
-\alias{callAllelicBalance.PairedPSCBS}
-\alias{PairedPSCBS.callAllelicBalance}
-\alias{callAllelicBalance.PairedPSCBS}
-\alias{callAllelicBalance,PairedPSCBS-method}
-
+\name{callAB.PairedPSCBS}
+\alias{callAB.PairedPSCBS}
 \alias{PairedPSCBS.callAB}
 \alias{callAB.PairedPSCBS}
 \alias{callAB,PairedPSCBS-method}
+
+\alias{PairedPSCBS.callAllelicBalance}
+\alias{callAllelicBalance.PairedPSCBS}
+\alias{callAllelicBalance,PairedPSCBS-method}
 
 
 \title{Calls segments that are in allelic balance}
@@ -24,12 +24,14 @@
  Calls segments that are in allelic balance, i.e. that have equal minor and major copy numbers.
 }
 
-\usage{\method{callAllelicBalance}{PairedPSCBS}(fit, flavor=c("DeltaAB*"), ...)}
+\usage{\method{callAB}{PairedPSCBS}(fit, flavor=c("DeltaAB*"), ..., force=FALSE)}
 
 \arguments{
   \item{flavor}{A \code{\link[base]{character}} string specifying which type of
    call to use.}
   \item{...}{Additional arguments passed to the caller.}
+  \item{force}{If \code{\link[base:logical]{FALSE}}, and allelic-balance calls already exits,
+   then nothing is done, otherwise the calls are done.}
 }
 
 \value{

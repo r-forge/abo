@@ -17,7 +17,7 @@
 \title{Estimate a threshold for calling allelic balance from DH}
 
 \description{
- Estimate a threshold for calling allelic balance from DH.
+ Estimate a threshold for calling allelic balance from DH to be used by the \code{\link[psCBS:callAB.PairedPSCBS]{*callAB}()} method.
 }
 
 \usage{\method{estimateTauAB}{PairedPSCBS}(this, scale=NULL, flavor=c("qq(DH)", "q(DH)", "mad(hBAF)", "median(DH)"), ..., verbose=FALSE)}

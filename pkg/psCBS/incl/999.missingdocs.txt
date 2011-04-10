@@ -49,3 +49,6 @@ applyByRegion applyByRegion.PairedPSCBS
   callAllelicBalance callAllelicBalanceByDH
 estimateTauAB
 estimateTauABBySmallDH
+estimateTauLOH estimateTauLOHByMinC1ForNonAB
+ callAB callAllelicBalance.default
+callLOH

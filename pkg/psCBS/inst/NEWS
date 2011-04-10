@@ -2,8 +2,17 @@
 Package: psCBS
 ==============
 
+Version: 0.9.48 [2011-04-10]
+o Added callLOH() for PairedPSCBS, which in turn calls 
+  auxillary methods.
+o Added estimateTauLOH() for PairedPSCBS, which in turn calls 
+  auxillary methods.
+o Now callAB(..., force=FALSE) skips the caller if
+  allelic-balance calls already exist.
+
+
 Version: 0.9.47 [2011-04-08]
-o Added estimateTauABBySmallDH() for PairedPSCBS.
+o Added estimateTauABBySmallDH()
 o Added internal weightedQuantile().
 o DOCUMENTATION: Added help pages for more methods.
 o CLEANUP: Started to restructure the source code files.

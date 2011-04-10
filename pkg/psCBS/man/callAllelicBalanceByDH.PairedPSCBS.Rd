@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Do not modify this file since it was automatically generated from:
 % 
-%  PairedPSCBS.callAllelicBalance.R
+%  PairedPSCBS.callAB.R
 % 
 % by the Rdoc compiler part of the R.oo package.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -22,7 +22,7 @@
  bootstrap estimator.
 }
 
-\usage{\method{callAllelicBalanceByDH}{PairedPSCBS}(fit, tau=0.1, alpha=0.05, ..., verbose=FALSE)}
+\usage{\method{callAllelicBalanceByDH}{PairedPSCBS}(fit, tau=estimateTauAB(fit, flavor = "qq(DH)"), alpha=0.05, ..., verbose=FALSE)}
 
 \arguments{
   \item{flavor}{A \code{\link[base]{character}} string specifying which type of
