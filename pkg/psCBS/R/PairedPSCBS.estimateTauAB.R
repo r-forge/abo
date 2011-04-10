@@ -482,8 +482,7 @@ setMethodS3("estimateHighDHQuantileAtAB", "PairedPSCBS", function(this, quantile
 # }
 #
 # @keyword internal
-#*/###########################################################################  
-
+#*/###########################################################################
 setMethodS3("estimateTauABBySmallDH", "PairedPSCBS", function(fit, q1=0.05, q2=0.90, ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments

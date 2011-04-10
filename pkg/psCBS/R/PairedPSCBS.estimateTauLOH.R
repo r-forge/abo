@@ -124,7 +124,7 @@ setMethodS3("estimateTauLOHByMinC1ForNonAB", "PairedPSCBS", function(this, tauMa
 
   verbose && enter(verbose, "Estimating DH threshold for calling LOH as the midpoint between guessed C1=0 and C1=1");
   segs <- as.data.frame(this);
-  verbose && cat(verbose, "Argument 'tauMax': ", tauMax);
+  verbose && printf(verbose, "Argument 'tauMax': %.3g\n", tauMax);
   verbose && cat(verbose, "Number of segments: ", nrow(segs));
 
   # Getting AB calls
@@ -134,19 +134,23 @@ setMethodS3("estimateTauLOHByMinC1ForNonAB", "PairedPSCBS", function(this, tauMa
     throw("Cannot estimate tau_LOH because allelic-balance calls have not been made yet.");
   }
 
-  verbose && cat(verbose, "Number of segments in allelic balance: ", sum(isAB));
+  verbose && cat(verbose, "Number of segments in allelic balance: ", sum(isAB, na.rm=TRUE));
 
-  segsAB <- segs[isAB,,drop=FALSE];
+  segsAB <- segs[which(isAB),,drop=FALSE];
   C <- segsAB$tcn.mean;
   n <- segsAB$dh.num.mark;
   w <- n/sum(n);
   C1 <- C/2;  # Called AB!
-  muC1atAB  <- weightedMedian(C, w=w, na.rm=TRUE);
+  verbose && printf(verbose, "C: %s\n", hpaste(sprintf("%.3g", C)));
+  verbose && printf(verbose, "Corrected C1 (=C/2): %s\n", hpaste(sprintf("%.3g", C1)));
+  verbose && printf(verbose, "Number of DHs: %s\n", hpaste(n));
+  verbose && printf(verbose, "Weights: %s\n", hpaste(sprintf("%.3g", w)));
+  muC1atAB  <- weightedMedian(C1, w=w, na.rm=TRUE);
   verbose && printf(verbose, "Weighted median of (corrected) C1 in allelic balance: %.3f\n", muC1atAB);
 
 
-  verbose && cat(verbose, "Number of segments not in allelic balance: ", sum(!isAB));
-  segsNotAB <- segs[!isAB,,drop=FALSE];
+  verbose && cat(verbose, "Number of segments not in allelic balance: ", sum(!isAB, na.rm=TRUE));
+  segsNotAB <- segs[which(!isAB),,drop=FALSE];
   C1 <- segsNotAB$c1.mean;
   muC1atNonAB <- min(C1, na.rm=TRUE);
   idxs <- which(C1 <= muC1atNonAB);
@@ -160,7 +164,7 @@ setMethodS3("estimateTauLOHByMinC1ForNonAB", "PairedPSCBS", function(this, tauMa
   tau <- (muC1atAB + muC1atNonAB) / 2;
   verbose && printf(verbose, "Midpoint between the two: %.3g\n", tau);
 
-  tau <- min(tau, tauMax);
+  tau <- min(c(tau, tauMax), na.rm=TRUE);
   verbose && printf(verbose, "Censored (tau <= %.g) midpoint between the two: %.3g\n", tauMax, tau);
 
   verbose && exit(verbose);
