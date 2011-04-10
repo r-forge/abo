@@ -9,6 +9,8 @@ o Added estimateTauLOH() for PairedPSCBS, which in turn calls
   auxillary methods.
 o Now callAB(..., force=FALSE) skips the caller if
   allelic-balance calls already exist.
+o DOCUMENTATION: Update the exampe for segmentByPairedPSCBS
+  to reflect the restructured AB and LOH callers.
 
 
 Version: 0.9.47 [2011-04-08]
