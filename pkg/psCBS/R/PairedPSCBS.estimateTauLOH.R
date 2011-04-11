@@ -74,7 +74,9 @@ setMethodS3("estimateTauLOH", "PairedPSCBS", function(this, flavor=c("minC1|nonA
 # @synopsis
 #
 # \arguments{
-#   \item{tauMax}{A @numeric specifying the maximum estimate returned.}
+#   \item{midpoint}{A @numeric scalar in [0,1] specifying the relative
+#    position of the midpoint between the estimated locations of 
+#    C1=0 and C1=1 mean parameters.}
 #   \item{...}{Not used.}
 #   \item{verbose}{See @see "R.utils::Verbose".}
 # }
@@ -108,12 +110,15 @@ setMethodS3("estimateTauLOH", "PairedPSCBS", function(this, flavor=c("minC1|nonA
 #
 # @keyword internal
 #*/###########################################################################  
-setMethodS3("estimateTauLOHByMinC1ForNonAB", "PairedPSCBS", function(this, tauMax=1/3, ..., verbose=FALSE) {
+setMethodS3("estimateTauLOHByMinC1ForNonAB", "PairedPSCBS", function(this, midpoint=1/2,..., verbose=FALSE) {
   require("aroma.light") || throw("Package not loaded: aroma.light");
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Argument 'midpoint':
+  midpoint <- Arguments$getDouble(midpoint, range=c(0,1));
+
   # Argument 'verbose':
   verbose <- Arguments$getVerbose(verbose);
   if (verbose) {
@@ -124,7 +129,7 @@ setMethodS3("estimateTauLOHByMinC1ForNonAB", "PairedPSCBS", function(this, tauMa
 
   verbose && enter(verbose, "Estimating DH threshold for calling LOH as the midpoint between guessed C1=0 and C1=1");
   segs <- as.data.frame(this);
-  verbose && printf(verbose, "Argument 'tauMax': %.3g\n", tauMax);
+  verbose && printf(verbose, "Argument 'midpoint': %.3g\n", midpoint);
   verbose && cat(verbose, "Number of segments: ", nrow(segs));
 
   # Getting AB calls
@@ -161,11 +166,8 @@ setMethodS3("estimateTauLOHByMinC1ForNonAB", "PairedPSCBS", function(this, tauMa
   # Sanity check
   stopifnot(muC1atNonAB < muC1atAB);
 
-  tau <- (muC1atAB + muC1atNonAB) / 2;
+  tau <- midpoint * (muC1atAB + muC1atNonAB);
   verbose && printf(verbose, "Midpoint between the two: %.3g\n", tau);
-
-  tau <- min(c(tau, tauMax), na.rm=TRUE);
-  verbose && printf(verbose, "Censored (tau <= %.g) midpoint between the two: %.3g\n", tauMax, tau);
 
   verbose && exit(verbose);
 
@@ -176,6 +178,9 @@ setMethodS3("estimateTauLOHByMinC1ForNonAB", "PairedPSCBS", function(this, tauMa
 
 ############################################################################
 # HISTORY:
+# 2011-04-11
+# o Added argument 'midpoint' to estimateTauLOHByMinC1AtNonAB().
+# o Dropped argument 'tauMax'; it was a misunderstanding.
 # 2011-04-09
 # o Added estimateTauLOHByMinC1AtNonAB().
 # o Added estimateTauLOH().

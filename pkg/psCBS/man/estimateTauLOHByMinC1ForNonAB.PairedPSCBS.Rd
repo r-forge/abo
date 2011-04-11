@@ -20,10 +20,12 @@
  Estimate a threshold for calling LOH from DH based on the location of guessed C1=0 and C1=1 peaks.
 }
 
-\usage{\method{estimateTauLOHByMinC1ForNonAB}{PairedPSCBS}(this, tauMax=1/3, ..., verbose=FALSE)}
+\usage{\method{estimateTauLOHByMinC1ForNonAB}{PairedPSCBS}(this, midpoint=1/2, ..., verbose=FALSE)}
 
 \arguments{
-  \item{tauMax}{A \code{\link[base]{numeric}} specifying the maximum estimate returned.}
+  \item{midpoint}{A \code{\link[base]{numeric}} scalar in [0,1] specifying the relative
+   position of the midpoint between the estimated locations of
+   C1=0 and C1=1 mean parameters.}
   \item{...}{Not used.}
   \item{verbose}{See \code{\link[R.utils]{Verbose}}.}
 }

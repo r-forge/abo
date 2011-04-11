@@ -469,8 +469,14 @@ setMethodS3("estimateHighDHQuantileAtAB", "PairedPSCBS", function(this, quantile
 #         of heterozygous SNPs.
 #   \item Calculate tau as the 5\% quantile of the weighted DH means.
 #   \item Choose the segments with means less than tau.
-#   \item Calculate threshold DeltaAB as the 90\% quantile of the
-#         observed locus-level DHs from the selected segments in Step 4.
+#   \item Calculate threshold DeltaAB as the 90\% "symmetric" quantile 
+#         of the observed locus-level DHs from the selected segments 
+#         in Step 4.
+#         The q:th "symmetric" quantile is estimated by estimating 
+#         the ((1-q), 50\%) quantiles, calculating their distance as
+#         "50\%-(1-q)" and add to the median (50\%), i.e.
+#         "median + (median-(1-q))" = "2*median-1 + q", which should
+#         equal q if the distribution is symmetric.
 #  }
 # }
 #
@@ -500,7 +506,7 @@ setMethodS3("estimateTauABBySmallDH", "PairedPSCBS", function(fit, q1=0.05, q2=0
 
   verbose && enter(verbose, "Estimating DH threshold for AB caller");
   verbose && cat(verbose, "quantile #1: ", q1);
-  verbose && cat(verbose, "quantile #2: ", q2);
+  verbose && cat(verbose, "Symmetrix quantile #2: ", q2);
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Extract the region-level estimates
@@ -545,13 +551,16 @@ setMethodS3("estimateTauABBySmallDH", "PairedPSCBS", function(fit, q1=0.05, q2=0
 
   verbose && cat(verbose, "Number of data points: ", length(rho));
 
+  # Drop missing values
   rho <- rho[is.finite(rho)];
   verbose && cat(verbose, "Number of finite data points: ", length(rho));
 
-  # Drop missing values
-  tauAB <- quantile(rho, probs=q2, na.rm=FALSE, names=FALSE);
-  verbose && printf(verbose, "Estimate of tauAB: %g\n", tauAB);
+  qs <- quantile(rho, probs=c(1-q2, 1/2), na.rm=FALSE, names=FALSE);
+  verbose && printf(verbose, "Estimate of (1-.3g%):th and 50%% quantiles: (%g,%g)\n", q2, qs[1], qs[2]);
+  tauAB <- qs[2] + (qs[2]-qs[1]);
+  verbose && printf(verbose, "Estimate of .3g%:th \"symmetric\" quantile: %g\n", q2, tauAB);
   
+
   # Sanity check
   tauAB <- Arguments$getDouble(tauAB);
 
@@ -561,6 +570,9 @@ setMethodS3("estimateTauABBySmallDH", "PairedPSCBS", function(fit, q1=0.05, q2=0
 
 ############################################################################
 # HISTORY:
+# 2011-04-11
+# o Updated estimateTauABBySmallDH() for PairedPSCBS to use a "symmetric"
+#   quantile estimator.
 # 2011-04-08
 # o Added estimateTauABBySmallDH() for PairedPSCBS.
 # o Added Rdoc help to estimateTauAB() for PairedPSCBS.
