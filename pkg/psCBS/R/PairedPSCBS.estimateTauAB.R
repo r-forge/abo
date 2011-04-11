@@ -556,9 +556,9 @@ setMethodS3("estimateTauABBySmallDH", "PairedPSCBS", function(fit, q1=0.05, q2=0
   verbose && cat(verbose, "Number of finite data points: ", length(rho));
 
   qs <- quantile(rho, probs=c(1-q2, 1/2), na.rm=FALSE, names=FALSE);
-  verbose && printf(verbose, "Estimate of (1-.3g%):th and 50%% quantiles: (%g,%g)\n", q2, qs[1], qs[2]);
+  verbose && printf(verbose, "Estimate of (1-%.3g):th and 50%% quantiles: (%g,%g)\n", q2, qs[1], qs[2]);
   tauAB <- qs[2] + (qs[2]-qs[1]);
-  verbose && printf(verbose, "Estimate of .3g%:th \"symmetric\" quantile: %g\n", q2, tauAB);
+  verbose && printf(verbose, "Estimate of %.3g:th \"symmetric\" quantile: %g\n", q2, tauAB);
   
 
   # Sanity check
