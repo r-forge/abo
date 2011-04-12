@@ -42,8 +42,14 @@
         of heterozygous SNPs.
   \item Calculate tau as the 5\% quantile of the weighted DH means.
   \item Choose the segments with means less than tau.
-  \item Calculate threshold DeltaAB as the 90\% quantile of the
-        observed locus-level DHs from the selected segments in Step 4.
+  \item Calculate threshold DeltaAB as the 90\% "symmetric" quantile
+        of the observed locus-level DHs from the selected segments
+        in Step 4.
+        The q:th "symmetric" quantile is estimated by estimating
+        the ((1-q), 50\%) quantiles, calculating their distance as
+        "50\%-(1-q)" and add to the median (50\%), i.e.
+        "median + (median-(1-q))" = "2*median-1 + q", which should
+        equal q if the distribution is symmetric.
  }
 }
 

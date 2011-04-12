@@ -20,12 +20,14 @@
  Calls segments that are in LOH, i.e. that have "zero" minor copy number.
 }
 
-\usage{\method{callLOH}{PairedPSCBS}(fit, flavor=c("SmallC1", "LargeDH"), ..., force=FALSE)}
+\usage{\method{callLOH}{PairedPSCBS}(fit, flavor=c("SmallC1", "LargeDH"), ..., xorCalls=TRUE, force=FALSE)}
 
 \arguments{
   \item{flavor}{A \code{\link[base]{character}} string specifying which type of
    call to use.}
   \item{...}{Additional arguments passed to the caller.}
+  \item{xorCalls}{If \code{\link[base:logical]{TRUE}}, a region already called AB, will
+   not be called LOH.}
   \item{force}{If \code{\link[base:logical]{FALSE}}, and allelic-balance calls already exits,
    then nothing is done, otherwise the calls are done.}
 }

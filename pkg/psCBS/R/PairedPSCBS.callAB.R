@@ -15,6 +15,8 @@
 #   \item{flavor}{A @character string specifying which type of
 #    call to use.}
 #   \item{...}{Additional arguments passed to the caller.}
+#   \item{xorCalls}{If @TRUE, a region already called LOH, will
+#    not be called AB.}
 #   \item{force}{If @FALSE, and allelic-balance calls already exits,
 #    then nothing is done, otherwise the calls are done.}
 # }
@@ -31,9 +33,12 @@
 # }
 #
 #*/###########################################################################
-setMethodS3("callAB", "PairedPSCBS", function(fit, flavor=c("DeltaAB*"), ..., force=FALSE) {
+setMethodS3("callAB", "PairedPSCBS", function(fit, flavor=c("DeltaAB*"), ..., xorCalls=TRUE, force=FALSE) {
   # Argument 'flavor':
   flavor <- match.arg(flavor);
+
+  # Argument 'xorCalls':
+  xorCalls <- Arguments$getLogical(xorCalls);
 
 
   # Already done?
@@ -43,11 +48,22 @@ setMethodS3("callAB", "PairedPSCBS", function(fit, flavor=c("DeltaAB*"), ..., fo
     return(invisible(fit));
   }
   
-
   if (flavor == "DeltaAB*") {
     fit <- callAllelicBalanceByDH(fit, ...);
   } else {
     throw("Cannot call allelic balance. Unsupported flavor: ", flavor);
+  }
+
+  # Don't call a segment AB if it already called LOH?
+  if (xorCalls) {
+    segs <- as.data.frame(fit);
+    if (is.element("loh.call", names(segs))) {
+      calls <- segs$ab.call;
+      otherCalls <- segs$loh.call;
+      calls <- (calls & !otherCalls);
+      segs$ab.call <- calls;
+      fit$output <- segs;
+    }
   }
 
   return(invisible(fit));
@@ -165,6 +181,8 @@ setMethodS3("callAllelicBalanceByDH", "PairedPSCBS", function(fit, tau=estimateT
 
 ##############################################################################
 # HISTORY
+# 2011-04-12
+# o Added argument 'xorCalls' to callAB() for PairedPSCBS.
 # 2011-04-10
 # o callAllelicBalance() calls callAB().
 # 2011-04-09

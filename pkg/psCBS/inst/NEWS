@@ -2,6 +2,12 @@
 Package: psCBS
 ==============
 
+Version: 0.9.50 [2011-04-12]
+o Added argument 'xorCalls' to callLOH() and callAB() for
+  PairedPSCBS.  When TRUE (the default), a segment that 
+  is already called AB will never be called LOH, and vice versa.
+
+
 Version: 0.9.49 [2011-04-11]
 o Updated estimateTauABBySmallDH() for PairedPSCBS to use a
   "symmetric" quantile estimator.

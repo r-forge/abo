@@ -24,12 +24,14 @@
  Calls segments that are in allelic balance, i.e. that have equal minor and major copy numbers.
 }
 
-\usage{\method{callAB}{PairedPSCBS}(fit, flavor=c("DeltaAB*"), ..., force=FALSE)}
+\usage{\method{callAB}{PairedPSCBS}(fit, flavor=c("DeltaAB*"), ..., xorCalls=TRUE, force=FALSE)}
 
 \arguments{
   \item{flavor}{A \code{\link[base]{character}} string specifying which type of
    call to use.}
   \item{...}{Additional arguments passed to the caller.}
+  \item{xorCalls}{If \code{\link[base:logical]{TRUE}}, a region already called LOH, will
+   not be called AB.}
   \item{force}{If \code{\link[base:logical]{FALSE}}, and allelic-balance calls already exits,
    then nothing is done, otherwise the calls are done.}
 }
