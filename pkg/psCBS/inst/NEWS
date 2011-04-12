@@ -6,6 +6,7 @@ Version: 0.9.49 [2011-04-11]
 o Updated estimateTauABBySmallDH() for PairedPSCBS to use a
   "symmetric" quantile estimator.
 o Added argument 'midpoint' to estimateTauLOHByMinC1AtNonAB().
+o BUG FIX: The recent callLOH() would not store the LOH calls.
 
 
 Version: 0.9.48 [2011-04-10]

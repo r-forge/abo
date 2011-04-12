@@ -38,16 +38,16 @@ setMethodS3("callLOH", "PairedPSCBS", function(fit, flavor=c("SmallC1", "LargeDH
 
   # Already done?
   segs <- as.data.frame(fit);
-  calls <- segs$ab.call;
+  calls <- segs$loh.call;
   if (!force && !is.null(calls)) {
     return(invisible(fit));
   }
   
 
   if (flavor == "SmallC1") {
-    fit <- callLowC1ByC1(fit, ...);
+    fit <- callLowC1ByC1(fit, ..., callName="loh");
   } else if (flavor == "LargeDH") {
-    fit <- callExtremeAllelicImbalanceByDH(fit, ...);
+    fit <- callExtremeAllelicImbalanceByDH(fit, ..., callName="loh");
   } else {
     throw("Cannot call LOH. Unsupported flavor: ", flavor);
   }
@@ -57,7 +57,7 @@ setMethodS3("callLOH", "PairedPSCBS", function(fit, flavor=c("SmallC1", "LargeDH
 
 
 
-setMethodS3("callLowC1ByC1", "PairedPSCBS", function(fit, tau=estimateTauLOH(fit, flavor="minC1|nonAB"), alpha=0.05, ..., verbose=FALSE) {
+setMethodS3("callLowC1ByC1", "PairedPSCBS", function(fit, tau=estimateTauLOH(fit, flavor="minC1|nonAB"), alpha=0.05, ..., callName="lowc1", verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
@@ -100,7 +100,9 @@ setMethodS3("callLowC1ByC1", "PairedPSCBS", function(fit, tau=estimateTauLOH(fit
   verbose && printf(verbose, "Number of segments called low C1 (LowC1, \"LOH_C1\"): %d (%.2f%%) of %d\n", nbrOfCalls, 100*nbrOfCalls/nrow(segs), nrow(segs));
   verbose && exit(verbose);
 
-  segs <- cbind(segs, lowc1.call=call);
+  calls <- data.frame(lowc1.call=call);
+  colnames(calls) <- sprintf("%s.call", callName);
+  segs <- cbind(segs, calls);
   fit$output <- segs;
 
   # Append 'tau' and 'alpha' to parameters
@@ -117,7 +119,7 @@ setMethodS3("callLowC1ByC1", "PairedPSCBS", function(fit, tau=estimateTauLOH(fit
 
 
 
-setMethodS3("callExtremeAllelicImbalanceByDH", "PairedPSCBS", function(fit, tau=0.60, alpha=0.05, ..., verbose=FALSE) {
+setMethodS3("callExtremeAllelicImbalanceByDH", "PairedPSCBS", function(fit, tau=0.60, alpha=0.05, ..., callName="ai.high", verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
@@ -161,7 +163,9 @@ setMethodS3("callExtremeAllelicImbalanceByDH", "PairedPSCBS", function(fit, tau=
   verbose && printf(verbose, "Number of segments called high allelic imbalance (AI/\"LOH_AI\"): %d (%.2f%%) of %d\n", nbrOfCalls, 100*nbrOfCalls/nrow(segs), nrow(segs));
   verbose && exit(verbose);
 
-  segs <- cbind(segs, ai.high.call=call);
+  calls <- data.frame(ai.high.call=call);
+  colnames(calls) <- sprintf("%s.call", callName);
+  segs <- cbind(segs, calls);
   fit$output <- segs;
 
   # Append 'tau' and 'alpha' to parameters
@@ -179,6 +183,9 @@ setMethodS3("callExtremeAllelicImbalanceByDH", "PairedPSCBS", function(fit, tau=
 
 ##############################################################################
 # HISTORY
+# 2011-04-11
+# o Added argument 'callName' to callExtremeAllelicImbalanceByDH() and
+#   callLowC1ByC1().
 # 2011-04-10
 # o Added callLOH().
 # 2010-12-07
