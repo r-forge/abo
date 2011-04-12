@@ -2,6 +2,13 @@
 Package: psCBS
 ==============
 
+Version: 0.9.51 [2011-04-12]
+o Added argument 'minSize' to callAB() and callLOH() for PairedPSCBS.
+o Now the a conflicting call in callLOH()/callAB() with 
+  argument xorCalls=TRUE is set to NA to contrast it from
+  a FALSE call.
+
+
 Version: 0.9.50 [2011-04-12]
 o Added argument 'xorCalls' to callLOH() and callAB() for
   PairedPSCBS.  When TRUE (the default), a segment that 

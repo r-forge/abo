@@ -46,7 +46,6 @@
   \item Estimate the C1=1 location as the weighted median C1 for segments that have been called to be in allelic balance.
   \item Estimate the C1=0 location as the smallest C1 among segments that are not in allelic balance.
   \item Let the LOH threshold be the midpoint of the estimates C1=0 and C1=1 locations.
-  \item If the estimated LOH threshold is greater than \code{tauMax}, set it to \code{tauMax}.
  }
 }
 

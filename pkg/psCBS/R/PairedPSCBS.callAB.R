@@ -15,6 +15,9 @@
 #   \item{flavor}{A @character string specifying which type of
 #    call to use.}
 #   \item{...}{Additional arguments passed to the caller.}
+#   \item{minSize}{An optional @integer specifying the minimum number
+#    of data points in order to call a segments.  If fewer data points,
+#    then the call is set to @NA regardless.}
 #   \item{xorCalls}{If @TRUE, a region already called LOH, will
 #    not be called AB.}
 #   \item{force}{If @FALSE, and allelic-balance calls already exits,
@@ -33,9 +36,12 @@
 # }
 #
 #*/###########################################################################
-setMethodS3("callAB", "PairedPSCBS", function(fit, flavor=c("DeltaAB*"), ..., xorCalls=TRUE, force=FALSE) {
+setMethodS3("callAB", "PairedPSCBS", function(fit, flavor=c("DeltaAB*"), ..., minSize=1, xorCalls=TRUE, force=FALSE) {
   # Argument 'flavor':
   flavor <- match.arg(flavor);
+
+  # Argument 'minSize':
+  minSize <- Arguments$getDouble(minSize, range=c(1,Inf));
 
   # Argument 'xorCalls':
   xorCalls <- Arguments$getLogical(xorCalls);
@@ -54,13 +60,23 @@ setMethodS3("callAB", "PairedPSCBS", function(fit, flavor=c("DeltaAB*"), ..., xo
     throw("Cannot call allelic balance. Unsupported flavor: ", flavor);
   }
 
+  # Don't call segments with too few data points?
+  if (minSize > 1) {
+    segs <- as.data.frame(fit);
+    ns <- segs$dh.num.mark;
+    calls <- segs$loh.call;
+    calls[ns < minSize] <- NA;
+    fit$output <- segs;
+  }
+
   # Don't call a segment AB if it already called LOH?
   if (xorCalls) {
     segs <- as.data.frame(fit);
     if (is.element("loh.call", names(segs))) {
       calls <- segs$ab.call;
       otherCalls <- segs$loh.call;
-      calls <- (calls & !otherCalls);
+      # If called and already called by other caller, call it as NA.
+      calls[calls & otherCalls] <- NA;
       segs$ab.call <- calls;
       fit$output <- segs;
     }
@@ -182,6 +198,7 @@ setMethodS3("callAllelicBalanceByDH", "PairedPSCBS", function(fit, tau=estimateT
 ##############################################################################
 # HISTORY
 # 2011-04-12
+# o Added argument 'minSize' to callAB() for PairedPSCBS.
 # o Added argument 'xorCalls' to callAB() for PairedPSCBS.
 # 2011-04-10
 # o callAllelicBalance() calls callAB().
