@@ -20,13 +20,16 @@
  Estimate a threshold for calling allelic balance from DH to be used by the \code{\link[psCBS:callAB.PairedPSCBS]{*callAB}()} method.
 }
 
-\usage{\method{estimateTauAB}{PairedPSCBS}(this, scale=NULL, flavor=c("qq(DH)", "q(DH)", "mad(hBAF)", "median(DH)"), ..., verbose=FALSE)}
+\usage{\method{estimateTauAB}{PairedPSCBS}(this, scale=NULL, flavor=c("qq(DH)", "q(DH)", "mad(hBAF)", "median(DH)"), ..., max=Inf, verbose=FALSE)}
 
 \arguments{
   \item{scale}{An optional \code{\link[base]{numeric}} scale factor.}
   \item{flavor}{A \code{\link[base]{character}} string specifying which type of
    estimator to use.}
   \item{...}{Additional arguments passed to the estimator.}
+  \item{max}{(Optional) The maxium estimate allowed. If greater than
+   this value, the estimate will be truncated.}
+  \item{verbose}{See \code{\link[R.utils]{Verbose}}.}
 }
 
 \value{

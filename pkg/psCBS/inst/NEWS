@@ -2,6 +2,10 @@
 Package: psCBS
 ==============
 
+Version: 0.9.53 [2011-04-14]
+o Added argument 'max' to estimateTauAB() and estimateTauLOH().
+
+
 Version: 0.9.52 [2011-04-14]
 o BUG FIX: Argument 'minSize' of callAB() and callLOH() had no effect.
 

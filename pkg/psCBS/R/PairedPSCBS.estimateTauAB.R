@@ -15,6 +15,9 @@
 #   \item{flavor}{A @character string specifying which type of
 #    estimator to use.}
 #   \item{...}{Additional arguments passed to the estimator.}
+#   \item{max}{(Optional) The maxium estimate allowed. If greater than 
+#    this value, the estimate will be truncated.}
+#   \item{verbose}{See @see "R.utils::Verbose".}
 # }
 #
 # \value{
@@ -32,12 +35,15 @@
 # }
 #
 #*/###########################################################################  
-setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=NULL, flavor=c("qq(DH)", "q(DH)", "mad(hBAF)", "median(DH)"), ..., verbose=FALSE) {
+setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=NULL, flavor=c("qq(DH)", "q(DH)", "mad(hBAF)", "median(DH)"), ..., max=Inf, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Argument 'flavor':
   flavor <- match.arg(flavor);
+
+  # Argument 'max':
+  max <- Arguments$getDouble(max, range=c(0,Inf));
 
   # Argument 'verbose':
   verbose <- Arguments$getVerbose(verbose);
@@ -110,7 +116,15 @@ setMethodS3("estimateTauAB", "PairedPSCBS", function(this, scale=NULL, flavor=c(
 ##     verbose && printf(verbose, "sd: %.3g\n", sd);
 ##  }
 
-  verbose && printf(verbose, "tau: %.3g\n", tau);
+  verbose && printf(verbose, "Estimated tau: %.3g\n", tau);
+
+  # Truncate estimate?
+  if (tau > max) {
+    warning("Estimated tau (%.3g) was greater than the maximum allowed value (%.3g).  The latter will be used instead.", tau, max);
+    tau <- max;
+    verbose && printf(verbose, "Max tau: %.3g\n", max);
+    verbose && printf(verbose, "Truncated tau: %.3g\n", tau);
+  }
 
   verbose && exit(verbose);
 

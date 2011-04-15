@@ -20,13 +20,16 @@
  Estimate a threshold for calling LOH from DH to be used by the \code{\link[psCBS:callLOH.PairedPSCBS]{*callLOH}()} method.
 }
 
-\usage{\method{estimateTauLOH}{PairedPSCBS}(this, flavor=c("minC1|nonAB"), ..., verbose=FALSE)}
+\usage{\method{estimateTauLOH}{PairedPSCBS}(this, flavor=c("minC1|nonAB"), ..., max=Inf, verbose=FALSE)}
 
 \arguments{
   \item{scale}{An optional \code{\link[base]{numeric}} scale factor.}
   \item{flavor}{A \code{\link[base]{character}} string specifying which type of
    estimator to use.}
   \item{...}{Additional arguments passed to the estimator.}
+  \item{max}{(Optional) The maxium estimate allowed. If greater than
+   this value, the estimate will be truncated.}
+  \item{verbose}{See \code{\link[R.utils]{Verbose}}.}
 }
 
 \value{
