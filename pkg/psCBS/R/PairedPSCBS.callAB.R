@@ -64,9 +64,11 @@ setMethodS3("callAB", "PairedPSCBS", function(fit, flavor=c("DeltaAB*"), ..., mi
   if (minSize > 1) {
     segs <- as.data.frame(fit);
     ns <- segs$dh.num.mark;
-    calls <- segs$loh.call;
+    calls <- segs$ab.call;
     calls[ns < minSize] <- NA;
+    segs$ab.call <- calls;
     fit$output <- segs;
+    rm(segs, ns, calls); # Not needed anymore
   }
 
   # Don't call a segment AB if it already called LOH?
@@ -197,6 +199,8 @@ setMethodS3("callAllelicBalanceByDH", "PairedPSCBS", function(fit, tau=estimateT
 
 ##############################################################################
 # HISTORY
+# 2011-04-14
+# o BUG FIX: Argument 'minSize' of callAB() and callLOH() had no effect.
 # 2011-04-12
 # o Added argument 'minSize' to callAB() for PairedPSCBS.
 # o Added argument 'xorCalls' to callAB() for PairedPSCBS.
