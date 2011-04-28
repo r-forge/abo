@@ -156,12 +156,26 @@ setMethodS3("estimateTauLOHByMinC1ForNonAB", "PairedPSCBS", function(this, midpo
   if (is.null(isAB)) {
     throw("Cannot estimate tau_LOH because allelic-balance calls have not been made yet.");
   }
-
   verbose && cat(verbose, "Number of segments in allelic balance: ", sum(isAB, na.rm=TRUE));
 
-  segsAB <- segs[which(isAB),,drop=FALSE];
-  C <- segsAB$tcn.mean;
-  n <- segsAB$dh.num.mark;
+  # Sanity check
+  if (sum(isAB, na.rm=TRUE) == 0) {
+    throw("There are no segments in allelic balance.");
+  }
+
+  C <- segs$tcn.mean;
+  keep <- which(isAB & C <= maxC);
+
+  verbose && printf(verbose, "Number of segments in allelic balance and TCN <= %.2f: %d\n", maxC, length(keep));
+
+  # Sanity check
+  if (length(keep) == 0) {
+    throw("There are no segments in allelic balance with small enough total CN.");
+  }
+
+  segsT <- segs[keep,,drop=FALSE];
+  C <- segsT$tcn.mean;
+  n <- segsT$dh.num.mark;
   w <- n/sum(n);
   C1 <- C/2;  # Called AB!
   verbose && printf(verbose, "C: %s\n", hpaste(sprintf("%.3g", C)));
