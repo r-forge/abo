@@ -91,6 +91,8 @@ setMethodS3("estimateTauLOH", "PairedPSCBS", function(this, flavor=c("minC1|nonA
 #   \item{midpoint}{A @numeric scalar in [0,1] specifying the relative
 #    position of the midpoint between the estimated locations of 
 #    C1=0 and C1=1 mean parameters.}
+#   \item{maxC}{Maximum total copy number of a segment in order to
+#    be included in the initial set of segments.}
 #   \item{...}{Not used.}
 #   \item{verbose}{See @see "R.utils::Verbose".}
 # }
@@ -123,7 +125,7 @@ setMethodS3("estimateTauLOH", "PairedPSCBS", function(this, flavor=c("minC1|nonA
 #
 # @keyword internal
 #*/###########################################################################  
-setMethodS3("estimateTauLOHByMinC1ForNonAB", "PairedPSCBS", function(this, midpoint=1/2,..., verbose=FALSE) {
+setMethodS3("estimateTauLOHByMinC1ForNonAB", "PairedPSCBS", function(this, midpoint=1/2, maxC=3, ..., verbose=FALSE) {
   require("aroma.light") || throw("Package not loaded: aroma.light");
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -131,6 +133,9 @@ setMethodS3("estimateTauLOHByMinC1ForNonAB", "PairedPSCBS", function(this, midpo
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Argument 'midpoint':
   midpoint <- Arguments$getDouble(midpoint, range=c(0,1));
+
+  # Argument 'maxC':
+  maxC <- Arguments$getDouble(maxC, range=c(0,Inf));
 
   # Argument 'verbose':
   verbose <- Arguments$getVerbose(verbose);
@@ -191,6 +196,8 @@ setMethodS3("estimateTauLOHByMinC1ForNonAB", "PairedPSCBS", function(this, midpo
 
 ############################################################################
 # HISTORY:
+# 2011-04-27
+# o Added argument 'maxC' to estimateTauLOHByMinC1ForNonAB().
 # 2011-04-14
 # o Added argument 'max' to estimateTauAB() and estimateTauLOH().
 # 2011-04-11

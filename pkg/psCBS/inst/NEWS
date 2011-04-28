@@ -2,6 +2,10 @@
 Package: psCBS
 ==============
 
+Version: 0.9.54 [2011-04-27]
+o Added argument 'maxC' to estimateTauLOHByMinC1ForNonAB().
+
+
 Version: 0.9.53 [2011-04-14]
 o Added argument 'max' to estimateTauAB() and estimateTauLOH().
 
