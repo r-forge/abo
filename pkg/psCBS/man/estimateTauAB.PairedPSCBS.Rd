@@ -17,7 +17,7 @@
 \title{Estimate a threshold for calling allelic balance from DH}
 
 \description{
- Estimate a threshold for calling allelic balance from DH to be used by the \code{\link[psCBS:callAB.PairedPSCBS]{*callAB}()} method.
+ Estimate a threshold for calling allelic balance from DH to be used by the \code{\link[PSCBS:callAB.PairedPSCBS]{*callAB}()} method.
 }
 
 \usage{\method{estimateTauAB}{PairedPSCBS}(this, scale=NULL, flavor=c("qq(DH)", "q(DH)", "mad(hBAF)", "median(DH)"), ..., max=Inf, verbose=FALSE)}
@@ -40,10 +40,10 @@
 
 \seealso{
   Internally, one of the following methods are used:
-  \code{\link[psCBS:estimateTauABBySmallDH.PairedPSCBS]{*estimateTauABBySmallDH}()},
-  \code{\link[psCBS:estimateStdDevForHeterozygousBAF.PairedPSCBS]{*estimateStdDevForHeterozygousBAF}()},
-  \code{\link[psCBS:estimateMeanForDH.PairedPSCBS]{*estimateMeanForDH}()}, and
-  \code{\link[psCBS:estimateHighDHQuantileAtAB.PairedPSCBS]{*estimateHighDHQuantileAtAB}()}.
+  \code{\link[PSCBS:estimateTauABBySmallDH.PairedPSCBS]{*estimateTauABBySmallDH}()},
+  \code{\link[PSCBS:estimateStdDevForHeterozygousBAF.PairedPSCBS]{*estimateStdDevForHeterozygousBAF}()},
+  \code{\link[PSCBS:estimateMeanForDH.PairedPSCBS]{*estimateMeanForDH}()}, and
+  \code{\link[PSCBS:estimateHighDHQuantileAtAB.PairedPSCBS]{*estimateHighDHQuantileAtAB}()}.
 }
 \keyword{internal}
 \keyword{methods}

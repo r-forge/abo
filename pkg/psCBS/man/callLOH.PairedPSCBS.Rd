@@ -43,8 +43,8 @@
 
 \seealso{
   Internally, one of the following methods are used:
-  \code{\link[psCBS:callLowC1ByC1.PairedPSCBS]{*callLowC1ByC1}()},
-  \code{\link[psCBS:callExtremeAllelicImbalanceByDH.PairedPSCBS]{*callExtremeAllelicImbalanceByDH}()}.
+  \code{\link[PSCBS:callLowC1ByC1.PairedPSCBS]{*callLowC1ByC1}()},
+  \code{\link[PSCBS:callExtremeAllelicImbalanceByDH.PairedPSCBS]{*callExtremeAllelicImbalanceByDH}()}.
 }
 \keyword{internal}
 \keyword{methods}

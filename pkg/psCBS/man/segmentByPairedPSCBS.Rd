@@ -98,7 +98,7 @@ library("aroma.light");
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Load data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-pathname <- system.file("data-ex/pcCBS,exData,chr01.Rbin", package="psCBS");
+pathname <- system.file("data-ex/PairedPSCBS,exData,chr01.Rbin", package="PSCBS");
 data <- R.utils::loadObject(pathname);
 
 # Subset to speed up example
@@ -187,7 +187,8 @@ print(kappa);
  }
 
  \references{
-   [1] A. Olshen, R. Olshen, H. Bengtsson, P. Neuvial, P. Spellman and P. Seshan, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, 2010 (submitted).\cr
+  [1] A.B. Olshen, H. Bengtsson, P. Neuvial, P. Spellman, R.A. Olshen, V.E. Seshan, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, Bioinformatics 2011 (in press)\cr
+ \cr
    [2] H. Bengtsson, P. Neuvial and T.P. Speed, \emph{TumorBoost: Normalization of allele-specific tumor copy numbers from a single pair of tumor-normal genotyping microarrays}, BMC Bioinformatics, 2010.
  }
 

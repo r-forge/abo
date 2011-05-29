@@ -6,12 +6,12 @@
 % by the Rdoc compiler part of the R.oo package.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
- \name{psCBS-package}
-\alias{psCBS-package}
-\alias{psCBS}
+ \name{PSCBS-package}
+\alias{PSCBS-package}
+\alias{PSCBS}
 \docType{package}
 
-\title{Package psCBS}
+\title{Package PSCBS}
 
 
  \description{
@@ -23,7 +23,9 @@ with abnormal copy number within each parental chromosome.
  }
 
  \section{Requirements}{
-   This package requires external packages.
+   This package requires external packages
+   DNAcopy (>= 1.24.0), R.methodsS3 (>= 1.2.1), R.utils (>= 1.7.5),
+   and also suggests aroma.light (>= 1.20.0), matrixStats (>= 0.2.2), R.oo (>= 1.8.0), Hmisc (>= 3.8-3).
  }
 
  \section{Installation and updates}{
@@ -40,18 +42,19 @@ with abnormal copy number within each parental chromosome.
  }
 
  \section{How to cite this package}{
-  TBA.
+   Please use [1] to cite this package.
  }
 
  \author{
-  TBA.
+  A.B. Olshen, H. Bengtsson, P. Neuvial, P. Spellman, R.A. Olshen, V.E. Seshan.
  }
 
  \section{License}{
-  TBA.
+  GPL (>= 2).
  }
 
  \references{
-  TBA.
+  [1] A.B. Olshen, H. Bengtsson, P. Neuvial, P. Spellman, R.A. Olshen, V.E. Seshan, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, Bioinformatics 2011 (in press)\cr
+ \cr
  }
 \keyword{package}

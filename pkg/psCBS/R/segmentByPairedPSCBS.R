@@ -93,7 +93,7 @@
 # }
 #
 # \references{
-#   [1] A. Olshen, R. Olshen, H. Bengtsson, P. Neuvial, P. Spellman and P. Seshan, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, 2010 (submitted).\cr
+#  [1] @include "../incl/OlshenA_etal_2011.Rd" \cr
 #   [2] H. Bengtsson, P. Neuvial and T.P. Speed, \emph{TumorBoost: Normalization of allele-specific tumor copy numbers from a single pair of tumor-normal genotyping microarrays}, BMC Bioinformatics, 2010.
 # }
 #
@@ -107,7 +107,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   index <- NULL; rm(index);
 
   # Settings for sanity checks
-  tol <- getOption("psCBS/sanityChecks/tolerance", 0.0005);
+  tol <- getOption("PSCBS/sanityChecks/tolerance", 0.0005);
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
@@ -723,6 +723,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2011-05-29
+# o Renamed options to reflect new package name.
 # 2011-04-07
 # o ROBUSTNESS: Added validation of the different 'tcnSegRows' and
 #   'dhSegRows' calculations in segmentByPairedPSCBS().  This helps

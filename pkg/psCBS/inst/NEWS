@@ -1,6 +1,12 @@
 
-Package: psCBS
+Package: PSCBS
 ==============
+
+Version: 0.10.0 [2011-05-29]
+o Renamed options, example code and help pages to reflect new package name.
+o Updated help page references.
+o Renamed package to PSCBS (from 'psCBS').
+
 
 Version: 0.9.54 [2011-04-27]
 o Added argument 'maxC' to estimateTauLOHByMinC1ForNonAB().

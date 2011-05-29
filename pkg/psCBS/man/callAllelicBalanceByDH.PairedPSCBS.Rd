@@ -48,7 +48,7 @@
 
 \seealso{
   Instead of calling this method explicitly, it is recommended
-  to use the \code{\link[psCBS:callAllelicBalance.PairedPSCBS]{*callAllelicBalance}()} method.
+  to use the \code{\link[PSCBS:callAllelicBalance.PairedPSCBS]{*callAllelicBalance}()} method.
 }
 
 

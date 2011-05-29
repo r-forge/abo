@@ -47,7 +47,7 @@
 
 \seealso{
   Internally, one of the following methods are used:
-  \code{\link[psCBS:callAllelicBalanceByDH.PairedPSCBS]{*callAllelicBalanceByDH}()}.
+  \code{\link[PSCBS:callAllelicBalanceByDH.PairedPSCBS]{*callAllelicBalanceByDH}()}.
 }
 \keyword{internal}
 \keyword{methods}

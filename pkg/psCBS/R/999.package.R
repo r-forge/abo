@@ -1,15 +1,17 @@
 #########################################################################/**
-# @RdocPackage psCBS
+# @RdocPackage PSCBS
 #
 # \description{
-#   @eval "packageDescription('psCBS')$Description".
+#   @eval "packageDescription('PSCBS')$Description".
 #
 #   This package should be considered to be in an alpha or beta phase.
 #   You should expect the API to be changing over time.
 # }
 #
 # \section{Requirements}{
-#   This package requires external packages.
+#   This package requires external packages
+#   @eval "unlist(packageDescription('PSCBS')[c('Depends', 'Imports')])",
+#   and also suggests @eval "packageDescription('PSCBS')$Suggests".
 # }
 #
 # \section{Installation and updates}{
@@ -26,19 +28,19 @@
 # }
 # 
 # \section{How to cite this package}{
-#  TBA.
+#   Please use [1] to cite this package.
 # }
 #
 # \author{
-#  TBA.
+#  @eval "packageDescription('PSCBS')$Author".
 # }
 #
 # \section{License}{
-#  TBA.
+#  @eval "packageDescription('PSCBS')$License".
 # }
 # 
 # \references{
-#  TBA.
+#  [1] @include "../incl/OlshenA_etal_2011.Rd" \cr
 # }
 #*/#########################################################################
 

@@ -73,7 +73,7 @@
 
  \seealso{
    Instead of calling this method explicitly, it is recommended
-   to use the \code{\link[psCBS:estimateKappa.PairedPSCBS]{*estimateKappa}()} method.
+   to use the \code{\link[PSCBS:estimateKappa.PairedPSCBS]{*estimateKappa}()} method.
  }
 
 

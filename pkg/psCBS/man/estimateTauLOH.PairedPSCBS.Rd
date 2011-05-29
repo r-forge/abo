@@ -17,7 +17,7 @@
 \title{Estimate a threshold for calling LOH from DH}
 
 \description{
- Estimate a threshold for calling LOH from DH to be used by the \code{\link[psCBS:callLOH.PairedPSCBS]{*callLOH}()} method.
+ Estimate a threshold for calling LOH from DH to be used by the \code{\link[PSCBS:callLOH.PairedPSCBS]{*callLOH}()} method.
 }
 
 \usage{\method{estimateTauLOH}{PairedPSCBS}(this, flavor=c("minC1|nonAB"), ..., max=Inf, verbose=FALSE)}
@@ -40,7 +40,7 @@
 
 \seealso{
   Internally, one of the following methods are used:
-  \code{\link[psCBS:estimateTauLOHByMinC1ForNonAB.PairedPSCBS]{*estimateTauLOHByMinC1ForNonAB}()}.
+  \code{\link[PSCBS:estimateTauLOHByMinC1ForNonAB.PairedPSCBS]{*estimateTauLOHByMinC1ForNonAB}()}.
 }
 \keyword{internal}
 \keyword{methods}

@@ -39,7 +39,7 @@
 
 \seealso{
   Internally, one of the following methods are used:
-  \code{\link[psCBS:estimateKappaByC1Density.PairedPSCBS]{*estimateKappaByC1Density}()}.
+  \code{\link[PSCBS:estimateKappaByC1Density.PairedPSCBS]{*estimateKappaByC1Density}()}.
 }
 \keyword{internal}
 \keyword{methods}

@@ -57,7 +57,7 @@
 
 \seealso{
   Instead of calling this method explicitly, it is recommended
-  to use the \code{\link[psCBS:estimateTauAB.PairedPSCBS]{*estimateTauAB}()} method.
+  to use the \code{\link[PSCBS:estimateTauAB.PairedPSCBS]{*estimateTauAB}()} method.
 }
 
 

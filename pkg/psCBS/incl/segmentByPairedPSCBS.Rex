@@ -5,7 +5,7 @@ library("aroma.light");
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Load data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-pathname <- system.file("data-ex/pcCBS,exData,chr01.Rbin", package="psCBS");
+pathname <- system.file("data-ex/PairedPSCBS,exData,chr01.Rbin", package="PSCBS");
 data <- R.utils::loadObject(pathname);
 
 # Subset to speed up example

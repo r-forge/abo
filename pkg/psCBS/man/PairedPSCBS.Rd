@@ -14,7 +14,7 @@
  \title{The PairedPSCBS class}
 
  \description{
-  Package:  psCBS \cr
+  Package:  PSCBS \cr
 \bold{Class PairedPSCBS}\cr
 
 \code{list}\cr
@@ -44,15 +44,15 @@ extends list\cr
   \bold{Methods:}\cr
 \tabular{rll}{
  \tab \code{as.data.frame} \tab  -\cr
- \tab \code{\link[psCBS:callAB.PairedPSCBS]{callAB}} \tab Calls segments that are in allelic balance.\cr
- \tab \code{\link[psCBS:callLOH.PairedPSCBS]{callLOH}} \tab Calls segments that are in LOH.\cr
+ \tab \code{\link[PSCBS:callAB.PairedPSCBS]{callAB}} \tab Calls segments that are in allelic balance.\cr
+ \tab \code{\link[PSCBS:callLOH.PairedPSCBS]{callLOH}} \tab Calls segments that are in LOH.\cr
  \tab \code{callSegments} \tab  -\cr
- \tab \code{\link[psCBS:estimateKappa.PairedPSCBS]{estimateKappa}} \tab Estimate global background in segmented copy numbers.\cr
- \tab \code{\link[psCBS:estimateTauAB.PairedPSCBS]{estimateTauAB}} \tab Estimate a threshold for calling allelic balance from DH.\cr
- \tab \code{\link[psCBS:estimateTauLOH.PairedPSCBS]{estimateTauLOH}} \tab Estimate a threshold for calling LOH from DH.\cr
+ \tab \code{\link[PSCBS:estimateKappa.PairedPSCBS]{estimateKappa}} \tab Estimate global background in segmented copy numbers.\cr
+ \tab \code{\link[PSCBS:estimateTauAB.PairedPSCBS]{estimateTauAB}} \tab Estimate a threshold for calling allelic balance from DH.\cr
+ \tab \code{\link[PSCBS:estimateTauLOH.PairedPSCBS]{estimateTauLOH}} \tab Estimate a threshold for calling LOH from DH.\cr
  \tab \code{extractC1C2} \tab  -\cr
  \tab \code{extractTCNAndDHs} \tab  -\cr
- \tab \code{\link[psCBS:plotTracks.PairedPSCBS]{plotTracks}} \tab Plots parental specific copy numbers along the genome.\cr
+ \tab \code{\link[PSCBS:plotTracks.PairedPSCBS]{plotTracks}} \tab Plots parental specific copy numbers along the genome.\cr
  \tab \code{plotTracks2} \tab  -\cr
  \tab \code{plotTracksManyChromosomes} \tab  -\cr
 }

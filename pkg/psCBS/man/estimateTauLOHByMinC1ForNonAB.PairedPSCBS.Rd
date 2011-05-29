@@ -38,7 +38,7 @@
 
 \details{
   This method requires that calls for allelic balances already have
-  been me made, cf. \code{\link[psCBS:callAllelicBalance.PairedPSCBS]{*callAllelicBalance}()}.
+  been me made, cf. \code{\link[PSCBS:callAllelicBalance.PairedPSCBS]{*callAllelicBalance}()}.
 }
 
 \section{Algorithm}{
@@ -55,7 +55,7 @@
 
 \seealso{
   Instead of calling this method explicitly, it is recommended
-  to use the \code{\link[psCBS:estimateTauLOH.PairedPSCBS]{*estimateTauLOH}()} method.
+  to use the \code{\link[PSCBS:estimateTauLOH.PairedPSCBS]{*estimateTauLOH}()} method.
 }
 
 

@@ -1,6 +1,6 @@
 setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, statsFcn=function(x) quantile(x, probs=c(0.025, 0.050, 0.95, 0.975), na.rm=TRUE), by=c("betaTN", "betaT"), ..., seed=NULL, verbose=FALSE) {
   # Settings for sanity checks
-  tol <- getOption("psCBS/sanityChecks/tolerance", 0.0005);
+  tol <- getOption("PSCBS/sanityChecks/tolerance", 0.0005);
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
@@ -539,6 +539,8 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
 
 ##############################################################################
 # HISTORY
+# 2011-05-29
+# o Renamed options to reflect new package name.
 # 2010-12-03
 # o BUG FIX: In rare cases the bootstrap sanity checks can indeed produce
 #   an invalid 'range', more precisely where (range[,2] >= range[,1]) is
