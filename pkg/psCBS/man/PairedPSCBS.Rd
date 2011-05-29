@@ -30,13 +30,13 @@ extends list\cr
 
 
   A PairedPSCBS is an object containing the results from the
-  paired PSCBS method.
+  Paired PSCBS method.
  }
 
  \usage{PairedPSCBS(fit=list(), ...)}
 
  \arguments{
-   \item{fit}{A \code{\link[base]{list}} structure containing the paired PSCBS results.}
+   \item{fit}{A \code{\link[base]{list}} structure containing the Paired PSCBS results.}
    \item{...}{Not used.}
  }
 

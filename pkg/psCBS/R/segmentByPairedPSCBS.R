@@ -2,7 +2,7 @@
 # @RdocDefault segmentByPairedPSCBS
 # @alias segmentByPairedPSCBS
 #
-# @title "Segment total copy numbers and allele B fractions using the paired PSCBS method"
+# @title "Segment total copy numbers and allele B fractions using the Paired PSCBS method"
 #
 # \description{
 #  @get "title" [1].
@@ -196,7 +196,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   }
 
 
-  verbose && enter(verbose, "Segmenting paired tumor-normal signals using PSCBS");
+  verbose && enter(verbose, "Segmenting paired tumor-normal signals using Paired PSCBS");
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Set the random seed
