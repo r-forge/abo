@@ -5,6 +5,7 @@ else
 CD=cd -P "$(CURDIR)"; cd   # This handles the case when CURDIR is a softlink
 endif
 CP=cp
+MAKE=make
 MV=mv
 RM=rm -f
 MKDIR=mkdir -p
@@ -88,6 +89,10 @@ debug_full: debug
 
 build: ../$(R_OUTDIR)/$(PKG_TARBALL)
 
+build_force:
+	$(RM) ../$(R_OUTDIR)/$(PKG_TARBALL)
+	$(MAKE) install
+
 
 # Install on current system
 $(R_LIBS_USER_X)/$(PKG_NAME)/DESCRIPTION: ../$(R_OUTDIR)/$(PKG_TARBALL)
@@ -96,19 +101,29 @@ $(R_LIBS_USER_X)/$(PKG_NAME)/DESCRIPTION: ../$(R_OUTDIR)/$(PKG_TARBALL)
 
 install: $(R_LIBS_USER_X)/$(PKG_NAME)/DESCRIPTION
 
+install_force:
+	$(RM) $(R_LIBS_USER_X)/$(PKG_NAME)/DESCRIPTION
+	$(MAKE) install
+
 
 # Check source tarball
 ../$(R_CHECK_OUTDIR)/.check.complete: ../$(R_OUTDIR)/$(PKG_TARBALL)
 	$(CD) ../$(R_OUTDIR);\
+	$(RM) -r $(PKG_NAME).Rcheck;\
         export _R_CHECK_CRAN_INCOMING_=0;\
 	export _R_CHECK_DOT_INTERNAL_=1;\
 	export _R_CHECK_USE_CODETOOLS_=1;\
-	export _R_CHECK_CRAN_INCOMING_USE_ASPELL_=;\
+	export _R_CHECK_CRAN_INCOMING_USE_ASPELL_=1;\
 	export _R_CHECK_FULL_=1;\
 	$(R_CMD) check $(R_CHECK_OPTS) $(PKG_TARBALL);\
-	echo done > $(PKG_NAME).Rcheck	/.check.complete
+	echo done > $(PKG_NAME).Rcheck/.check.complete
 
 check: ../$(R_CHECK_OUTDIR)/.check.complete
+
+
+check_force:
+	$(RM) -r ../$(R_CHECK_OUTDIR)
+	$(MAKE) check
 
 
 # Install and build binaries
