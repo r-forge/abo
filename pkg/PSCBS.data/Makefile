@@ -25,8 +25,9 @@ FILES_INST := $(wildcard inst/* inst/*/* inst/*/*/* inst/*/*/*/*)
 FILES_VIGNETTES := $(wildcard vignettes/*)
 FILES_SRC := $(wildcard src/* src/*/* src/*/*/* src/*/*/*/* src/*/*/*/*/* src/*/*/*/*/*/* src/*/*/*/*/*/*/* src/*/*/*/*/*/*/*/*)
 FILES_TESTS := $(wildcard tests/*.R)
-FILES_ROOT := DESCRIPTION NAMESPACE NEWS .Rbuildignore
-PKG_FILES := $(FILES_ROOT) $(FILES_R) $(FILES_DATA) $(FILES_MAN) $(FILES_INST) $(FILES_VIGNETTES) $(FILES_SRC) $(FILES_TESTS)
+FILES_NEWS := $(wildcard NEWS inst/NEWS)
+FILES_ROOT := DESCRIPTION NAMESPACE .Rbuildignore
+PKG_FILES := $(FILES_ROOT) $(FILES_NEWS) $(FILES_R) $(FILES_DATA) $(FILES_MAN) $(FILES_INST) $(FILES_VIGNETTES) $(FILES_SRC) $(FILES_TESTS)
 
 # Has vignettes in 'vignettes/' or 'inst/doc/'?
 DIR_VIGNS := $(wildcard vignettes inst/doc)
