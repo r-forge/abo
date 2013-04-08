@@ -1,0 +1,7 @@
+
+Package: PSCBS.data
+===================
+
+Version: 0.35.0 [2013-04-08]
+o Created package 'PSCBS.data' by extracting example data
+  from the 'PSCBS' package.

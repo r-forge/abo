@@ -1,0 +1,18 @@
+Package: PSCBS.data
+Version: 0.35.0
+Date: 2013-04-08
+Title: Matched tumor-normal SNP microarray example data for the PSCBS package
+Authors@R: c(
+  person("Henrik", "Bengtsson", role=c("aut", "cre", "cph"),
+                                 email="henrikb@braju.com"),
+  person("Pierre", "Neuvial", role="aut"),
+  person("Venkatraman E.", "Seshan", role="aut"),
+  person("Adam B.", "Olshen", role="aut"),
+  person("Paul T.", "Spellman", role="aut"),
+  person("Richard A.", "Olshen", role="aut"))
+Author: A.B. Olshen, H. Bengtsson, P. Neuvial, P.T. Spellman, R.A. Olshen, V.E. Seshan
+Maintainer: Henrik Bengtsson <henrikb@braju.com>
+Description: This package contains matched tumor-normal SNP microarray data on chromosome 1 (73,346 loci) for a single anonymous individual.  It is used to illustrate the Paired Parent-Specific Circular Binary Segmentation (Paired PSCBS) method implemented in the PSCBS package.
+License: GPL (>= 2)
+LazyLoad: yes
+biocViews: aCGH, CopyNumberVariants, SNP, Microarray, OneChannel, TwoChannel, Genetics
