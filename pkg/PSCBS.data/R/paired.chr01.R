@@ -15,8 +15,7 @@
 # }
 #
 # \examples{
-#   library("PSCBS.data")
-#   data("paired.chr01")
+#   data("paired.chr01", package="PSCBS.data")
 #   str(paired.chr01)
 # }
 #
