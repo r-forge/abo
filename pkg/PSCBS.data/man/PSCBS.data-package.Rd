@@ -15,7 +15,7 @@
 
 
 \description{
-  This package contains matched tumor-normal SNP microarray data on chromosome 1 (73,346 loci) for a single individual.  It is used to illustrate the Paired Parent-Specific Circular Binary Segmentation (Paired PSCBS) method implemented in the PSCBS package..
+  This package contains matched tumor-normal SNP microarray data on chromosome 1 (73,346 loci) for a single individual.  It is used to illustrate the Paired Parent-Specific Circular Binary Segmentation (Paired PSCBS) method implemented in the PSCBS package.
 }
 
 \section{Installation and updates}{
