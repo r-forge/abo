@@ -14,7 +14,7 @@
 \title{Matched tumor-normal SNP microarray data}
 
 \description{
- Matched tumor-normal SNP microarray data on chromosome 1 (73,346 loci) for a single anonymous individual.
+ Matched tumor-normal SNP microarray data on chromosome 1 (73,346 loci) for a single individual.
 }
 
 \usage{paired.chr01}
