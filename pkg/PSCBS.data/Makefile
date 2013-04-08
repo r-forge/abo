@@ -98,11 +98,17 @@ install: $(R_LIBS_USER_X)/$(PKG_NAME)/DESCRIPTION
 
 
 # Check source tarball
-../$(R_CHECK_OUTDIR)/00check.log: ../$(R_OUTDIR)/$(PKG_TARBALL)
+../$(R_CHECK_OUTDIR)/.check.complete: ../$(R_OUTDIR)/$(PKG_TARBALL)
 	$(CD) ../$(R_OUTDIR);\
-	$(R_CMD) check $(R_CHECK_OPTS) $(PKG_TARBALL)
+        export _R_CHECK_CRAN_INCOMING_=0;\
+	export _R_CHECK_DOT_INTERNAL_=1;\
+	export _R_CHECK_USE_CODETOOLS_=1;\
+	export _R_CHECK_CRAN_INCOMING_USE_ASPELL_=;\
+	export _R_CHECK_FULL_=1;\
+	$(R_CMD) check $(R_CHECK_OPTS) $(PKG_TARBALL);\
+	echo done > $(PKG_NAME).Rcheck	/.check.complete
 
-check: ../$(R_CHECK_OUTDIR)/00check.log
+check: ../$(R_CHECK_OUTDIR)/.check.complete
 
 
 # Install and build binaries

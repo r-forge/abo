@@ -8,11 +8,10 @@
 
 \name{PSCBS.data-package}
 \alias{PSCBS.data-package}
-
+\alias{PSCBS.data}
 \docType{package}
 
 \title{Package PSCBS.data}
-
 
 
 \description{
@@ -21,6 +20,12 @@
 
 \section{Installation and updates}{
   To install this package, use \code{install.packages("PSCBS.data")}.
+}
+
+\section{Data sets}{
+  \itemize{
+    \item \code{\link{paired.chr01}}.
+  }
 }
 
 \section{How to cite}{

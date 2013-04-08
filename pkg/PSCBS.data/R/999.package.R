@@ -1,13 +1,18 @@
 #########################################################################/**
 # @RdocPackage "PSCBS.data"
-# @eval "rd <- gsub('\\alias{PSCBS.data}', '', rd, fixed=TRUE); ''"
 #
 # \description{
-#   @eval "packageDescription('PSCBS.data')$Description".
+#   @eval "packageDescription('PSCBS.data')$Description"
 # }
 #
 # \section{Installation and updates}{
 #   To install this package, use \code{install.packages("PSCBS.data")}.
+# }
+#
+# \section{Data sets}{
+#   \itemize{
+#     \item @see "paired.chr01".
+#   }
 # }
 #
 # \section{How to cite}{
