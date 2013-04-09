@@ -20,8 +20,6 @@
 #   and [3] and [4] when using CBS.
 # }
 #
-# @author
-#
 # \section{License}{
 #  @eval "packageDescription('PSCBS.data')$License".
 # }

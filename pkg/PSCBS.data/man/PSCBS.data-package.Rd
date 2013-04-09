@@ -33,8 +33,6 @@
   and [3] and [4] when using CBS.
 }
 
-\author{Henrik Bengtsson}
-
 \section{License}{
  GPL (>= 2).
 }

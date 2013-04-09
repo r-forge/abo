@@ -8,7 +8,6 @@
 
 \name{paired.chr01}
 \alias{paired.chr01}
-\docType{data}
 
 
 \title{Matched tumor-normal SNP microarray data}
@@ -34,6 +33,4 @@
  [1] A.B. Olshen, H. Bengtsson, P. Neuvial, P.T. Spellman, R.A. Olshen, V.E. Seshan, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, Bioinformatics, 2011
 
 }
-
-\author{Henrik Bengtsson}
 \keyword{datasets}
