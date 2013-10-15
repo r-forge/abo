@@ -8,6 +8,7 @@
 
 \name{paired.chr01}
 \alias{paired.chr01}
+\docType{data}
 
 
 \title{Matched tumor-normal SNP microarray data}

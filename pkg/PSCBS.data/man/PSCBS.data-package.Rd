@@ -15,7 +15,7 @@
 
 
 \description{
-  This package contains matched tumor-normal SNP microarray data from one chromosome in one individual.  It is used to illustrate the Paired Parent-Specific Circular Binary Segmentation (Paired PSCBS) method implemented in the PSCBS package.
+  This package contains data that accompany the PSCBS package implementing the Paired Parent-Specific Circular Binary Segmentation (Paired PSCBS) method.  The data are on from a matched tumor-normal pair obtained using SNP microarrays.  To save space, only data from one chromosome is included.
 }
 
 \section{Installation and updates}{
