@@ -5,7 +5,7 @@
 From paired mRNA and ribosome protected fragment count data run Babel analysis to detect changes in translation.
 }
 \usage{
-babel(rna,rp,group,nreps,method.adjust="BH",...)
+babel(rna,rp,group,nreps,method.adjust="BH",min.rna=10,...)
 }
 \arguments{
   \item{rna}{a matrix or data frame of mRNA count data whose rows
@@ -20,6 +20,8 @@ babel(rna,rp,group,nreps,method.adjust="BH",...)
     divisible by 10,000.}
   \item{method.adjust}{method of adjustment for multiple comparisons used
     by p.adjust.}
+  \item{min.rna}{minimum number of rna counts across all samples for a
+    gene to be included.  Default is 10.}
   \item{...}{Additional arguments.}
 }
 
@@ -35,19 +37,26 @@ babel(rna,rp,group,nreps,method.adjust="BH",...)
   gene id, direction ( 1 for translation greater than expected, -1 for  
   less than expected), a (two-sided) p-value, and the 
   corresponding FDR.}
-\item{between}{A data frame consisting of a gene id, p-value, corresponding FDR,
-  and direction (1 for translation higher in first group label, -1 for 
-  lower in first group label).)  If there is at least two samples per group
-  there are three addition variables: rna log fold-change, rna FDR,
-  and change type (translation only or both rna and translation).}
-}
+\item{between}{A list of data frames corresponding to every pairwise
+  comparison between groups named after the comparison consisting of a
+  gene id, p-value, corresponding FDR, and direction (1 for translation
+  higher in first group label, -1 for lower in first group label).  If
+  there is at least two samples per group there are three addition
+  variables: rna log fold-change, rna FDR, and change type (translation
+  only or both rna and translation).}  }
 
 \details{
   No missing values are allowed.
   
-  Making nreps larger gives more precise estimates.  At least 100,000
-  is required.  A million would be better, and ten million would be ideal, but will
-  execute very slowly in the alpha version of the serial implementation.}  
+  Making nreps larger gives more precise estimates.  At least 100,000 is
+  required.  A million would be better, and ten million would be ideal,
+  but will execute slowly in the current implementation.
+  
+  Computations can be speeded up by running on multiple cores of the
+  same node using the mclappy command of the parallel library.  By
+  default, two cores are used.  Windows cannot use the fork command so
+  it can run on only one core.  To adjust the number of cores used, use
+  'options(mc.cores=x)', where x is the number of cores to use.  }
 
 \examples{
 data(ribo.prof)
@@ -61,7 +70,7 @@ test.group=c("A","B","A","B")
 #Set the seed so the result is reproducibile
 set.seed(12345)
 #Run babel with 100000 repetitions.
-test.babel <- babel(test.rna,test.rp,group=test.group,nreps=100000)
+test.babel <- babel(test.rna,test.rp,group=test.group,nreps=100000,min.rna=10)
 #Extract within sample p-values (is translation expected given mRNA level per sample)
 within.babel <- test.babel$within
 #Extract within group combined p-values (is translation expected given
@@ -69,4 +78,11 @@ within.babel <- test.babel$within
 Combined.babel <- test.babel$combined
 #Extract between group p-values (is translation given mRNA level the same between group)
 between.babel <- test.babel$between
+}
+
+\references{
+  Olshen, A. B., Hsieh, A. C., Stumpf, C. R., Olshen R. A., Ruggero, D.,
+  Taylor, B. S. (2013).
+  Assessing gene-level translation control from ribosome profiling.
+  \emph{Bioinformatics}.
 }

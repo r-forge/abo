@@ -1,5 +1,3 @@
-#Thus is the code from 10/03/13
-
 #library(edgeR)
 #library(parallel)
 
@@ -212,23 +210,30 @@ doCount <- function(rnv.pos,rnadisp,fit,rpdisp,match.rnv.urnv,rpv)
     count
   }
     
-doWithin <- function(rna,rp,group,nreps,trim.x=0.1,trim.var=0.1,rnadisp=NULL)
+doWithin <- function(rna,rp,group,nreps,keeper.genes,trim.x=0.1,trim.var=0.1,rnadisp=NULL)
 {
   n <- ncol(rna)
+  rna <- rna[keeper.genes,]
+  rp <- rp[keeper.genes,]
   smat <- matrix(0,nrow(rna),n)
   rownames(smat) <- rownames(rna)
   colnames(smat) <- colnames(rna)
   if(!is.null(rnadisp)) rnadisp <- rnadisp
   else
     {
-      if(min(table(group))<2)
+      unique.group <- unique(group)
+      count.group <- rep(NA,length(unique.group))
+      for(i in 1:length(unique.group)) count.group[i] <- length(which(group==unique.group[i]))
+      keeper.groups <- which(count.group>1)
+      if(length(keeper.groups)<2)
          {
-           warning("Must be at least two sanmples in every group to estimate rna dispersion.  Fixing at 0.2.  May want to select value for rnadisp")
+           warning("Must be at least two sanmples in at least two groups to estimate rna dispersion.  Fixing at 0.2.  May want to select value for rnadisp in argument to babel")
            rnadisp <- 0.2
          }
       else
          {
-           rnadisp <- estDisp(rna,group,NULL)
+           keeper.samples <- which(!is.na(match(group,unique.group[keeper.groups])))
+           rnadisp <- estDisp(rna[,keeper.samples],group[keeper.samples],NULL)
          }
     }
 #
@@ -272,7 +277,7 @@ doCombined <- function(pmat,group)
   cmat
 }
 
-formatWithin <- function(within,method,p,rnames,cnames)
+formatWithin <- function(within,method,p,rnames,cnames,keeper.genes,n)
   {
     twosided <- 2*within
     alt <- 2*(1-within)
@@ -285,14 +290,20 @@ formatWithin <- function(within,method,p,rnames,cnames)
     names(output.within) <- cnames
     for(i in 1:p)
       {
-        output.within[[i]] <- cbind.data.frame(rnames,direction[,i],within[,i],twosided[,i],qvalues[,i])
+        new.direction <- new.within <- new.twosided <- new.qvalues <- rep(NA,n)
+        new.direction[keeper.genes] <- direction[,i]
+        new.within[keeper.genes] <- within[,i]
+        new.twosided[keeper.genes] <- twosided[,i]
+        new.qvalues[keeper.genes] <- qvalues[,i]
+        output.within[[i]] <- cbind.data.frame(rnames,new.direction,new.within,new.twosided,new.qvalues)
+#        output.within[[i]] <- cbind.data.frame(rnames,direction[,i],within[,i],twosided[,i],qvalues[,i])        
         rownames(output.within[[i]]) <- NULL
         colnames(output.within[[i]]) <- c("Gene","Direction","P-value (one-sided)","P-value (two-sided)","FDR")        
       }
     output.within
   }
 
-formatCombined <- function(combined,group,method,rnames)
+formatCombined <- function(combined,group,method,rnames,keeper.genes,n)
 {
   twosided <- 2*combined
   alt <- 2*(1-combined)
@@ -300,45 +311,76 @@ formatCombined <- function(combined,group,method,rnames)
   twosided[which.switch] <- alt[which.switch]
   qvalues <- apply(twosided,2,p.adjust,method=method)
   direction <- matrix(1,nrow(combined),ncol(combined))
-  direction[which(combined>0.5)] <- (-1)    
-  output.combined <- vector("list",2)
-  names(output.combined) <- unique(group)
-  for(i in 1:2)
+  direction[which(combined>0.5)] <- (-1)
+  ugroup <- unique(group)
+  lgroup <- length(ugroup)
+  output.combined <- vector("list",lgroup)
+  names(output.combined) <- ugroup
+  for(i in 1:lgroup)
     {
-      output.combined[[i]] <- cbind.data.frame(rnames,direction[,i],twosided[,i],qvalues[,i])
-      rownames(output.combined[[i]]) <- NULL
-      colnames(output.combined[[i]]) <- c("Gene","Direction","P-value","FDR")        
+        new.direction <- new.twosided <- new.qvalues <- rep(NA,n)
+        new.direction[keeper.genes] <- direction[,i]
+        new.twosided[keeper.genes] <- twosided[,i]
+        new.qvalues[keeper.genes] <- qvalues[,i]
+        output.combined[[i]] <- cbind.data.frame(rnames,new.direction,new.twosided,new.qvalues)
+#        output.combined[[i]] <- cbind.data.frame(rnames,direction[,i],twosided[,i],qvalues[,i])
+        rownames(output.combined[[i]]) <- NULL
+        colnames(output.combined[[i]]) <- c("Gene","Direction","P-value","FDR")        
     }
   output.combined
 }
 
-formatBetween <- function(between,rna,group,method)
+formatBetween <- function(between,rna,group,method,keeper.genes=keeper.genes,n=n)
   {
-    qvalues <- apply(between$pval,2,p.adjust,method=method)
     min.group <- min(table(group))
-    if(min.group<2)
+    ugroup <- unique(group)
+    lgroup <- length(ugroup)
+    m <- choose(lgroup,2)
+    output.between <- vector("list",m)
+    counter <- 1
+    for(i in 1:(lgroup-1))
       {
-        output.between <-cbind.data.frame(rownames(rna),between$pval,qvalues,between$direction)
-        colnames(output.between) <- c("Gene","P-value","FDR","Direction")
-      }
-    else
-      {
-        dge <- suppressMessages(DGEList(counts=rna,group=group))
-        dsp <- estimateCommonDisp(dge)
-        dsp <- estimateTagwiseDisp(dsp)
-        res <- topTags(exactTest(dsp),n=nrow(rna))$table
-        match.genes <- match(rownames(rna),rownames(res))
-        mrna.qval <- res$FDR[match.genes]
-        mrna.logfc <- res$logFC[match.genes]
-        change.type <- rep("both",nrow(rna))
-        change.type[mrna.qval>0.05 & abs(mrna.logfc)<1.5] <- "translational_only"
-        output.between <-cbind.data.frame(rownames(rna),mrna.logfc,mrna.qval,change.type,between$pval,qvalues,between$direction)
-        colnames(output.between) <- c("Gene","mRNA_logFC","mRNA_FDR","Change_type","P-value","FDR","Direction")
+        for(j in (i+1):lgroup)
+          {
+            names(output.between)[counter] <- paste(ugroup[i],".vs.",ugroup[j],sep="")
+            qvalues <- p.adjust(between$pval[,counter],method=method)
+            if(min.group<2)
+              {
+                new.between <- new.qvalues <- new.direction <- rep(NA,n)
+                new.between[keeper.genes] <- between$pval[,counter]
+                new.qvalues[keeper.genes] <- qvalues
+                new.direction[keeper.genes] <- between$direction[,counter]
+                output.between[[counter]] <-cbind.data.frame(rownames(rna),new.between,new.qvalues,new.direction)
+#                output.between[[counter]] <-cbind.data.frame(rownames(rna),between$pval[,counter],qvalues,between$direction[,counter])
+                colnames(output.between[[counter]]) <- c("Gene","P-value","FDR","Direction")
+              }
+            else
+              {
+                which.ij <- which(group==ugroup[i]|group==group[j])
+                dge <- suppressMessages(DGEList(counts=rna[,which.ij],group=group[which.ij]))
+                dsp <- estimateCommonDisp(dge)
+                dsp <- estimateTagwiseDisp(dsp)
+                res <- topTags(exactTest(dsp),n=nrow(rna))$table
+                match.genes <- match(rownames(rna),rownames(res))
+                mrna.qval <- res$FDR[match.genes]
+                mrna.logfc <- res$logFC[match.genes]
+                change.type <- rep("both",nrow(rna))
+                change.type[mrna.qval>0.05 & abs(mrna.logfc)<1.5] <- "translational_only"
+                new.between <- new.qvalues <- new.direction <- rep(NA,n)
+                new.between[keeper.genes] <- between$pval[,counter]
+                new.qvalues[keeper.genes] <- qvalues
+                new.direction[keeper.genes] <- between$direction[,counter]
+                output.between[[counter]] <-cbind.data.frame(rownames(rna),mrna.logfc,mrna.qval,change.type,new.between,new.qvalues,new.direction)
+#                output.between[[counter]] <-cbind.data.frame(rownames(rna),mrna.logfc,mrna.qval,change.type,between$pval[,counter],qvalues,between$direction[,counter])
+                colnames(output.between[[counter]]) <- c("Gene","mRNA_logFC","mRNA_FDR","Change_type","P-value","FDR","Direction")
+              }
+            counter <- counter+1
+          }
       }
     output.between
   }
                           
-babel <- function(rna,rp,group,nreps,method.adjust="BH",...)
+babel <- function(rna,rp,group,nreps,method.adjust="BH",min.rna=10,...)
   {
     if(sum(dim(rna)==dim(rp))<2) stop("rna and rp are different sizes")
     n <- nrow(rna)
@@ -352,13 +394,16 @@ babel <- function(rna,rp,group,nreps,method.adjust="BH",...)
     if(sum(colnames(rna)==colnames(rp))<p) stop("colnames of rna and rp must match")
     if((nreps%%10000)!=0) stop("nreps must be divisible by 10000")
     if(nreps<100000) stop("nreps must at least 100,000")
-    if(length(unique(group))!=2) stop("There must be exactly two groups")
-    within <- doWithin(rna,rp,group,nreps,...)
-    output.within <- formatWithin(within,method=method.adjust,p=p,rnames=rownames(within),cnames=colnames(rna))
+    if(min.rna<1) stop("min.rna needs to be at least 1")
+#    if(length(unique(group))!=2) stop("There must be exactly two groups")
+    mins.rna <- apply(rna,1,min)
+    keeper.genes <- which(mins.rna>=min.rna)
+    within <- doWithin(rna=rna,rp=rp,group=group,nreps=nreps,keeper.genes=keeper.genes,...)
+    output.within <- formatWithin(within,method=method.adjust,p=p,rnames=rownames(rna),cnames=colnames(rna),keeper.genes=keeper.genes,n=n)
     combined <- doCombined(within,group)
-    output.combined <- formatCombined(combined,group=group,method=method.adjust,rnames=rownames(within))
+    output.combined <- formatCombined(combined,group=group,method=method.adjust,rnames=rownames(rna),keeper.genes=keeper.genes,n=n)
     between <- doBetween(within,group,type="two-sided",...)
-    output.between <- formatBetween(between,rna=rna,group=group,method=method.adjust)
+    output.between <- formatBetween(between,rna=rna,group=group,method=method.adjust,keeper.genes=keeper.genes,n=n)
     list(within=output.within,combined=output.combined,between=output.between)
   }
 
