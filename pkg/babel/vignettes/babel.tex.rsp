@@ -1,0 +1,257 @@
+<%@meta language="R-vignette" content="--------------------------------
+  DIRECTIVES FOR R:
+
+  %\VignetteIndexEntry{The babel vignette}
+  %\VignetteKeyword{example, R, package, vignette}
+  %\VignetteAuthor{Adam B. Olshen, Richard A. Olshen, and Barry S. Taylor}
+  %\VignetteEngine{R.rsp::rsp}
+--------------------------------------------------------------------"%>
+\documentclass[10pt]{article}
+\usepackage[top=0.8in, bottom=0.8in, left=1in, right=0.8in]{geometry}
+\usepackage{graphicx}
+<%
+R.utils::use("R.utils, R.devices")
+options(width=100)
+%>
+\graphicspath{{<%=getOption("devEval/args/path", "figures/")%>}}
+
+\title{<%@meta name="title"%>}
+\author{<%@meta name="author"%>}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+This document presents an overview of the {\tt babel} package. This
+package is for analyzing ribosome profiling data.  Ribosome profiling
+data arises from paired next generation sequencing experiments
+~\cite{aingolia09,bhsieh12}.  One experiment is standard RNA-seq, which
+we abbreviate as mRNA.  The other is RNA-seq of ribosome-protected
+fragments, which we abbreviate as RPF.  It implements our methodology
+for finding genes that have unusual RPF counts given their mRNA counts
+~\cite{colshen13}.  
+
+Our model is that the mRNA counts follow a negative binomial
+distribtion, as is standard ~\cite{drobinson08,eanders10}.  Because
+sample sizes are always low in this context, we estimate a single
+over-dispersion parameter across genes using the Robinson and Smyth
+methodology found in edgeR ~\cite{frobinson10}.  Given the mRNA
+counts, we model the RPF counts also as negative binomial with mean
+according to a trimmed least sequares regression fit of RPF counts on
+mRNA counts and over-dispersion estimated in an iterative fashion
+~\cite{colshen13}.
+
+As we detail below, our package does three main things.  First, we
+identify genes with unusual RPF counts given their mRNA counts {\it
+  within} conditions.  Second, we combine p-values across multiple
+experiments within conditions.  Third, we use the within-condition
+p-values to identify genes were the RPF/mRNA relationship has changed
+{\it between} conditions.
+
+\section{Data}
+
+We selected a ribosome profiling data set consisting of 1000 genes
+from two conditions (GroupA and GroupB) with each condition having two
+replicates (Sample1 and Sample2).  We are calling this data set {\tt
+ribo.prof}.
+
+\section{An Example}
+
+Here we perform an analysis on the {\tt ribo.prof} data described above.  First we load the library and data.
+
+\begin{verbatim}<%=evalCapture({
+library(babel)
+data(ribo.prof)
+})%>\end{verbatim}
+
+Next we print the first five lines of the mRNA ({\tt test.rna}) and
+RPF ({\tt test.rp}) elements of {\tt ribo.prof}.  Note that these are
+raw counts that are not normalized in any way.  Raw counts must be
+used with {\tt babel}.
+
+\begin{verbatim}<%=evalCapture({
+test.rna <- ribo.prof$test.rna
+print(test.rna[1:5,])
+})%>\end{verbatim}
+   
+\begin{verbatim}<%=evalCapture({
+test.rp <- ribo.prof$test.rp
+print(test.rp[1:5,])
+})%>\end{verbatim}
+
+We see paired count data for the first five genes.  We plot
+the Sample1 and GroupA data, with both mRNA and RPF counts on the log
+scale.  We expect and actually do see an increasing function between
+the mRNA counts and RPF counts.
+   
+\begin{figure}[htbp]
+ \begin{center}
+  \resizebox{0.6\textwidth}{!}{
+   \includegraphics{<%=toPDF("scatter", tags="1A", {
+   plot(test.rna[,1]+1,test.rp[,1]+1,xlab="mRNA counts",ylab="RPF counts",pch=16,log="xy",xlim=c(1,10000),ylim=c(1,10000),font.lab=2)
+   })%>}
+  }
+  \caption{Scatterplot of Sample1 and GroupA data.}
+  \label{fig:scatter}
+ \end{center}
+\end{figure}
+
+Similar patterns are repeated across the three other
+experiments.  Next we estimate p-values for the RPF counts given the
+mRNA counts within every experiment.  The tests are one-sided; higher
+than expected RPF counts lead to low p-values, while lower than
+expected RPF counts lead to high p-values.
+
+We set group labels corresponding to the columns of the mRNA
+and RPF inputs.
+\begin{verbatim}<%=evalCapture({
+test.group <- c("A","B","A","B")
+})%>\end{verbatim}
+
+Then, for the purpose of reproducibility, we fix the number
+of cores at 1.  Two cores are used by default, unless the machine is
+running Windows, where one is the default because Windows cannot use
+the fork command in the parallel library.  Users are encouraged to use
+multiple cores if they are available.  Future versions of the software
+will allow computation over multiple nodes of a computational cluster.
+\begin{verbatim}<%=evalCapture({
+options(mc.cores=1)
+})%>\end{verbatim}
+
+We set the seed for reproducibility purposes.
+\begin{verbatim}<%=evalCapture({
+set.seed(12345)
+})%>\end{verbatim}
+
+We run the main function, which is called {\tt babel()}.  The
+argument {\tt nreps} is set to 100000.  This is the number of permutations,
+so the minimum p-value is {\tt 1/nreps}.  Therefore, when correcting for
+multiple comparisons, We would prefer a million, or, even
+better, ten million reps, but here we are just demonstrating the
+procedure on one core.
+\begin{verbatim}<%=evalCapture({
+test.babel <- babel(test.rna,test.rp,group=test.group,nreps=1e+05,min.rna=10)
+})%>\end{verbatim}
+
+Now we examine the first five lines of the within element of the list
+created by the {\tt babel()} run.
+ 
+\begin{verbatim}<%=evalCapture({
+within.babel <- test.babel$within
+print(within.babel[[1]][1:5,])
+})%>\end{verbatim}
+
+The element {\tt Direction} is whether the RPF count is
+greater (1) or less (-1) than expected given the mRNA count.  The {\tt
+P-value (one-sided)} tells us how unusual the RPF count is given the
+mRNA count, with low or high being interesting.  The {\tt P-value
+(two-sided)} correspond to how unusual the RPF count is relative to
+the mRNA count, with only low being interesting.  The {\tt FDR} is the
+estimated false discovery rate corresponding to the gene for the
+two-sided p-value.
+
+We plot the interesting genes from the within analysis on this sample.
+Genes in red have (one-sided) p-values $< 0.025$, while genes in green
+have p-values $> 0.975.$
+
+\begin{figure}[htbp]
+ \begin{center}
+  \resizebox{0.6\textwidth}{!}{
+   \includegraphics{<%=toPDF("scatter2", tags="1A", {
+   which.025 <- which(within.babel[[1]]$"P-value (one-sided)"<0.025)
+   which.975 <- which(within.babel[[1]]$"P-value (one-sided)">0.975)	
+   plot(test.rna[,1]+1,test.rp[,1]+1,xlab="mRNA counts",ylab="RPF counts",pch=16,log="xy",xlim=c(1,10000),ylim=c(1,10000),font.lab=2)
+   points(test.rna[which.025,1]+1,test.rp[which.025,1]+1,pch=16,col=2)
+   points(test.rna[which.975,1]+1,test.rp[which.975,1]+1,pch=16,col=3)
+   })%>}
+  }
+  \caption{Scatterplot of Sample1 and GroupA data with unusual genes highlighted.}
+  \label{fig:scatter2}
+ \end{center}
+\end{figure}
+
+Next we combine the p-values from the two experiments from
+Group A using the technique described in our manuscript ~\cite{colshen13},
+and show the first five lines from the results.  Note there is now a
+single (two-sided) combined p-value and a corresponding FDR.  The
+Direction let us know whether RPF counts are higher or lower than
+expected.  
+
+\begin{verbatim}<%=evalCapture({
+combined.babel <- test.babel$combined
+print(combined.babel[[1]][1:5,])
+})%>\end{verbatim}
+
+We plot the genes at the same p-value cutoffs as before.
+Note the increase in power from combining experiments and that all
+highlighted genes are unusual in both samples.
+
+\begin{figure}[htbp]
+ \begin{center}
+  \resizebox{0.6\textwidth}{!}{
+   \includegraphics{<%=toPDF("scatter3", tags="1A", {
+   which.025 <- which(combined.babel[[1]]$"P-value"<0.025)
+   plot(test.rna[,1]+1,test.rp[,1]+1,xlab="mRNA counts",ylab="RPF counts",pch=16,log="xy",xlim=c(1,10000),ylim=c(1,10000),font.lab=2)
+   points(test.rna[which.025,1]+1,test.rp[which.025,1]+1,pch=16,col=2)
+   })%>}
+  }
+  \caption{Scatterplot of the Sample1 and GroupA data with unusual genes
+ highlighted from combined analysis.}
+  \label{fig:scatter3}
+ \end{center}
+\end{figure}
+
+\begin{figure}[htbp]
+ \begin{center}
+  \resizebox{0.6\textwidth}{!}{
+   \includegraphics{<%=toPDF("scatter4", tags="1A", {
+   which.025 <- which(combined.babel[[1]]$"P-value"<0.025)
+   plot(test.rna[,3]+1,test.rp[,3]+1,xlab="mRNA counts",ylab="RPF counts",pch=16,log="xy",xlim=c(1,10000),ylim=c(1,10000),font.lab=2)
+   points(test.rna[which.025,3]+1,test.rp[which.025,3]+1,pch=16,col=2)
+   })%>}
+  }
+  \caption{Scatterplot of the Sample2 and GroupA data with unusual genes
+ highlighted from combined analysis.}
+  \label{fig:scatter4}
+ \end{center}
+\end{figure}
+
+Next we look for genes whose RPF to mRNA counts vary between
+group A and group B.  Here there are only two groups, but babel
+automatically tests all pairwise combinations.  We again print the
+first five lines of the output.
+
+\begin{verbatim}<%=evalCapture({
+between.babel <- test.babel$between
+print(between.babel[[1]][1:5,])
+})%>\end{verbatim}
+
+The elements {\tt mRNA$\_$logFC} and {\tt mRNA$\_$FDR} are based on
+tests for differential expression just on the mRNA data
+~\cite{frobinson10}.  Genes with {\tt mRNA$\_$FDR} $< 0.05$ are labeled as
+"both," meaning change is in expression and translation; other genes
+are labeled "translation$\_$only".  There is a single (two-sided)
+p-value for the difference in RPF relative to mRNA and the
+corresponding FDR.  The element {\tt Direction} determines the type of
+change (1 for translation higher in the first group label, -1 for
+lower in the first group label).  Note that an {\tt FDR} of $25\%$ there are
+12 significant genes.
+
+<%-------------------------------------------------------------------
+  REFERENCES
+  -------------------------------------------------------------------%>
+\bibliographystyle{ieeetr}
+\bibliography{babel}
+
+<%-------------------------------------------------------------------
+  APPENDIX
+  -------------------------------------------------------------------%>
+\clearpage
+\section*{Appendix}
+\subsection*{Session information}
+<%=toLatex(sessionInfo())%>
+This report was generated using the R.rsp package.
+
+\end{document}
+
