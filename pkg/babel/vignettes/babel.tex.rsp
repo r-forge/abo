@@ -124,12 +124,15 @@ We set the seed for reproducibility purposes.
 set.seed(12345)
 })%>\end{verbatim}
 
-We run the main function, which is called {\tt babel()}.  The
-argument {\tt nreps} is set to 100000.  This is the number of permutations,
-so the minimum p-value is {\tt 1/nreps}.  Therefore, when correcting for
-multiple comparisons, We would prefer a million, or, even
-better, ten million reps, but here we are just demonstrating the
-procedure on one core.
+We run the main function, which is called {\tt babel()}.  The argument
+{\tt nreps} is set to 100000.  This is the number of permutations, so
+the minimum p-value is {\tt 1/nreps}.  Therefore, when correcting for
+multiple comparisons, We would prefer a million, or, even better, ten
+million reps, but here we are just demonstrating the procedure on one
+core.  The argument {\tt min.rna} is set to $10$.  This is the minimum
+number of mRNA counts acrossing all experiments for a gene to be
+included.  This cutoff leads to the removal of $9$ genes so that $991$
+are analyzed.
 \begin{verbatim}<%=evalCapture({
 test.babel <- babel(test.rna,test.rp,group=test.group,nreps=1e+05,min.rna=10)
 })%>\end{verbatim}
@@ -235,8 +238,8 @@ are labeled "translation$\_$only".  There is a single (two-sided)
 p-value for the difference in RPF relative to mRNA and the
 corresponding FDR.  The element {\tt Direction} determines the type of
 change (1 for translation higher in the first group label, -1 for
-lower in the first group label).  Note that an {\tt FDR} of $25\%$ there are
-12 significant genes.
+lower in the first group label).  Note that an FDR of $25\%$ there are
+$11$ significant genes.
 
 <%-------------------------------------------------------------------
   REFERENCES

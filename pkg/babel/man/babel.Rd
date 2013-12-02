@@ -8,9 +8,9 @@ From paired mRNA and ribosome protected fragment count data run Babel analysis t
 babel(rna,rp,group,nreps,method.adjust="BH",min.rna=10,...)
 }
 \arguments{
-  \item{rna}{a matrix or data frame of mRNA count data whose rows
+  \item{rna}{a matrix or data frame of raw (not normalized) mRNA count data whose rows
     correspond to genes and whose columns correspond to samples.}
-  \item{rp}{a matrix or data frame of ribosome protected fragment count
+  \item{rp}{a matrix or data frame of raw ribosome protected fragment count
     data whose rows correspond to genes and whose columns correspond to
     samples.  The row names and column names (if specified) must be the same
     as for rna.}
@@ -70,6 +70,7 @@ test.group=c("A","B","A","B")
 #Set the seed so the result is reproducibile
 set.seed(12345)
 #Run babel with 100000 repetitions.
+\dontrun{
 test.babel <- babel(test.rna,test.rp,group=test.group,nreps=100000,min.rna=10)
 #Extract within sample p-values (is translation expected given mRNA level per sample)
 within.babel <- test.babel$within
@@ -78,6 +79,7 @@ within.babel <- test.babel$within
 Combined.babel <- test.babel$combined
 #Extract between group p-values (is translation given mRNA level the same between group)
 between.babel <- test.babel$between
+}
 }
 
 \references{

@@ -227,8 +227,8 @@ doWithin <- function(rna,rp,group,nreps,keeper.genes,trim.x=0.1,trim.var=0.1,rna
       keeper.groups <- which(count.group>1)
       if(length(keeper.groups)<2)
          {
-           warning("Must be at least two sanmples in at least two groups to estimate rna dispersion.  Fixing at 0.2.  May want to select value for rnadisp in argument to babel")
-           rnadisp <- 0.2
+           warning("Must be at least two sanmples in at least two groups to estimate rna dispersion.  Fixing at 0.1.  May want to select value for rnadisp in argument to babel")
+           rnadisp <- 0.1
          }
       else
          {
