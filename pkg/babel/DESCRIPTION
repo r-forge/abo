@@ -5,7 +5,7 @@ Author: Adam B. Olshen, Richard A. Olshen, Barry S. Taylor
 Maintainer: Adam B. Olshen <olshena@biostat.ucsf.edu>
 Depends: R (>= 2.14.0), edgeR
 Imports: parallel
-Suggests: R.rsp, R.devices
+Suggests: R.rsp, R.devices, R.utils
 VignetteBuilder: R.rsp
 Description: Implements babel routines for identifying unusual ribosome protected fragment counts given mRNA counts
 License: LGPL (>= 2.1)
