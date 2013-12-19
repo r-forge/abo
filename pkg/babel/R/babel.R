@@ -356,7 +356,7 @@ formatBetween <- function(between,rna,group,method,keeper.genes=keeper.genes,n=n
               }
             else
               {
-                which.ij <- which(group==ugroup[i]|group==group[j])
+                which.ij <- which(group==ugroup[i]|group==ugroup[j])
                 dge <- suppressMessages(DGEList(counts=rna[,which.ij],group=group[which.ij]))
                 dsp <- estimateCommonDisp(dge)
                 dsp <- estimateTagwiseDisp(dsp)

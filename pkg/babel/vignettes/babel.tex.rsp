@@ -46,7 +46,7 @@ As we detail below, our package does three main things.  First, we
 identify genes with unusual RPF counts given their mRNA counts {\it
   within} conditions.  Second, we combine p-values across multiple
 experiments within conditions.  Third, we use the within-condition
-p-values to identify genes were the RPF/mRNA relationship has changed
+p-values to identify genes where the RPF/mRNA relationship has changed
 {\it between} conditions.
 
 \section{Data}
