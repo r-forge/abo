@@ -4,3 +4,10 @@ Package: babel
 Version: 0.2-3 [2013-12-03]
 o First version submitted to CRAN
 
+Version: 0.2-4 [2013-12-19]
+o Group label bug fixed
+
+Version: 0.2-5 [2014-01-08]
+o doBetween ...  bug fixed
+
+

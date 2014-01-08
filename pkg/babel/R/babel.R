@@ -402,7 +402,7 @@ babel <- function(rna,rp,group,nreps,method.adjust="BH",min.rna=10,...)
     output.within <- formatWithin(within,method=method.adjust,p=p,rnames=rownames(rna),cnames=colnames(rna),keeper.genes=keeper.genes,n=n)
     combined <- doCombined(within,group)
     output.combined <- formatCombined(combined,group=group,method=method.adjust,rnames=rownames(rna),keeper.genes=keeper.genes,n=n)
-    between <- doBetween(within,group,type="two-sided",...)
+    between <- doBetween(within,group,type="two-sided")
     output.between <- formatBetween(between,rna=rna,group=group,method=method.adjust,keeper.genes=keeper.genes,n=n)
     list(within=output.within,combined=output.combined,between=output.between)
   }
