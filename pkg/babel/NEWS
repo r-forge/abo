@@ -10,4 +10,9 @@ o Group label bug fixed
 Version: 0.2-5 [2014-01-08]
 o doBetween ...  bug fixed
 
+Version: 0.2-6 [2014-04-23]
+o doBetween fold change fixed to have proper sign
+
+
+
 

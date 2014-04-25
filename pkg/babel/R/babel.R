@@ -360,7 +360,7 @@ formatBetween <- function(between,rna,group,method,keeper.genes=keeper.genes,n=n
                 dge <- suppressMessages(DGEList(counts=rna[,which.ij],group=group[which.ij]))
                 dsp <- estimateCommonDisp(dge)
                 dsp <- estimateTagwiseDisp(dsp)
-                res <- topTags(exactTest(dsp),n=nrow(rna))$table
+                res <- topTags(exactTest(dsp,pair=c(ugroup[j],ugroup[i])),n=nrow(rna))$table
                 match.genes <- match(rownames(rna),rownames(res))
                 mrna.qval <- res$FDR[match.genes]
                 mrna.logfc <- res$logFC[match.genes]
