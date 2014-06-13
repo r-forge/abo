@@ -47,10 +47,10 @@ rpDisp <- function(x,y,nbins=20,min.bin=10,trim.x=0.1,fixdisp=0.2,fixalpha=0.01)
 #Starting and ending of bins based on quantiles so same number in every bin
         x.bins <- quantile(x.keepers,seq(0,1,length.out=nbins+1))
 #    x.bins <- quantile(x[x>=x.lower & x<=x.upper],seq(0,1,length.out=nbins+1))    
-        v <- rep(NA,nbins)
-        lambda <- rep(NA,nbins)
-        count.bins <- rep(NA,nbins)
-        for(i in 1:nbins)
+        v <- rep(NA_real_,nbins)
+        lambda <- rep(NA_real_,nbins)
+        count.bins <- rep(NA_integer_,nbins)
+        for(i in seq_len(nbins))
           {
 #Which x are in the current bin
             which.bin <- which(x.keepers>=x.bins[i] & x.keepers<x.bins[i+1])
@@ -148,20 +148,20 @@ doBetween <- function(pmat,group,nSD=3,type=c("one-sided","two-sided"))
     unique.group <- unique(group)
     n <- length(unique.group)
     m <- choose(n,2)
-    pval <- matrix(NA,nrow(pmat),m)
+    pval <- matrix(NA_real_,nrow(pmat),m)
     direction <- matrix(1,nrow(pmat),m)
     colnames(pval) <- 1:m
     counter <- 1
-    for(i in 1:(n-1))
+    for(i in seq_len(n-1))
       {
         which.i <- which(group==unique.group[i])
         zmat.i <- as.matrix(zmat[,which.i])
-        num1 <- apply(zmat.i,1,sum)
+        num1 <- rowSums(zmat.i)
         for(j in (i+1):n)
           {
             which.j <- which(group==unique.group[j])
             zmat.j <- as.matrix(zmat[,which.j])
-            num2 <- apply(zmat.j,1,sum)
+            num2 <- rowSums(zmat.j)
             num <- num1-num2
             p <- length(which.i)+length(which.j)
             which.del <- which(abs(num)>(nSD*sqrt(p)))
@@ -169,7 +169,7 @@ doBetween <- function(pmat,group,nSD=3,type=c("one-sided","two-sided"))
             if(length(which.del)>0) zmat.ij <- zmat.ij[-which.del,]
             covmat <- cov(zmat.ij)
             var.ij <- sum(diag(covmat))
-            for(ii in 1:(ncol(zmat.ij)-1))
+            for(ii in seq_len(ncol(zmat.ij)-1))
                 {
                   for(jj in (ii+1):ncol(zmat.ij))
                     {
@@ -206,7 +206,7 @@ doCount <- function(rnv.pos,rnadisp,fit,rpdisp,match.rnv.urnv,rpv)
     nbsample <- rnbinom(len,mu=rnv.pos,size=1/rnadisp)
     mu <- (nbsample*fit$coefficients)
     ref <- (matrix(rnbinom(len,mu=mu,size=1/rpdisp),nrow=length.pos,ncol=10000))[match.rnv.urnv,]
-    count <- apply(ref>rpv,1,sum)
+    count <- rowSums(ref>rpv)
     count
   }
     
@@ -222,8 +222,8 @@ doWithin <- function(rna,rp,group,nreps,keeper.genes,trim.x=0.1,trim.var=0.1,rna
   else
     {
       unique.group <- unique(group)
-      count.group <- rep(NA,length(unique.group))
-      for(i in 1:length(unique.group)) count.group[i] <- length(which(group==unique.group[i]))
+      count.group <- rep(NA_integer_,length(unique.group))
+      for(i in seq_len(length(unique.group))) count.group[i] <- length(which(group==unique.group[i]))
       keeper.groups <- which(count.group>1)
       if(length(keeper.groups)<2)
          {
@@ -240,7 +240,7 @@ doWithin <- function(rna,rp,group,nreps,keeper.genes,trim.x=0.1,trim.var=0.1,rna
 # Permute
 #
   loops <- nreps%/%10000
-  for(i in 1:n)
+  for(i in seq_len(n))
     {
       print(paste("Running",colnames(rna)[i]))
       rnv <- rna[,i]; # This sample's RNA
@@ -266,8 +266,8 @@ doCombined <- function(pmat,group)
 {
   unique.group <- unique(group)
   n <- length(unique.group)
-  cmat <- matrix(NA,nrow(pmat),n)
-  for(i in 1:n)
+  cmat <- matrix(NA_real_,nrow(pmat),n)
+  for(i in seq_len(n))
     {
       which.i <- which(group==unique.group[i])
       p.i <- as.matrix(pmat[,which.i])
@@ -288,9 +288,9 @@ formatWithin <- function(within,method,p,rnames,cnames,keeper.genes,n)
     direction[which(within>0.5)] <- (-1)
     output.within <- vector("list",p)
     names(output.within) <- cnames
-    for(i in 1:p)
+    for(i in seq_len(p))
       {
-        new.direction <- new.within <- new.twosided <- new.qvalues <- rep(NA,n)
+        new.direction <- new.within <- new.twosided <- new.qvalues <- rep(NA_real_,n)
         new.direction[keeper.genes] <- direction[,i]
         new.within[keeper.genes] <- within[,i]
         new.twosided[keeper.genes] <- twosided[,i]
@@ -316,9 +316,9 @@ formatCombined <- function(combined,group,method,rnames,keeper.genes,n)
   lgroup <- length(ugroup)
   output.combined <- vector("list",lgroup)
   names(output.combined) <- ugroup
-  for(i in 1:lgroup)
+  for(i in seq_len(lgroup))
     {
-        new.direction <- new.twosided <- new.qvalues <- rep(NA,n)
+        new.direction <- new.twosided <- new.qvalues <- rep(NA_real_,n)
         new.direction[keeper.genes] <- direction[,i]
         new.twosided[keeper.genes] <- twosided[,i]
         new.qvalues[keeper.genes] <- qvalues[,i]
@@ -338,7 +338,7 @@ formatBetween <- function(between,rna,group,method,keeper.genes=keeper.genes,n=n
     m <- choose(lgroup,2)
     output.between <- vector("list",m)
     counter <- 1
-    for(i in 1:(lgroup-1))
+    for(i in seq_len(lgroup-1))
       {
         for(j in (i+1):lgroup)
           {
@@ -346,7 +346,7 @@ formatBetween <- function(between,rna,group,method,keeper.genes=keeper.genes,n=n
             qvalues <- p.adjust(between$pval[,counter],method=method)
             if(min.group<2)
               {
-                new.between <- new.qvalues <- new.direction <- rep(NA,n)
+                new.between <- new.qvalues <- new.direction <- rep(NA_real_,n)
                 new.between[keeper.genes] <- between$pval[,counter]
                 new.qvalues[keeper.genes] <- qvalues
                 new.direction[keeper.genes] <- between$direction[,counter]
@@ -366,7 +366,7 @@ formatBetween <- function(between,rna,group,method,keeper.genes=keeper.genes,n=n
                 mrna.logfc <- res$logFC[match.genes]
                 change.type <- rep("both",nrow(rna))
                 change.type[mrna.qval>0.05 & abs(mrna.logfc)<1.5] <- "translational_only"
-                new.between <- new.qvalues <- new.direction <- rep(NA,n)
+                new.between <- new.qvalues <- new.direction <- rep(NA_real_,n)
                 new.between[keeper.genes] <- between$pval[,counter]
                 new.qvalues[keeper.genes] <- qvalues
                 new.direction[keeper.genes] <- between$direction[,counter]

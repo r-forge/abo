@@ -2,7 +2,7 @@ Package: babel
 Version: 0.2-6
 Title: Ribosome profiling data analysis
 Author: Adam B. Olshen, Richard A. Olshen, Barry S. Taylor
-Maintainer: Adam B. Olshen <olshena@biostat.ucsf.edu>
+Maintainer: Adam B. Olshen <adam.olshen@ucsf.edu>
 Depends: R (>= 2.14.0), edgeR
 Imports: parallel
 Suggests: R.rsp, R.devices, R.utils

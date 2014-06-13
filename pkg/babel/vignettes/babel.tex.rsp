@@ -60,7 +60,7 @@ ribo.prof}.
 
 Here we perform an analysis on the {\tt ribo.prof} data described above.  First we load the library and data.
 
-\begin{verbatim}<%=evalCapture({
+\begin{verbatim}<%=withCapture({
 library(babel)
 data(ribo.prof)
 })%>\end{verbatim}
@@ -70,12 +70,12 @@ RPF ({\tt test.rp}) elements of {\tt ribo.prof}.  Note that these are
 raw counts that are not normalized in any way.  Raw counts must be
 used with {\tt babel}.
 
-\begin{verbatim}<%=evalCapture({
+\begin{verbatim}<%=withCapture({
 test.rna <- ribo.prof$test.rna
 print(test.rna[1:5,])
 })%>\end{verbatim}
    
-\begin{verbatim}<%=evalCapture({
+\begin{verbatim}<%=withCapture({
 test.rp <- ribo.prof$test.rp
 print(test.rp[1:5,])
 })%>\end{verbatim}
@@ -105,7 +105,7 @@ expected RPF counts lead to high p-values.
 
 We set group labels corresponding to the columns of the mRNA
 and RPF inputs.
-\begin{verbatim}<%=evalCapture({
+\begin{verbatim}<%=withCapture({
 test.group <- c("A","B","A","B")
 })%>\end{verbatim}
 
@@ -115,12 +115,12 @@ running Windows, where one is the default because Windows cannot use
 the fork command in the parallel library.  Users are encouraged to use
 multiple cores if they are available.  Future versions of the software
 will allow computation over multiple nodes of a computational cluster.
-\begin{verbatim}<%=evalCapture({
+\begin{verbatim}<%=withCapture({
 options(mc.cores=1)
 })%>\end{verbatim}
 
 We set the seed for reproducibility purposes.
-\begin{verbatim}<%=evalCapture({
+\begin{verbatim}<%=withCapture({
 set.seed(12345)
 })%>\end{verbatim}
 
@@ -133,14 +133,14 @@ core.  The argument {\tt min.rna} is set to $10$.  This is the minimum
 number of mRNA counts acrossing all experiments for a gene to be
 included.  This cutoff leads to the removal of $9$ genes so that $991$
 are analyzed.
-\begin{verbatim}<%=evalCapture({
+\begin{verbatim}<%=withCapture({
 test.babel <- babel(test.rna,test.rp,group=test.group,nreps=1e+05,min.rna=10)
 })%>\end{verbatim}
 
 Now we examine the first five lines of the within element of the list
 created by the {\tt babel()} run.
  
-\begin{verbatim}<%=evalCapture({
+\begin{verbatim}<%=withCapture({
 within.babel <- test.babel$within
 print(within.babel[[1]][1:5,])
 })%>\end{verbatim}
@@ -181,7 +181,7 @@ single (two-sided) combined p-value and a corresponding FDR.  The
 Direction let us know whether RPF counts are higher or lower than
 expected.  
 
-\begin{verbatim}<%=evalCapture({
+\begin{verbatim}<%=withCapture({
 combined.babel <- test.babel$combined
 print(combined.babel[[1]][1:5,])
 })%>\end{verbatim}
@@ -225,7 +225,7 @@ group A and group B.  Here there are only two groups, but babel
 automatically tests all pairwise combinations.  We again print the
 first five lines of the output.
 
-\begin{verbatim}<%=evalCapture({
+\begin{verbatim}<%=withCapture({
 between.babel <- test.babel$between
 print(between.babel[[1]][1:5,])
 })%>\end{verbatim}
